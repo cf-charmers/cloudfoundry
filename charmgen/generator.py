@@ -89,7 +89,7 @@ class CharmGenerator(object):
             os.makedirs(target_dir)
         meta = self.build_metadata(service_key)
         meta_target = open(os.path.join(target_dir, 'metadata.yaml'), 'w')
-        yaml.safe_dump(meta, meta_target)
+        yaml.safe_dump(meta, meta_target, default_flow_style=False)
         meta_target.close()
 
         hook_dir = os.path.join(target_dir, 'hooks')
@@ -153,7 +153,7 @@ class CharmGenerator(object):
         bundle = self.build_deployment()
         target = os.path.join(target_dir, 'bundles.yaml')
         with open(target, 'w') as fp:
-            yaml.safe_dump(bundle, fp)
+            yaml.safe_dump(bundle, fp, default_flow_style=False)
             fp.flush()
 
     def generate(self, target_dir):
