@@ -58,7 +58,8 @@ class RouterRelation(RelationContext):
 
 class LogRouterRelation(RelationContext):
     interface = 'logrouter'
-    required_keys = ['shared_secret', 'address', 'incoming_port', 'outgoing_port']
+    required_keys = ['shared_secret', 'address',
+                     'incoming_port', 'outgoing_port']
 
 
 class LoggregatorRelation(RelationContext):
@@ -74,6 +75,7 @@ class EtcdRelation(RelationContext):
 class CloudControllerRelation(RelationContext):
     interface = 'cc'
     required_keys = ['hostname', 'port', 'user', 'password']
+
 
 class OrchestratorRelation(RelationContext):
     name = "orchestrator"
