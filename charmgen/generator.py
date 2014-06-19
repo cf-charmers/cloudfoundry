@@ -53,7 +53,7 @@ class CharmGenerator(object):
                     interface=OrchestratorRelation.interface)
             })
         provides = {}
-        for job in service['jobs']:
+        for job in service.get('jobs', []):
             for relation in job['provided_data']:
                 provides[relation.name] = dict(interface=relation.interface)
             for relation in job['required_data']:
@@ -108,16 +108,18 @@ class CharmGenerator(object):
 
     def _parse_charm_ref(self, service_id):
         if isinstance(service_id, tuple):
-            charm_id = service_id[0]
+            charm_id = charm_name = service_id[0]
             service_name = service_id[1]
         else:
-            charm_id = service_id
+            charm_id = charm_name = service_id
             service_name = service_id
+
+        if '/' in charm_name:
+            charm_name = charm_name.split('/', 1)[1]
 
         if '/' in service_name:
             service_name = service_name.split('/', 1)[1]
-
-        return charm_id, service_name
+        return charm_id, charm_name, service_name
 
     def build_deployment(self):
         services = {}
@@ -130,7 +132,7 @@ class CharmGenerator(object):
         }}
 
         for service_id in self.release['topology']['services']:
-            charm_id, service_name = self._parse_charm_ref(service_id)
+            charm_id, _, service_name = self._parse_charm_ref(service_id)
             services[service_name] = self._build_charm_ref(charm_id)
 
         rel_data = {}
@@ -150,3 +152,21 @@ class CharmGenerator(object):
         with open(target, 'w') as fp:
             yaml.safe_dump(bundle, fp)
             fp.flush()
+
+    def generate(self, target_dir):
+        # Ensure that both the target dir
+        # and its 'trusty' subdir exists
+        repo = os.path.join(target_dir, 'trusty')
+        if not os.path.exists(repo):
+            os.makedirs(repo)
+        self.generate_deployment(target_dir)
+
+        for service in self.release['topology']['services']:
+            charm_id, charm_name, _ = self._parse_charm_ref(service)
+            if charm_id.startswith('cs:'):
+                continue
+            charm_path = os.path.join(repo, charm_name)
+            if not os.path.exists(charm_path):
+                os.makedirs(charm_path)
+            if charm_name in self.service_registry:
+                self.generate_charm(service, charm_path)
