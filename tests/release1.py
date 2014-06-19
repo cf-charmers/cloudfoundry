@@ -41,8 +41,8 @@ COMMON_SERVICES = [
 ]
 
 COMMON_RELATIONS = [
-    (('cloud_controller_v1', 'nats'), ('nats_v1', 'nats')),
-    (("mysql", "db"), ('cloud_controller_v1', "db"))
+    (('cc', 'nats'), ('nats_v1', 'nats')),
+    (("mysql", "db"), ('cc', "db"))
 ]
 
 COMMON_UPGRADES = [
@@ -58,7 +58,7 @@ RELEASES = [
             "services": COMMON_SERVICES + ['cc_clock_v1'],
             "expose": ['router_v1'],
             "relations": COMMON_RELATIONS + [
-                (('cloud_controller_v1', 'clock'), ('cc_clock_v1', 'clock'))
+                (('cc', 'clock'), ('cc_clock_v1', 'clock'))
             ]
         },
         "upgrades": COMMON_UPGRADES + [deploy_cc_clock]

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
+import shutil
 import tempfile
 import unittest
+
+import yaml
 
 from charmgen.generator import CharmGenerator
 from charmgen.contexts import OrchestratorRelation
@@ -80,11 +83,63 @@ class TestGenerator(unittest.TestCase):
         g.generate_charm(cc, tmpdir)
         self.assertTrue(os.path.exists(os.path.join(tmpdir, 'metadata.yaml')))
         self.assertTrue(os.path.isdir(os.path.join(tmpdir, 'hooks')))
-        self.assertTrue(os.path.islink(os.path.join(tmpdir, 'hooks', 'db-relation-changed')))
-        self.assertTrue(os.path.isfile(os.path.join(tmpdir, 'hooks', 'entry.py')))
-        self.assertTrue(os.path.isfile(os.path.join(tmpdir, 'hooks', 'entry.py')))
-        self.assertTrue(os.access(os.path.join(tmpdir, 'hooks', 'entry.py'), os.R_OK | os.X_OK))
+        self.assertTrue(os.path.islink(
+            os.path.join(tmpdir, 'hooks', 'db-relation-changed')))
+        self.assertTrue(os.path.isfile(
+            os.path.join(tmpdir, 'hooks', 'entry.py')))
+        self.assertTrue(os.path.isfile(
+            os.path.join(tmpdir, 'hooks', 'entry.py')))
+        self.assertTrue(os.access(os.path.join(tmpdir, 'hooks', 'entry.py'),
+                                  os.R_OK | os.X_OK))
+        shutil.rmtree(tmpdir)
 
+    def test_build_charm_ref(self):
+        g = CharmGenerator(RELEASES, SERVICES)
+        self.assertEqual(g._build_charm_ref('cs:trusty/mysql'),
+                         {'charm': 'cs:trusty/mysql'})
+        self.assertEqual(g._build_charm_ref('cloud_controller_v1'),
+                         {'branch': 'local:trusty/cloud_controller_v1'})
+
+    def test_parse_charm_ref(self):
+        g = CharmGenerator(RELEASES, SERVICES)
+        self.assertEqual(g._parse_charm_ref('cs:trusty/mysql'),
+                         ('cs:trusty/mysql', 'mysql'))
+        self.assertEqual(g._parse_charm_ref(('cs:trusty/mysql', 'db')),
+                         ('cs:trusty/mysql', 'db'))
+        self.assertEqual(g._parse_charm_ref(('cloud_controller_v1', 'cc')),
+                         ('cloud_controller_v1', 'cc'))
+
+    def test_build_deployment(self):
+        g = CharmGenerator(RELEASES, SERVICES)
+        g.select_release(173)
+        data = g.build_deployment()
+        cf = data['cloudfoundry']
+        self.assertEqual(cf['series'], 'trusty')
+        # A local generated charm
+        self.assertEqual(cf['services']['cc'],
+                         {'branch': 'local:trusty/cloud_controller_v1'})
+        # A store charm
+        self.assertEqual(cf['services']['mysql'],
+                         {'charm': 'cs:trusty/mysql'})
+
+        # Relations
+        rels = set(map(tuple, tuple(cf['relations'])))
+        expected = ('mysql:db', ('cc:db',))
+        # Verify we found expected relations
+        self.assertIn(expected, rels)
+
+    def test_generate_deployment(self):
+        g = CharmGenerator(RELEASES, SERVICES)
+        g.select_release(173)
+        tmpdir = tempfile.mkdtemp()
+        g.generate_deployment(tmpdir)
+        bundle = os.path.join(tmpdir, 'bundles.yaml')
+        self.assertTrue(os.path.exists(bundle))
+        with open(bundle) as fp:
+            data = yaml.safe_load(fp)
+            cf = data['cloudfoundry']
+            self.assertEqual(cf['series'], 'trusty')
+        shutil.rmtree(tmpdir)
 
 if __name__ == '__main__':
     unittest.main()

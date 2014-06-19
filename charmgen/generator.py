@@ -101,3 +101,54 @@ class CharmGenerator(object):
 
         for hook in self.build_hooks(service_key):
             os.symlink(entry, os.path.join(hook_dir, hook))
+
+    def _build_charm_ref(self, charm_id):
+        if charm_id.startswith('cs:'):
+            return dict(charm=charm_id)
+        else:
+            return dict(branch="local:trusty/{}".format(charm_id))
+
+    def _parse_charm_ref(self, service_id):
+        if isinstance(service_id, tuple):
+            charm_id = service_id[0]
+            service_name = service_id[1]
+        else:
+            charm_id = service_id
+            service_name = service_id
+
+        if '/' in service_name:
+            service_name = service_name.split('/', 1)[1]
+
+        return charm_id, service_name
+
+    def build_deployment(self):
+        services = {}
+        relations = []
+        result = {'cloudfoundry': {
+            # Trusty is Magic!
+            'series': 'trusty',
+            'services': services,
+            'relations': relations
+        }}
+
+        for service_id in self.release['topology']['services']:
+            charm_id, service_name = self._parse_charm_ref(service_id)
+            services[service_name] = self._build_charm_ref(charm_id)
+
+        rel_data = {}
+        for rel in self.release['topology']['relations']:
+            lhs = "{}:{}".format(*rel[0])
+            rhs = "{}:{}".format(*rel[1])
+            rel_data.setdefault(lhs, []).append(rhs)
+        for k, v in rel_data.items():
+            relations.append((k, tuple(v)))
+        return result
+
+    def generate_deployment(self, target_dir):
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+        bundle = self.build_deployment()
+        target = os.path.join(target_dir, 'bundles.yaml')
+        with open(target, 'w') as fp:
+            yaml.safe_dump(bundle, fp)
+            fp.flush()
