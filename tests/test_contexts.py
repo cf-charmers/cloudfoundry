@@ -3,7 +3,7 @@
 import mock
 import unittest
 
-from charmgen import contexts
+from cloudfoundry import contexts
 
 
 class TestContexts(unittest.TestCase):

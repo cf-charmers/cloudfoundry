@@ -6,7 +6,7 @@ from itertools import chain
 import pkg_resources
 import yaml
 
-from . contexts import OrchestratorRelation
+from cloudfoundry.contexts import OrchestratorRelation
 
 
 class CharmGenerator(object):

@@ -9,7 +9,7 @@ from contextlib import contextmanager
 import yaml
 
 from charmgen.generator import CharmGenerator
-from charmgen.contexts import OrchestratorRelation
+from cloudfoundry.contexts import OrchestratorRelation
 
 from charmhelpers.contrib.cloudfoundry import contexts
 
