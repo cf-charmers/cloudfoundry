@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import shutil
 from itertools import chain
 
+import pkg_resources
 import yaml
 
 from . contexts import OrchestratorRelation
@@ -75,10 +77,11 @@ class CharmGenerator(object):
         return results
 
     def build_entry(self, service_key):
+        _, name, _ = self._parse_charm_ref(service_key)
         return "\n".join([
             '#!/usr/bin/env python2.7',
             'from cloudfoundry.jobs import job_manager',
-            'job_manager("{}")'.format(service_key)
+            'job_manager("{}")'.format(name)
         ])
 
     def generate_charm(self, service_key, target_dir):
@@ -170,3 +173,6 @@ class CharmGenerator(object):
                 os.makedirs(charm_path)
             if charm_name in self.service_registry:
                 self.generate_charm(service, charm_path)
+                shutil.copytree(pkg_resources.resource_filename(
+                    __name__, '../cloudfoundry'),
+                    os.path.join(charm_path, 'hooks', 'cloudfoundry'))

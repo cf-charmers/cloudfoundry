@@ -79,7 +79,7 @@ class TestGenerator(unittest.TestCase):
     def test_build_entry_point(self):
         g = CharmGenerator(RELEASES, SERVICES)
         g.select_release(173)
-        cc = g.release['topology']['services'][0][0]
+        cc = g.release['topology']['services'][0]
         entry = g.build_entry(cc)
         self.assertIn('job_manager("cloud_controller_v1")', entry)
 
@@ -163,6 +163,8 @@ class TestGenerator(unittest.TestCase):
             # deployer will eventually place it in this dir pre-deploy
             self.assertFalse(os.path.exists(os.path.join(
                 tmpdir, 'trusty', 'mysql')))
+            self.assertTrue(os.path.isdir(os.path.join(
+                tmpdir, 'trusty', 'cloud_controller_v1', 'hooks', 'cloudfoundry')))
 
 
 if __name__ == '__main__':

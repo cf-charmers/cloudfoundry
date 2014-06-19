@@ -37,7 +37,7 @@ coverage:
 	coverage run --source charmgen setup.py test
 	coverage report -m
 	coverage html
-	open htmlcov/index.html
+	xdg-open htmlcov/index.html
 
 docs:
 	rm -f docs/charmgen.rst
@@ -45,7 +45,7 @@ docs:
 	sphinx-apidoc -o docs/ charmgen
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
-	open docs/_build/html/index.html
+	xdg-open docs/_build/html/index.html
 
 release: clean
 	python setup.py sdist upload
