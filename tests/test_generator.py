@@ -164,7 +164,8 @@ class TestGenerator(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(
                 tmpdir, 'trusty', 'mysql')))
             self.assertTrue(os.path.isdir(os.path.join(
-                tmpdir, 'trusty', 'cloud_controller_v1', 'hooks', 'cloudfoundry')))
+                tmpdir, 'trusty', 'cloud_controller_v1',
+                'hooks', 'cloudfoundry')))
             self.assertTrue(os.path.isdir(os.path.join(
                 tmpdir, 'trusty', 'cloud_controller_v1', 'files')))
 
