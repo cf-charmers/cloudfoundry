@@ -176,3 +176,6 @@ class CharmGenerator(object):
                 shutil.copytree(pkg_resources.resource_filename(
                     __name__, '../cloudfoundry'),
                     os.path.join(charm_path, 'hooks', 'cloudfoundry'))
+                shutil.copytree(pkg_resources.resource_filename(
+                    __name__, '../files'),
+                    os.path.join(charm_path, 'files'))
