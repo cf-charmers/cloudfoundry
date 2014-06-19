@@ -1,0 +1,12 @@
+name: cloudfoundry
+summary: The CloudFoundry bundle orchestrator.
+maintainer: cf-charmers <cf-charmers@lists.launchpad.net>
+description: |
+        This charm is capable of deploying and managing CloudFoundry.
+categories:
+  - PaaS
+subordinate: false
+provides:
+  orchestrator:
+    interface: orchestrator
+
