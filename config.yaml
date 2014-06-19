@@ -1,0 +1,6 @@
+options:
+    domain:
+        type: string
+        description: |
+            The router domain, set to a xip.io address by default.
+        default: xip.io

@@ -1,0 +1,12 @@
+*.pyc
+dist/
+build/
+MANIFEST
+.coverage
+coverage.xml
+.venv
+cover/
+.ropeproject/
+cloudfoundry.egg-info/
+.DS_Store
+.tox/

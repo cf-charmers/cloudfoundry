@@ -1,0 +1,53 @@
+Metadata-Version: 1.1
+Name: charmgen
+Version: 0.1.0
+Summary: Generate CF charms from metadata
+Home-page: https://github.com/bcsaller/charmgen
+Author: Benjamin Saller
+Author-email: benjamin.saller@canonical.com
+License: BSD
+Description: ===============================
+        CF Charm Generator
+        ===============================
+        
+        .. image:: https://badge.fury.io/py/charmgen.png
+            :target: http://badge.fury.io/py/charmgen
+            
+        .. image:: https://travis-ci.org/bcsaller/charmgen.png?branch=master
+                :target: https://travis-ci.org/bcsaller/charmgen
+        
+        .. image:: https://pypip.in/d/charmgen/badge.png
+                :target: https://pypi.python.org/pypi/charmgen
+        
+        
+        Generate CF charms from metadata
+        
+        * Free software: BSD license
+        * Documentation: http://charmgen.readthedocs.org.
+        
+        Features
+        --------
+        
+        * TODO
+        
+        
+        
+        History
+        -------
+        
+        0.1.0 (2014-01-11)
+        ---------------------
+        
+        * First release on PyPI.
+Keywords: charmgen
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
