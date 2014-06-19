@@ -38,8 +38,6 @@ class CharmGenerator(object):
         raise KeyError(version)
 
     def build_metadata(self, service_key):
-        if not self.release:
-            raise ValueError
         # service usage within the topo can include the service name
         # allowing this to be a tuple
         if isinstance(service_key, (tuple, list)):
