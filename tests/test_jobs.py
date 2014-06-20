@@ -23,12 +23,10 @@ class TestJobManager(unittest.TestCase):
             mock.call('service3'),
         ])
 
-    @mock.patch.object(jobs.tasks, 'install_service_packages')
     @mock.patch.object(jobs.tasks, 'install_bosh_template_renderer')
-    def test_manage_install(self, install_btr, install_sp):
+    def test_manage_install(self, install_btr):
         jobs.manage_install('service')
         install_btr.assert_called_once_with()
-        install_sp.assert_called_once_with('service')
 
     def test_manage_services(self):
         pass

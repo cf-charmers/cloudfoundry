@@ -16,7 +16,8 @@ class TestContexts(unittest.TestCase):
     def test_orchestrator_required_keys(self, mrel_ids):
         oc = contexts.OrchestratorRelation()
         self.assertEqual(set(oc.required_keys),
-                         set(['domain', 'admin_secret', 'cf-version']))
+                         set(['domain', 'admin_secret',
+                              'cf_version', 'artifacts_url']))
 
 
 class TestNatsRelation(unittest.TestCase):

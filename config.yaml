@@ -4,7 +4,7 @@ options:
         description: |
             The admin password used to talk to the Juju REST API to do bundle orchestration. You
             will not be able to use juju to deploy CF until this is properly set.
-    cf-version:
+    cf_version:
         type: string
         desription: |
             The release of CF to switch the deployed bundle to.

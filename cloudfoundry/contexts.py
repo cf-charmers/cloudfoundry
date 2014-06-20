@@ -1,5 +1,4 @@
 import os
-import os
 import pkg_resources
 import re
 import subprocess
@@ -7,9 +6,6 @@ import yaml
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
-from charmhelpers.core.services import RelationContext
-
-
 from charmhelpers.core.services import RelationContext
 
 
@@ -173,4 +169,5 @@ class OrchestratorRelation(RelationContext):
         config_yaml = pkg_resources.resource_filename(__name__,
                                                       '../config.yaml')
         config = yaml.safe_load(open(config_yaml))
-        return [option for option in config['options']]
+        options = [option for option in config['options']]
+        return ['artifacts_url'] + options

@@ -1,11 +1,14 @@
 import os
 import subprocess
 import yaml
+import urllib
+import tarfile
 
 from charmhelpers.core import hookenv
 from charmhelpers import fetch
 from cloudfoundry import TEMPLATES_BASE_DIR
 from cloudfoundry import templating
+from cloudfoundry import contexts
 
 
 def install_bosh_template_renderer():
@@ -13,6 +16,17 @@ def install_bosh_template_renderer():
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
     subprocess.check_call(['gem', 'install', gem_file])
+
+
+def fetch_job_artifacts(job_name):
+    orchestrator_data = contexts.OrchestratorRelation()
+    artifact_url = '{}/{}/{}.tgz'.format(
+        orchestrator_data['artifacts_url'], orchestrator_data['cf_release'], job_name)
+    job_path = os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_release'], job_name)
+    job_archive = job_path+'/'+job_name+'.tgz'
+    urllib.urlretrieve(artifact_url, job_archive)
+    with tarfile.open(job_archive) as tgz:
+        tgz.extractall(job_path)
 
 
 def install_service_packages(service_name):
