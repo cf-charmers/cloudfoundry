@@ -15,19 +15,20 @@ class TestJobManager(unittest.TestCase):
         jobs.job_manager('service2')
         hook_name.return_value = 'foo-relation-joined'
         jobs.job_manager('service3')
-        self.assertEqual(manage_install.call_count, 2)
-        manage_services.assert_called_once_with('service3')
+        self.assertEqual(manage_install.call_args_list, [
+            mock.call('service1'),
+            mock.call('service2'),
+        ])
+        self.assertEqual(manage_services.call_args_list, [
+            mock.call('service3'),
+        ])
 
-    @mock.patch('subprocess.check_call')
-    @mock.patch('charmhelpers.core.hookenv.charm_dir')
-    @mock.patch('charmhelpers.fetch.filter_installed_packages')
-    @mock.patch('charmhelpers.fetch.apt_install')
-    def test_manage_install(self, apt_install, filter_installed_packages, charm_dir, check_call):
-        filter_installed_packages.side_effect = lambda a: a
-        charm_dir.return_value = 'charm_dir'
-        jobs.manage_install()
-        apt_install.assert_called_once_with(packages=['ruby'])
-        check_call.assert_called_once_with(['gem', 'install', 'charm_dir/files/bosh-templates-0.0.1.gem'])
+    @mock.patch.object(jobs.tasks, 'install_service_packages')
+    @mock.patch.object(jobs.tasks, 'install_bosh_template_renderer')
+    def test_manage_install(self, install_btr, install_sp):
+        jobs.manage_install('service')
+        install_btr.assert_called_once_with()
+        install_sp.assert_called_once_with('service')
 
     def test_manage_services(self):
         pass
