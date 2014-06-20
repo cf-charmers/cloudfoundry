@@ -1,9 +1,11 @@
 import os
 import json
+import copy
 import subprocess
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
+from charmhelpers.core import services
 
 
 def render_erb(source, target, context, owner='root', group='root', perms=0444, templates_dir=None):
@@ -31,3 +33,35 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
         'bosh-template', source, '-C', json.dumps(context)])
     host.mkdir(os.path.dirname(target))
     host.write_file(target, content, owner, group, perms)
+
+
+def deepmerge(dest, src):
+    result = copy.deepcopy(dest)
+    for k, v in src.iteritems():
+        if k in dest and isinstance(v, dict):
+            result[k] = deepmerge(dest[k], v)
+        else:
+            result[k] = copy.deepcopy(v)
+    return result
+
+
+class RubyTemplateCallback(services.TemplateCallback):
+    """
+    Callback class that will render a Ruby template, for use as a ready action.
+    """
+    def __init__(self, source, target, owner='root', group='root', perms=0444, templates_dir=None):
+        super(RubyTemplateCallback, self).__init__(source, target, owner, group, perms)
+        self.templates_dir = templates_dir
+
+    def collect_data(self, manager, service_name):
+        service = manager.get_service(service_name)
+        data = {}
+        for data_source in service.get('required_data', []):
+            data = deepmerge(data, data_source)
+        return data
+
+    def __call__(self, manager, service_name, event_name):
+        context = self.collect_data(manager, service_name)
+        render_erb(self.source, self.target, context,
+                   self.owner, self.group, self.perms,
+                   self.templates_dir)
