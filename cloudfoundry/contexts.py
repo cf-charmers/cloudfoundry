@@ -1,6 +1,14 @@
 import os
+import os
 import pkg_resources
+import re
+import subprocess
 import yaml
+
+from charmhelpers.core import host
+from charmhelpers.core import hookenv
+from charmhelpers.core.services import RelationContext
+
 
 from charmhelpers.core.services import RelationContext
 
@@ -33,12 +41,26 @@ class StoredContext(dict):
 
 
 class NatsRelation(RelationContext):
+    name = 'nats'
     interface = 'nats'
     required_keys = ['address', 'port', 'user', 'password']
 
+    def get_credentials(self):
+        return StoredContext(
+            'nats_credentials.yml', {
+                'user': host.pwgen(7),
+                'password': host.pwgen(7),
+            })
+
+    def provide_data(self):
+        return dict(self.get_credentials(),
+                    port=4222,
+                    address=hookenv.unit_get('private-address').encode('utf-8'))
+
 
 class MysqlRelation(RelationContext):
-    interface = 'db'
+    name = 'db'
+    interface = 'mysql'
     required_keys = ['user', 'password', 'host', 'database']
     dsn_template = "mysql2://{user}:{password}@{host}:{port}/{database}"
 
@@ -52,29 +74,94 @@ class MysqlRelation(RelationContext):
 
 
 class RouterRelation(RelationContext):
+    name = 'router'
     interface = 'router'
     required_keys = ['domain']
 
+    def provide_data(self):
+        return {'domain': self.get_domain()}
+
+    def get_domain(self):
+        domain = hookenv.config()['domain']
+        if domain == 'xip.io':
+            public_address = hookenv.unit_get('public-address')
+            domain = "%s.xip.io" % self.to_ip(public_address)
+        return domain
+
+    def to_ip(self, address):
+        ip_pat = re.compile('^(\d{1,3}\.){3}\d{1,3}$')
+        if ip_pat.match(address):
+            return address  # already an IP
+        else:
+            result = subprocess.check_output(
+                ['dig', '+short', '@8.8.8.8', address])
+            for candidate in result.split('\n'):
+                candidate = candidate.strip()
+                if ip_pat.match(candidate):
+                    return candidate
+            return None
+
 
 class LogRouterRelation(RelationContext):
+    name = 'logrouter'
     interface = 'logrouter'
-    required_keys = ['shared_secret', 'address',
-                     'incoming_port', 'outgoing_port']
+    required_keys = ['shared_secret', 'address', 'incoming_port', 'outgoing_port']
+    incoming_port = 3456
+    outgoing_port = 8083
+    varz_port = 8882
+
+    def get_shared_secret(self):
+        secret_context = StoredContext(
+            os.path.join(hookenv.charm_dir(), '.logrouter-secret.yml'),
+            {'shared_secret': host.pwgen(20)})
+        return secret_context['shared_secret']
+
+    def provide_data(self):
+        return {
+            'address': hookenv.unit_get('private-address').encode('utf-8'),
+            'incoming_port': self.incoming_port,
+            'outgoing_port': self.outgoing_port,
+            'shared_secret': self.get_shared_secret(),
+        }
 
 
 class LoggregatorRelation(RelationContext):
+    name = 'loggregator'
     interface = 'loggregator'
     required_keys = ['address', 'incoming_port', 'outgoing_port']
+    incoming_port = 3457
+    outgoing_port = 8082
+    varz_port = 8883
+
+    def provide_data(self):
+        return {
+            'address': hookenv.unit_get('private-address').encode('utf-8'),
+            'incoming_port': self.incoming_port,
+            'outgoing_port': self.outgoing_port,
+        }
 
 
 class EtcdRelation(RelationContext):
+    name = 'etcd'
     interface = 'etcd'
     required_keys = ['hostname', 'port']
 
 
 class CloudControllerRelation(RelationContext):
-    interface = 'cc'
+    name = 'cc'
+    interface = 'controller'
     required_keys = ['hostname', 'port', 'user', 'password']
+
+    def get_credentials(self):
+        return StoredContext('api_credentials.yml', {
+            'user': host.pwgen(7),
+            'password': host.pwgen(7),
+        })
+
+    def provide_data(self):
+        return dict(self.get_credentials(),
+                    hostname=hookenv.unit_get('private-address').encode('utf-8'),
+                    port=9022)
 
 
 class OrchestratorRelation(RelationContext):
