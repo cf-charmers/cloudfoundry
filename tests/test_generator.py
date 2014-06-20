@@ -8,7 +8,7 @@ from contextlib import contextmanager
 
 import yaml
 
-from charmgen.generator import CharmGenerator
+from charmgen.generator import CharmGenerator, main
 from cloudfoundry.contexts import OrchestratorRelation
 
 from charmhelpers.contrib.cloudfoundry import contexts
@@ -119,6 +119,11 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(g._parse_charm_ref(('cloud_controller_v1', 'cc')),
                          ('cloud_controller_v1', 'cloud_controller_v1', 'cc'))
 
+    def test_normalize_relations(self):
+        g = CharmGenerator(RELEASES, SERVICES)
+        self.assertEqual(g._normalize_relation(('cc', 'db')), 'cc:db')
+        self.assertEqual(g._normalize_relation('cc:db'), 'cc:db')
+
     def test_build_deployment(self):
         g = CharmGenerator(RELEASES, SERVICES)
         g.select_release(173)
@@ -171,6 +176,14 @@ class TestGenerator(unittest.TestCase):
                 'hooks', 'charmhelpers')))
             self.assertTrue(os.path.isdir(os.path.join(
                 tmpdir, 'trusty', 'cloud_controller_v1', 'files')))
+
+    def test_main(self):
+        with tempdir() as tmpdir:
+            main(['-d', tmpdir, '173'])
+            self.assertTrue(os.path.exists(
+                os.path.join(tmpdir, 'bundles.yaml')))
+            self.assertTrue(os.path.exists(os.path.join(
+                tmpdir, 'trusty', 'cloud_controller_v1')))
 
 
 if __name__ == '__main__':

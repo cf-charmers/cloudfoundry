@@ -193,26 +193,29 @@ class CharmGenerator(object):
                     os.path.join(charm_path, 'hooks', 'charmhelpers'))
 
 
-def main():
+def main(args=None):
+    from cloudfoundry.releases import RELEASES
+    from cloudfoundry.services import SERVICES
     parser = argparse.ArgumentParser()
     parser.add_argument('release', type=int)
-    parser.add_argument('-d', '--directory')
+    parser.add_argument('-d', '--directory', dest="directory")
     parser.add_argument('-f', '--force', action="store_true")
-    options = parser.parse_args()
+    options = parser.parse_args(args)
 
+    using_default_dir = False
     if not options.directory:
         options.directory = "cloudfoundry-r{}".format(options.release)
+        using_default_dir = True
     if not os.path.exists(options.directory):
-        os.makedirs(options.directory)
+        os.mkdir(options.directory)
     else:
         if options.force:
             shutil.rmtree(options.directory)
-            os.makedirs(options.directory)
-        else:
-            raise SystemExit("Release already generated")
+            os.mkdir(options.directory)
+        elif using_default_dir is True:
+            raise SystemExit("Release already generated: {}".format(
+                options.directory))
 
-    from cloudfoundry.releases import RELEASES
-    from cloudfoundry.services import SERVICES
     g = CharmGenerator(RELEASES, SERVICES)
     g.select_release(options.release)
     g.generate(options.directory)
