@@ -1,5 +1,4 @@
 import contexts
-import tasks
 
 __all__ = ['SERVICES']
 
@@ -22,7 +21,6 @@ SERVICES = {
                               # All job context keys
                               # get processed by a name mapper
                               ],
-            'data_ready': [tasks.job_templates, tasks.db_migrate, ],
         }]
     },
 
@@ -35,9 +33,6 @@ SERVICES = {
                 'nats.(\w+)': r'properties.nats.\1'
             },
             'provided_data': [contexts.NatsRelation],
-            'data_ready': [
-                tasks.job_templates
-            ],
         }],
     },
 
@@ -53,9 +48,6 @@ SERVICES = {
             'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LogRouterRelation],
-            'data_ready': [
-                tasks.job_templates
-            ],
         }],
 
     },

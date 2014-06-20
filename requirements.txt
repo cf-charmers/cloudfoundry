@@ -17,3 +17,4 @@ python-mimeparse==0.1.4
 testtools==0.9.35
 wheel==0.23.0
 wsgiref==0.1.2
+requests==2.2.1

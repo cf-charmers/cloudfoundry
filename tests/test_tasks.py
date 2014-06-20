@@ -5,25 +5,41 @@ from cloudfoundry import tasks
 
 
 class TestTasks(unittest.TestCase):
+    def setUp(self):
+        self.charm_dir_patch = mock.patch('charmhelpers.core.hookenv.charm_dir')
+        self.charm_dir = self.charm_dir_patch.start()
+        self.charm_dir.return_value = 'charm_dir'
+
+    def tearDown(self):
+        self.charm_dir_patch.stop()
+
     @mock.patch('subprocess.check_call')
-    @mock.patch('charmhelpers.core.hookenv.charm_dir')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
-    def test_install_bosh_template_renderer(self, apt_install, filter_installed_packages, charm_dir, check_call):
+    def test_install_bosh_template_renderer(self, apt_install, filter_installed_packages, check_call):
         filter_installed_packages.side_effect = lambda a: a
-        charm_dir.return_value = 'charm_dir'
         tasks.install_bosh_template_renderer()
         apt_install.assert_called_once_with(packages=['ruby'])
         check_call.assert_called_once_with(['gem', 'install', 'charm_dir/files/bosh-template-1.2611.0.pre.gem'])
+
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_service_artifacts(self, OrchRelation, urlretrieve, taropen):
+        OrchRelation.return_value = {'cf_release': 'version', 'artifacts_url': 'http://url'}
+        tgz = taropen.return_value.__enter__.return_value
+        tasks.fetch_job_artifacts('job_name')
+        urlretrieve.assert_called_once_with(
+            'http://url/version/job_name.tgz', 'charm_dir/jobs/version/job_name/job_name.tgz')
+        taropen.assert_called_once_with('charm_dir/jobs/version/job_name/job_name.tgz')
+        tgz.extractall.assert_called_once_with('charm_dir/jobs/version/job_name')
 
     def test_install_service_packages(self):
         pass
 
     @mock.patch('cloudfoundry.tasks.open', create=True)
-    @mock.patch('charmhelpers.core.hookenv.charm_dir')
     @mock.patch('cloudfoundry.tasks.yaml.safe_load')
-    def test_load_spec(self, safe_load, charm_dir, mopen):
-        charm_dir.return_value = 'charm_dir'
+    def test_load_spec(self, safe_load, mopen):
         safe_load.side_effect = [
             {'p1': 'v1'},
             {'p2': 'v2'},
@@ -40,11 +56,9 @@ class TestTasks(unittest.TestCase):
             mock.call('charm_dir/jobs/job2/spec'),
         ])
 
-    @mock.patch('charmhelpers.core.hookenv.charm_dir')
     @mock.patch('cloudfoundry.tasks.load_spec')
     @mock.patch('cloudfoundry.templating.RubyTemplateCallback')
-    def test_job_templates(self, RubyTemplateCallback, load_spec, charm_dir):
-        charm_dir.return_value = 'charm_dir'
+    def test_job_templates(self, RubyTemplateCallback, load_spec):
         load_spec.return_value = {'templates': {
             'src1': 'dest1',
             'src2': 'dest2',
