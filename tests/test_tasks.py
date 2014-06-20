@@ -26,7 +26,7 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_service_artifacts(self, OrchRelation, get_job_path, urlretrieve, taropen):
+    def test_fetch_job_artifacts(self, OrchRelation, get_job_path, urlretrieve, taropen):
         OrchRelation.return_value = {'cf_release': 'version', 'artifacts_url': 'http://url'}
         get_job_path.return_value = 'job_path'
         tgz = taropen.return_value.__enter__.return_value
@@ -36,8 +36,51 @@ class TestTasks(unittest.TestCase):
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
 
-    def test_install_service_packages(self):
-        pass
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('os.path.exists')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_job_artifacts_same_version(self, OrchRelation, get_job_path, exists, urlretrieve, taropen):
+        OrchRelation.return_value = {'cf_release': 'version', 'artifacts_url': 'http://url'}
+        get_job_path.return_value = 'job_path'
+        exists.return_value = True
+        tasks.fetch_job_artifacts('job_name')
+        assert not urlretrieve.called
+        assert not taropen.called
+
+    @mock.patch('os.symlink')
+    @mock.patch('os.unlink')
+    @mock.patch('shutil.copytree')
+    @mock.patch('os.path.exists')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_install_job_packages(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
+        get_job_path.return_value = 'job_path'
+        OrchRelation.return_value = {'cf_release': 'version'}
+        exists.return_value = False
+        tasks.install_job_packages('job_name')
+        exists.assert_called_once_with('/var/vcap/packages/version/job_name')
+        copytree.assert_called_once_with(
+            'job_path/packages', '/var/vcap/packages/version/job_name')
+        unlink.assert_called_once_with('/var/vcap/packages/job_name')
+        symlink.assert_called_once_with('/var/vcap/packages/version/job_name', '/var/vcap/packages/job_name')
+
+    @mock.patch('os.symlink')
+    @mock.patch('os.unlink')
+    @mock.patch('shutil.copytree')
+    @mock.patch('os.path.exists')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_install_job_packages_same_version(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
+        get_job_path.return_value = 'job_path'
+        OrchRelation.return_value = {'cf_release': 'version'}
+        exists.return_value = True
+        tasks.install_job_packages('job_name')
+        exists.assert_called_once_with('/var/vcap/packages/version/job_name')
+        assert not copytree.called
+        assert not unlink.called
+        assert not symlink.called
 
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_get_job_path(self, OrchRelation):

@@ -1,12 +1,14 @@
 import os
 import subprocess
-import yaml
 import urllib
 import tarfile
+import shutil
+import yaml
 
 from charmhelpers.core import hookenv
 from charmhelpers import fetch
 from cloudfoundry import TEMPLATES_BASE_DIR
+from cloudfoundry import PACKAGES_BASE_DIR
 from cloudfoundry import templating
 from cloudfoundry import contexts
 
@@ -20,17 +22,27 @@ def install_bosh_template_renderer():
 
 def fetch_job_artifacts(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
+    job_path = get_job_path(job_name)
+    if os.path.exists(job_path):
+        return
     artifact_url = '{}/{}/{}.tgz'.format(
         orchestrator_data['artifacts_url'], orchestrator_data['cf_release'], job_name)
-    job_path = get_job_path(job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
     urllib.urlretrieve(artifact_url, job_archive)
     with tarfile.open(job_archive) as tgz:
         tgz.extractall(job_path)
 
 
-def install_service_packages(service_name):
-    pass
+def install_job_packages(job_name):
+    package_path = os.path.join(get_job_path(job_name), 'packages')
+    version = contexts.OrchestratorRelation()['cf_release']
+    dst_path = os.path.join(PACKAGES_BASE_DIR, job_name)
+    versioned_path = os.path.join(PACKAGES_BASE_DIR, version, job_name)
+    if os.path.exists(versioned_path):
+        return
+    shutil.copytree(package_path, versioned_path)
+    os.unlink(dst_path)
+    os.symlink(versioned_path, dst_path)
 
 
 @hookenv.cached
