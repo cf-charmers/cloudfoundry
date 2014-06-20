@@ -12,12 +12,24 @@ CF Charm Generator
         :target: https://pypi.python.org/pypi/charmgen
 
 
-Generate CF charms from metadata
+A Juju charm to generate CF charms from metadata and 
+manage them at runtime.
 
 * Free software: BSD license
 * Documentation: http://charmgen.readthedocs.org.
 
-Features
---------
+Development
+-----------
+
+For any given release we support (see cloudfoundry.releases) you should be able
+to generate an example of the bundle we'll deploy and manage by doing:
+
+    . .tox/py27/bin/activate
+    python charmgen.generator <release>
+
+This will create a cloudfoundry-r<release> directory with the bundle.yaml and a
+trusty repo will all the created charms.
+
+
 
 * TODO
