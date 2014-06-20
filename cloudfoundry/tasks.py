@@ -7,8 +7,9 @@ import tarfile
 from charmhelpers.core import hookenv
 from charmhelpers import fetch
 from cloudfoundry import TEMPLATES_BASE_DIR
-from cloudfoundry import templating
 from cloudfoundry import contexts
+from cloudfoundry import services
+from cloudfoundry import templating
 
 
 def install_bosh_template_renderer():
@@ -21,8 +22,11 @@ def install_bosh_template_renderer():
 def fetch_job_artifacts(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
     artifact_url = '{}/{}/{}.tgz'.format(
-        orchestrator_data['artifacts_url'], orchestrator_data['cf_release'], job_name)
-    job_path = os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_release'], job_name)
+        orchestrator_data['artifacts_url'],
+        orchestrator_data['cf_release'],
+        job_name)
+    job_path = os.path.join(hookenv.charm_dir(), 'jobs',
+                            orchestrator_data['cf_release'], job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
     urllib.urlretrieve(artifact_url, job_archive)
     with tarfile.open(job_archive) as tgz:
@@ -38,13 +42,15 @@ def load_spec(job_name):
     """
     Reads and parses the spec file for the given job name from the jobs folder.
     """
-    with open(os.path.join(hookenv.charm_dir(), 'jobs', job_name, 'spec')) as fp:
+    with open(os.path.join(hookenv.charm_dir(),
+                           'jobs', job_name, 'spec')) as fp:
         return yaml.safe_load(fp)
 
 
 def job_templates(job_name):
     """
-    Uses the job spec to generate the list of callbacks to render the job's templates.
+    Uses the job spec to generate the list of callbacks to render the job's
+    templates.
     """
     spec = load_spec(job_name)
     callbacks = []
@@ -57,6 +63,19 @@ def job_templates(job_name):
         'monit', '/etc/monit.d/{}.cfg'.format(job_name),
         templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
     return callbacks
+
+
+def build_service_block(charm_name):
+    service_def = services.SERVICES[charm_name]
+    result = []
+    for job in service_def.get('jobs', []):
+        job_def = {
+            'required_data': job['required_data'],
+            'provided_data': job['provided_data'],
+            'data_ready': job_templates(job['job_name'])
+        }
+        result.append(job_def)
+    return result
 
 
 def db_migrate():
