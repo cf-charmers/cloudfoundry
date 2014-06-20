@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import argparse
 import os
 import shutil
 from itertools import chain
@@ -56,9 +57,9 @@ class CharmGenerator(object):
             })
         provides = {}
         for job in service.get('jobs', []):
-            for relation in job['provided_data']:
+            for relation in job.get('provided_data', []):
                 provides[relation.name] = dict(interface=relation.interface)
-            for relation in job['required_data']:
+            for relation in job.get('required_data', []):
                 result['requires'][relation.name] = dict(
                     interface=relation.interface)
         if provides:
@@ -93,7 +94,8 @@ class CharmGenerator(object):
         meta_target.close()
 
         hook_dir = os.path.join(target_dir, 'hooks')
-        os.makedirs(hook_dir)
+        if not os.path.exists(hook_dir):
+            os.makedirs(hook_dir)
         entry = os.path.join(target_dir, 'hooks', 'entry.py')
 
         with open(entry, 'w') as target:
@@ -124,6 +126,12 @@ class CharmGenerator(object):
             service_name = service_name.split('/', 1)[1]
         return charm_id, charm_name, service_name
 
+    def _normalize_relation(self, rel):
+        if isinstance(rel, tuple):
+            return "{}:{}".format(*rel)
+        else:
+            return rel
+
     def build_deployment(self):
         services = {}
         relations = []
@@ -140,8 +148,8 @@ class CharmGenerator(object):
 
         rel_data = {}
         for rel in self.release['topology']['relations']:
-            lhs = "{}:{}".format(*rel[0])
-            rhs = "{}:{}".format(*rel[1])
+            lhs = self._normalize_relation(rel[0])
+            rhs = self._normalize_relation(rel[1])
             rel_data.setdefault(lhs, []).append(rhs)
         for k, v in rel_data.items():
             relations.append((k, tuple(v)))
@@ -179,3 +187,35 @@ class CharmGenerator(object):
                 shutil.copytree(pkg_resources.resource_filename(
                     __name__, '../files'),
                     os.path.join(charm_path, 'files'))
+                # copy charmhelpers into the hook_dir
+                shutil.copytree(pkg_resources.resource_filename(
+                    __name__, '../hooks/charmhelpers'),
+                    os.path.join(charm_path, 'hooks', 'charmhelpers'))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('release', type=int)
+    parser.add_argument('-d', '--directory')
+    parser.add_argument('-f', '--force', action="store_true")
+    options = parser.parse_args()
+
+    if not options.directory:
+        options.directory = "cloudfoundry-r{}".format(options.release)
+    if not os.path.exists(options.directory):
+        os.makedirs(options.directory)
+    else:
+        if options.force:
+            shutil.rmtree(options.directory)
+            os.makedirs(options.directory)
+        else:
+            raise SystemExit("Release already generated")
+
+    from cloudfoundry.releases import RELEASES
+    from cloudfoundry.services import SERVICES
+    g = CharmGenerator(RELEASES, SERVICES)
+    g.select_release(options.release)
+    g.generate(options.directory)
+
+if __name__ == '__main__':
+    main()

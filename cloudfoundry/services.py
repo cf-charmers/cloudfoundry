@@ -3,7 +3,6 @@ import tasks
 
 __all__ = ['SERVICES']
 
-
 SERVICES = {
     'cc_clock_v1': {},
     'cloud_controller_v1': {
@@ -26,6 +25,38 @@ SERVICES = {
             'data_ready': [tasks.job_templates, tasks.db_migrate, ],
         }]
     },
-    'nats_v1': {},
-    'router_v1': {},
+
+    'nats_v1': {
+        'service': 'nats',
+        'summary': 'NATS message bus for CF',
+        'jobs': [{
+            'job_name': 'nats',
+            'mapping': {
+                'nats.(\w+)': r'properties.nats.\1'
+            },
+            'provided_data': [contexts.NatsRelation],
+            'data_ready': [
+                tasks.job_templates
+            ],
+        }],
+    },
+
+    'router_v1': {
+        'service': 'router',
+        'summary': 'CF Router',
+        'jobs': [{
+            'job_name': 'gorouter',
+            'ports': [80],
+            'mapping': {
+                'router.(\w+)': r'properties.router.\1'
+            },
+            'provided_data': [contexts.RouterRelation],
+            'required_data': [contexts.NatsRelation,
+                              contexts.LogRouterRelation],
+            'data_ready': [
+                tasks.job_templates
+            ],
+        }],
+
+    },
 }

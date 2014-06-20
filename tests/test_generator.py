@@ -167,6 +167,9 @@ class TestGenerator(unittest.TestCase):
                 tmpdir, 'trusty', 'cloud_controller_v1',
                 'hooks', 'cloudfoundry')))
             self.assertTrue(os.path.isdir(os.path.join(
+                tmpdir, 'trusty', 'cloud_controller_v1',
+                'hooks', 'charmhelpers')))
+            self.assertTrue(os.path.isdir(os.path.join(
                 tmpdir, 'trusty', 'cloud_controller_v1', 'files')))
 
 

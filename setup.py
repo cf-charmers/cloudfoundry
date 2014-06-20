@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import os
-import sys
-
-
 try:
     from setuptools import setup
 except ImportError:
@@ -23,7 +18,7 @@ test_requirements = [
 ]
 
 setup(
-    name='charmgen',
+    name='cloudfoundry',
     version='0.1.0',
     description='Generate CF charms from metadata',
     long_description=readme + '\n\n' + history,
@@ -32,14 +27,14 @@ setup(
     url='https://github.com/bcsaller/charmgen',
     packages=[
         'charmgen',
+        'cloudfoundry'
     ],
-    package_dir={'charmgen':
-                 'charmgen'},
-    include_package_data=True,
+    package_dir={'charmgen': 'charmgen',
+                 'cloudfoundry': 'cloudfoundry'},
     install_requires=requirements,
     license="BSD",
     zip_safe=False,
-    keywords='charmgen',
+    keywords='cloudfoundry',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -53,5 +48,10 @@ setup(
         'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
-    tests_require=test_requirements
+    tests_require=test_requirements,
+    entry_points={
+        'console_scripts': [
+            'generate_charm = charmgen.generator:main'
+        ]
+    }
 )

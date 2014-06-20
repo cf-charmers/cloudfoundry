@@ -13,3 +13,11 @@ def install_bosh_template_renderer():
 
 def install_service_packages(service_name):
     pass
+
+
+def job_templates():
+    pass
+
+
+def db_migrate():
+    pass
