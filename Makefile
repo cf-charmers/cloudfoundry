@@ -35,6 +35,7 @@ test-all:
 
 coverage:
 	coverage run --source charmgen setup.py test
+	coverage run -a --source cloudfoundry setup.py test
 	coverage report -m
 	coverage html
 	xdg-open htmlcov/index.html
