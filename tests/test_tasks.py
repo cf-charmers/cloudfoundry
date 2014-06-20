@@ -24,22 +24,31 @@ class TestTasks(unittest.TestCase):
 
     @mock.patch('cloudfoundry.tasks.tarfile.open')
     @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_service_artifacts(self, OrchRelation, urlretrieve, taropen):
+    def test_fetch_service_artifacts(self, OrchRelation, get_job_path, urlretrieve, taropen):
         OrchRelation.return_value = {'cf_release': 'version', 'artifacts_url': 'http://url'}
+        get_job_path.return_value = 'job_path'
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
         urlretrieve.assert_called_once_with(
-            'http://url/version/job_name.tgz', 'charm_dir/jobs/version/job_name/job_name.tgz')
-        taropen.assert_called_once_with('charm_dir/jobs/version/job_name/job_name.tgz')
-        tgz.extractall.assert_called_once_with('charm_dir/jobs/version/job_name')
+            'http://url/version/job_name.tgz', 'job_path/job_name.tgz')
+        taropen.assert_called_once_with('job_path/job_name.tgz')
+        tgz.extractall.assert_called_once_with('job_path')
 
     def test_install_service_packages(self):
         pass
 
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_get_job_path(self, OrchRelation):
+        OrchRelation.return_value = {'cf_release': 'version'}
+        self.assertEqual(tasks.get_job_path('job_name'), 'charm_dir/jobs/version/job_name')
+
+    @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.tasks.open', create=True)
     @mock.patch('cloudfoundry.tasks.yaml.safe_load')
-    def test_load_spec(self, safe_load, mopen):
+    def test_load_spec(self, safe_load, mopen, get_job_path):
+        get_job_path.side_effect = ['job_path1', 'job_path2']
         safe_load.side_effect = [
             {'p1': 'v1'},
             {'p2': 'v2'},
@@ -52,8 +61,8 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(mopen.call_count, 2)
         self.assertEqual(safe_load.call_count, 2)
         self.assertEqual(mopen.call_args_list, [
-            mock.call('charm_dir/jobs/job1/spec'),
-            mock.call('charm_dir/jobs/job2/spec'),
+            mock.call('job_path1/spec'),
+            mock.call('job_path2/spec'),
         ])
 
     @mock.patch('cloudfoundry.tasks.load_spec')

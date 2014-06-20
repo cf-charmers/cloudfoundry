@@ -22,7 +22,7 @@ def fetch_job_artifacts(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
     artifact_url = '{}/{}/{}.tgz'.format(
         orchestrator_data['artifacts_url'], orchestrator_data['cf_release'], job_name)
-    job_path = os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_release'], job_name)
+    job_path = get_job_path(job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
     urllib.urlretrieve(artifact_url, job_archive)
     with tarfile.open(job_archive) as tgz:
@@ -34,11 +34,18 @@ def install_service_packages(service_name):
 
 
 @hookenv.cached
+def get_job_path(job_name):
+    orchestrator_data = contexts.OrchestratorRelation()
+    return os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_release'], job_name)
+
+
+@hookenv.cached
 def load_spec(job_name):
     """
     Reads and parses the spec file for the given job name from the jobs folder.
     """
-    with open(os.path.join(hookenv.charm_dir(), 'jobs', job_name, 'spec')) as fp:
+    job_path = get_job_path(job_name)
+    with open(os.path.join(job_path, 'spec')) as fp:
         return yaml.safe_load(fp)
 
 
