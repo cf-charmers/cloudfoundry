@@ -28,6 +28,6 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
     if not os.path.isabs(source):
         source = os.path.join(templates_dir, source)
     content = subprocess.check_output([
-        'bosh-templates', source, '-C', json.dumps(context)])
+        'bosh-template', source, '-C', json.dumps(context)])
     host.mkdir(os.path.dirname(target))
     host.write_file(target, content, owner, group, perms)

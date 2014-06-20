@@ -14,4 +14,4 @@ class TestTasks(unittest.TestCase):
         charm_dir.return_value = 'charm_dir'
         tasks.install_bosh_template_renderer()
         apt_install.assert_called_once_with(packages=['ruby'])
-        check_call.assert_called_once_with(['gem', 'install', 'charm_dir/files/bosh-templates-0.0.1.gem'])
+        check_call.assert_called_once_with(['gem', 'install', 'charm_dir/files/bosh-template-1.2611.0.pre.gem'])

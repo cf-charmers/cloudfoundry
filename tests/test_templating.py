@@ -17,5 +17,5 @@ class TestTemplating(unittest.TestCase):
         check_output.return_value = 'test-data'
         templating.render_erb('fake_cc.erb', 'target', context, templates_dir='')
         check_output.assert_called_once_with([
-            'bosh-templates', 'fake_cc.erb', '-C', '{"data": ["port", 80]}'])
+            'bosh-template', 'fake_cc.erb', '-C', '{"data": ["port", 80]}'])
         write_file.assert_called_once_with('target', 'test-data', 'root', 'root', 0444)
