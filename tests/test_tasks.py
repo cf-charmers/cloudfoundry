@@ -19,8 +19,26 @@ class TestTasks(unittest.TestCase):
     def test_install_service_packages(self):
         pass
 
-    def test_load_spec(self):
-        pass
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.hookenv.charm_dir')
+    @mock.patch('cloudfoundry.tasks.yaml.safe_load')
+    def test_load_spec(self, safe_load, charm_dir, mopen):
+        charm_dir.return_value = 'charm_dir'
+        safe_load.side_effect = [
+            {'p1': 'v1'},
+            {'p2': 'v2'},
+        ]
+        self.assertEquals(tasks.load_spec('job1'), {'p1': 'v1'})
+        self.assertEquals(tasks.load_spec('job1'), {'p1': 'v1'})
+        self.assertEqual(mopen.call_count, 1)
+        self.assertEqual(safe_load.call_count, 1)
+        self.assertEquals(tasks.load_spec('job2'), {'p2': 'v2'})
+        self.assertEqual(mopen.call_count, 2)
+        self.assertEqual(safe_load.call_count, 2)
+        self.assertEqual(mopen.call_args_list, [
+            mock.call('charm_dir/jobs/job1/spec'),
+            mock.call('charm_dir/jobs/job2/spec'),
+        ])
 
     @mock.patch('charmhelpers.core.hookenv.charm_dir')
     @mock.patch('cloudfoundry.tasks.load_spec')

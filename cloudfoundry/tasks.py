@@ -1,5 +1,6 @@
 import os
 import subprocess
+import yaml
 
 from charmhelpers.core import hookenv
 from charmhelpers import fetch
@@ -22,7 +23,8 @@ def load_spec(job_name):
     """
     Reads and parses the spec file for the given job name from the jobs folder.
     """
-    return {}
+    with open(os.path.join(hookenv.charm_dir(), 'jobs', job_name, 'spec')) as fp:
+        return yaml.safe_load(fp)
 
 
 def job_templates(job_name):
