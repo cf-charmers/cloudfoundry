@@ -1,7 +1,10 @@
 import unittest
 import mock
 
+from charmhelpers.core.services import ServiceManager
 from cloudfoundry import jobs
+
+from release1 import SERVICES
 
 
 class TestJobManager(unittest.TestCase):
@@ -28,5 +31,17 @@ class TestJobManager(unittest.TestCase):
         jobs.manage_install('service')
         install_btr.assert_called_once_with()
 
-    def test_manage_services(self):
-        pass
+    @mock.patch.object(ServiceManager, 'manage')
+    @mock.patch('cloudfoundry.tasks.load_spec')
+    @mock.patch('charmhelpers.core.hookenv.charm_dir')
+    def test_manage_services(self, charm_dir, load_spec, manage):
+        # XXX: This test is currently very weak, we don't assert
+        # the emit quality, but the units below it are better
+        # tested
+        charm_dir.return_value = 'charm_dir'
+        load_spec.return_value = {'templates': {
+            'src1': 'dest1',
+            'src2': 'dest2',
+        }}
+        jobs.manage_services('cloud_controller_v1', SERVICES)
+        manage.assert_called_once_with()

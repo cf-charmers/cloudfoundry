@@ -65,13 +65,14 @@ def job_templates(job_name):
     return callbacks
 
 
-def build_service_block(charm_name):
-    service_def = services.SERVICES[charm_name]
+def build_service_block(charm_name, services=services.SERVICES):
+    service_def = services[charm_name]
     result = []
     for job in service_def.get('jobs', []):
         job_def = {
-            'required_data': job['required_data'],
-            'provided_data': job['provided_data'],
+            'service': job['job_name'],
+            'required_data': job.get('required_data', []),
+            'provided_data': job.get('provided_data', []),
             'data_ready': job_templates(job['job_name'])
         }
         result.append(job_def)

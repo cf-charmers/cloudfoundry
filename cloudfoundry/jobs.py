@@ -1,5 +1,8 @@
 from charmhelpers.core import hookenv
+from charmhelpers.core import services
+
 from cloudfoundry import tasks
+from cloudfoundry.services import SERVICES
 
 
 def job_manager(service_name):
@@ -14,5 +17,6 @@ def manage_install(service_name):
     tasks.install_bosh_template_renderer()
 
 
-def manage_services(service_name):
-    pass
+def manage_services(service_name, service_data=SERVICES):
+    service_def = tasks.build_service_block(service_name, service_data)
+    services.ServiceManager(service_def).manage()
