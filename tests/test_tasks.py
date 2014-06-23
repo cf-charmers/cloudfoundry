@@ -40,7 +40,7 @@ class TestTasks(unittest.TestCase):
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
         urlretrieve.assert_called_once_with(
-            'http://url/version/job_name.tgz', 
+            'http://url/version/job_name.tgz',
             'job_path/job_name.tgz')
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
@@ -153,5 +153,5 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(services[0]['required_data'][0],
                          contexts.NatsRelation)
         # Show that we converted to rubytemplatecallbacks
-        self.assertIsInstance(services[0]['data_ready'][0],
+        self.assertIsInstance(services[0]['data_ready'][2],
                               templating.RubyTemplateCallback)
