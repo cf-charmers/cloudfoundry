@@ -10,5 +10,4 @@ python-apt
 wheel==0.23.0
 requests==2.2.1
 datadiff==1.1.5
-pygit==0.1
-
+pygit2==0.19.0

@@ -60,7 +60,7 @@ def get_rev(repo, rev=None):
 
 
 def get_repo(basedir):
-    repo = git.Repo(basedir)
+    repo = git.Repo(os.path.dirname(basedir))
     repo.remotes[0].fetch()
     return repo
 
