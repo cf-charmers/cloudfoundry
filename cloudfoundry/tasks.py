@@ -90,7 +90,10 @@ def build_service_block(charm_name, services=services.SERVICES):
             'service': job['job_name'],
             'required_data': job.get('required_data', []),
             'provided_data': job.get('provided_data', []),
-            'data_ready': job_templates(job['job_name'])
+            'data_ready': [
+                fetch_job_artifacts,
+                install_job_packages,
+            ] + job_templates(job['job_name']),
         }
         result.append(job_def)
     return result
