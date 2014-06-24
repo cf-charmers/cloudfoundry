@@ -51,7 +51,10 @@ setup(
     tests_require=test_requirements,
     entry_points={
         'console_scripts': [
-            'generate_charm = charmgen.generator:main'
+            'generate_charm = charmgen.generator:main',
+            'get_relations = charmgen.getrels:main',
+            'diff_revisions = charmgen.differ:main'
+
         ]
     }
 )

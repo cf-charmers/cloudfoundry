@@ -30,6 +30,19 @@ to generate an example of the bundle we'll deploy and manage by doing:
 This will create a cloudfoundry-r<release> directory with the bundle.yaml and a
 trusty repo will all the created charms.
 
+There are currently two experimental tools included with the charm. These
+are designed to process a cf-release checkout and examine the differences
+in various tagged versions of cf-release.
+
+    . .tox/py27/bin/activate
+    # skip if you have a cf-release checkout
+    git clone https://github.com/cloudfoundry/cf-release.git ../cf-release
+    python setup.py develop
+    get_revisions -d ../cf-release 153..173
+    diff_revisions 153..173 | less
+
+
 
 
 * TODO
+  Attempt to generate service definitions and relation classes from cf-release.

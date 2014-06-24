@@ -13,6 +13,7 @@ help:
 
 clean: clean-build clean-pyc
 	rm -fr htmlcov/
+	rm -fr output-v*.yaml
 
 clean-build:
 	rm -fr build/
