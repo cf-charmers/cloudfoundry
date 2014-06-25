@@ -27,8 +27,8 @@ def flatten(data):
 def property_mapper(property_expressions, data):
     data = flatten(data)
     result = NestedDict()
-    for input_re, dest_path in property_expressions:
-        for k, v in data.items():
+    for k, v in data.items():
+        for input_re, dest_path in property_expressions:
             if re.match(input_re, k):
                 target = re.sub(input_re, dest_path, k)
                 result[target] = v
