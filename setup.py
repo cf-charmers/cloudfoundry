@@ -9,14 +9,6 @@ except ImportError:
 readme = open('README.rst').read()
 history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
-requirements = [
-    # TODO: put package requirements here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
-
 setup(
     name='cloudfoundry',
     version='0.1.0',
@@ -31,7 +23,6 @@ setup(
     ],
     package_dir={'charmgen': 'charmgen',
                  'cloudfoundry': 'cloudfoundry'},
-    install_requires=requirements,
     license="BSD",
     zip_safe=False,
     keywords='cloudfoundry',
@@ -40,15 +31,9 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
-        "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
-    tests_require=test_requirements,
     entry_points={
         'console_scripts': [
             'generate_charm = charmgen.generator:main',
