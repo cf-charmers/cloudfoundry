@@ -8,16 +8,19 @@ import yaml
 import git
 
 
-JOBS_BLACKLIST = ['etcd', 'networks', 'opentstb',
-                  'ssl', 'uaadb', 'smoke_tests',
-                  'databases']
+JOBS_BLACKLIST = ['etcd', 'opentstb',
+                  'ssl', 'smoke_tests',
+                  'acceptance_tests', 'collector']
+NAMESPACE_BLACKLIST = ['newrelic', 'packages', 'networks']
 
 
 def setup():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--directory',
                         default=os.getcwd())
-    parser.add_argument('-r', '--revs')
+    parser.add_argument('revs', nargs="*")
+    parser.add_argument('-v', '--verbose', action="store_true")
+    parser.add_argument('-k', '--keep-defaults', action="store_true")
 
     options = parser.parse_args()
     find_jobs(options)
@@ -66,17 +69,19 @@ def get_repo(basedir):
 
 
 def parse_revs(revs):
-    match = re.search(r'v?(\d+)\.{2,3}v?(\d+)', revs)
-    if match:
-        start = int(match.group(1))
-        lim = int(match.group(2))
-        revs = range(start, lim + 1)
-    else:
-        revs = [revs]
-    return revs
+    result = []
+    for rev in revs:
+        match = re.search(r'v?(\d+)\.{2,3}v?(\d+)', rev)
+        if match:
+            start = int(match.group(1))
+            lim = int(match.group(2))
+            result.extend(range(start, lim + 1))
+        else:
+            result.append(rev)
+    return result
 
 
-def process_spec(job_name, spec_path, relations, interfaces):
+def process_spec(job_name, spec_path, relations, interfaces, options):
     with open(spec_path) as fp:
         job_data = yaml.safe_load(fp)
         job_name = job_name.replace('-', '_')
@@ -86,24 +91,29 @@ def process_spec(job_name, spec_path, relations, interfaces):
         for prop, prop_data in properties.items():
             prop = prop.replace('-', '_')
             if '.' not in prop:
-                ns = 'implicit'
+                ns = 'orchestrator'
                 key = prop
             else:
                 ns, key = prop.split('.', 1)
-            if ns in JOBS_BLACKLIST:
+
+            if ns in NAMESPACE_BLACKLIST or ns in JOBS_BLACKLIST:
                 continue
 
+            # Skip keys with default values
+            default = None
             if 'default' in prop_data:
-                continue
+                default = prop_data['default']
 
-            relations.setdefault(ns, set()).add(job_name)
+            if ns != job_name:
+                relations.setdefault(job_name, set()).add(ns)
+                relations.setdefault(ns, set()).add(job_name)
 
             if '.' in key:
-                remote = key.split('.', 1)[0]
-                remote = remote.replace('-', '_')
-                if remote == job_name or remote in JOBS_BLACKLIST:
+                part = key.split('.', 1)[0]
+                if part in NAMESPACE_BLACKLIST:
                     continue
-                interfaces.setdefault(job_name, set()).add(remote)
+            if options.keep_defaults is True or default is None:
+                interfaces.setdefault(ns, {})[key] = default
 
 
 def run_rev(repo, rev, options):
@@ -112,7 +122,8 @@ def run_rev(repo, rev, options):
         return
     repo.head.reference = ref
     repo.head.reset(index=True, working_tree=True)
-    print ref.name
+    if options.verbose:
+        print(ref.name)
 
     relations = {}
     interfaces = {}
@@ -128,14 +139,18 @@ def run_rev(repo, rev, options):
             continue
         if job_name in JOBS_BLACKLIST:
             continue
-        process_spec(job_name, spec_path, relations, interfaces)
+        process_spec(job_name, spec_path, relations, interfaces, options)
+
+    # simplify relations
+    for k, v in relations.items():
+        relations[k] = sorted(v)
 
     with open('output-%s.yaml' % ref.name, 'w') as fp:
         yaml.safe_dump(
             dict(interfaces=interfaces,
                  relations=relations,
                  revision=ref.name),
-            fp)
+            fp, default_flow_style=False)
 
 
 def main():
@@ -143,6 +158,8 @@ def main():
 
     repo = get_repo(options.directory)
     revs = parse_revs(options.revs)
+    if revs == []:
+        revs = [None]
     for rev in revs:
         run_rev(repo, rev, options)
 

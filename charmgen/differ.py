@@ -9,7 +9,7 @@ from getrels import parse_revs
 
 def setup():
     parser = argparse.ArgumentParser()
-    parser.add_argument('revs')
+    parser.add_argument('revs', nargs="+")
     options = parser.parse_args()
 
     data = []
