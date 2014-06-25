@@ -45,3 +45,4 @@ docs/_build
 
 # Generated test charms
 cloudfoundry-r*
+output-v*.yaml

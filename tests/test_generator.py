@@ -11,7 +11,7 @@ import yaml
 from charmgen.generator import CharmGenerator, main
 from cloudfoundry.contexts import OrchestratorRelation
 
-from charmhelpers.contrib.cloudfoundry import contexts
+from cloudfoundry import contexts
 
 # Local fixture
 from tests.release1 import RELEASES, SERVICES

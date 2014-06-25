@@ -51,7 +51,8 @@ class NatsRelation(RelationContext):
     def provide_data(self):
         return dict(self.get_credentials(),
                     port=4222,
-                    address=hookenv.unit_get('private-address').encode('utf-8'))
+                    address=hookenv.unit_get(
+                        'private-address').encode('utf-8'))
 
 
 class MysqlRelation(RelationContext):

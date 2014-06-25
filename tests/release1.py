@@ -1,4 +1,4 @@
-from charmhelpers.contrib.cloudfoundry import contexts
+from cloudfoundry import contexts
 
 
 leader_elected_cc_migration = lambda x: None
