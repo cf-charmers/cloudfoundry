@@ -171,3 +171,38 @@ class OrchestratorRelation(RelationContext):
         config = yaml.safe_load(open(config_yaml))
         options = [option for option in config['options']]
         return ['artifacts_url'] + options
+
+
+class JujuAPICredentials(dict):
+    def __init__(self):
+        super(JujuAPICredentials, self).__init__()
+        config = hookenv.config()
+        if config.get('admin_secret'):
+            self['api_address'] = 'wss://{}'.format(self.get_api_address())
+            self['api_password'] = config['admin_secret']
+
+    def get_api_address(self, unit_dir=None):
+        """Return the Juju API address.
+
+        (Copied from lp:~juju-gui/charms/trusty/juju-gui/trunk)
+        """
+        api_addresses = os.getenv('JUJU_API_ADDRESSES')
+        if api_addresses is not None:
+            return api_addresses.split()[0]
+        # The JUJU_API_ADDRESSES environment variable is not included in the hooks
+        # context in older releases of juju-core.  Retrieve it from the machiner
+        # agent file instead.
+        if unit_dir is None:
+            base_dir = os.path.join(hookenv.charm_dir(), '..', '..')
+        else:
+            base_dir = os.path.join(unit_dir, '..')
+        base_dir = os.path.abspath(base_dir)
+        for dirname in os.listdir(base_dir):
+            if dirname.startswith('machine-'):
+                agent_conf = os.path.join(base_dir, dirname, 'agent.conf')
+                break
+        else:
+            raise IOError('Juju agent configuration file not found.')
+        contents = yaml.load(open(agent_conf))
+        return contents['apiinfo']['addrs'][0]
+        return api_addresses.split()[0]

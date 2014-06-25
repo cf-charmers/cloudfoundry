@@ -109,7 +109,10 @@ class CharmGenerator(object):
         if charm_id.startswith('cs:'):
             return dict(charm=charm_id)
         else:
-            return dict(branch="local:trusty/{}".format(charm_id))
+            return dict(
+                charm=charm_id,
+                branch="local:trusty/{}".format(charm_id)
+            )
 
     def _parse_charm_ref(self, service_id):
         if isinstance(service_id, tuple):

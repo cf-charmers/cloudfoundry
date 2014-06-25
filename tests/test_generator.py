@@ -108,7 +108,8 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(g._build_charm_ref('cs:trusty/mysql'),
                          {'charm': 'cs:trusty/mysql'})
         self.assertEqual(g._build_charm_ref('cloud_controller_v1'),
-                         {'branch': 'local:trusty/cloud_controller_v1'})
+                         {'charm': 'cloud_controller_v1',
+                          'branch': 'local:trusty/cloud_controller_v1'})
 
     def test_parse_charm_ref(self):
         g = CharmGenerator(RELEASES, SERVICES)
@@ -132,7 +133,8 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(cf['series'], 'trusty')
         # A local generated charm
         self.assertEqual(cf['services']['cc'],
-                         {'branch': 'local:trusty/cloud_controller_v1'})
+                         {'charm': 'cloud_controller_v1',
+                          'branch': 'local:trusty/cloud_controller_v1'})
         # A store charm
         self.assertEqual(cf['services']['mysql'],
                          {'charm': 'cs:trusty/mysql'})
