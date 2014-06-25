@@ -179,21 +179,24 @@ class CharmGenerator(object):
             charm_id, charm_name, _ = self._parse_charm_ref(service)
             if charm_id.startswith('cs:'):
                 continue
+            if charm_name not in self.service_registry:
+                raise KeyError(
+                    'Missing service_registry definition for charm: {}'.format(
+                        charm_name))
             charm_path = os.path.join(repo, charm_name)
             if not os.path.exists(charm_path):
                 os.makedirs(charm_path)
-            if charm_name in self.service_registry:
-                self.generate_charm(service, charm_path)
-                shutil.copytree(pkg_resources.resource_filename(
-                    __name__, '../cloudfoundry'),
-                    os.path.join(charm_path, 'hooks', 'cloudfoundry'))
-                shutil.copytree(pkg_resources.resource_filename(
-                    __name__, '../files'),
-                    os.path.join(charm_path, 'files'))
-                # copy charmhelpers into the hook_dir
-                shutil.copytree(pkg_resources.resource_filename(
-                    __name__, '../hooks/charmhelpers'),
-                    os.path.join(charm_path, 'hooks', 'charmhelpers'))
+            self.generate_charm(service, charm_path)
+            shutil.copytree(pkg_resources.resource_filename(
+                __name__, '../cloudfoundry'),
+                os.path.join(charm_path, 'hooks', 'cloudfoundry'))
+            shutil.copytree(pkg_resources.resource_filename(
+                __name__, '../files'),
+                os.path.join(charm_path, 'files'))
+            # copy charmhelpers into the hook_dir
+            shutil.copytree(pkg_resources.resource_filename(
+                __name__, '../hooks/charmhelpers'),
+                os.path.join(charm_path, 'hooks', 'charmhelpers'))
 
 
 def main(args=None):
