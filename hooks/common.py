@@ -44,10 +44,9 @@ class APIEnvironment(GUIEnvironment):
             charm_file = os.path.join('/tmp', charm_id)
             charm_path = os.path.join(repo, series, charm_name)
             shutil.make_archive(charm_file, 'zip', charm_path)
-            with open(charm_file + '.zip') as fp:
-                fp.seek(0, 2)
-                size = fp.tell()
-                fp.seek(0)
+            archive = charm_file + '.zip'
+            size = os.path.getsize(archive)
+            with open(archive) as fp:
                 self.client.add_local_charm(fp, series, size)
         else:
             self.client.add_charm(charm_url)
