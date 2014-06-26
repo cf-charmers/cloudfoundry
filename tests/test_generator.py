@@ -179,6 +179,16 @@ class TestGenerator(unittest.TestCase):
             self.assertTrue(os.path.isdir(os.path.join(
                 tmpdir, 'trusty', 'cloud_controller_v1', 'files')))
 
+    def test_generate_missing_service(self):
+        releases = [{'releases': (1, 1), 'topology': {
+            'services': [('missing', '??')],
+        }}]
+        services = {}
+        g = CharmGenerator(releases, services)
+        g.select_release(1)
+        with tempdir() as tmpdir:
+            self.assertRaises(KeyError, g.generate, tmpdir)
+
     def test_main(self):
         with tempdir() as tmpdir:
             main(['-d', tmpdir, '173'])

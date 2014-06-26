@@ -10,16 +10,6 @@ from cloudfoundry import contexts
 CONTEXT = 'cloudfoundry.contexts.'
 
 
-class TestContexts(unittest.TestCase):
-
-    @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_orchestrator_required_keys(self, mrel_ids):
-        oc = contexts.OrchestratorRelation()
-        self.assertEqual(set(oc.required_keys),
-                         set(['domain', 'admin_secret',
-                              'cf_version', 'artifacts_url']))
-
-
 class TestNatsRelation(unittest.TestCase):
 
     @mock.patch('charmhelpers.core.hookenv.relation_ids')

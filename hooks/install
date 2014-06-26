@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
 from charmhelpers import fetch
 
-fetch.apt_install(fetch.filter_installed_packages(['juju-deployer']))
+fetch.apt_install(fetch.filter_installed_packages(['juju-deployer', 'nginx']))
+os.unlink('/etc/nginx/sites-enabled/default')

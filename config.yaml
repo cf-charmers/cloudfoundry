@@ -2,12 +2,23 @@ options:
     admin_secret:
         type: string
         description: |
-            The admin password used to talk to the Juju REST API to do bundle orchestration. You
-            will not be able to use juju to deploy CF until this is properly set.
+            The admin password used to talk to the Juju REST API to do bundle
+            orchestration. You will not be able to use Juju to deploy Cloud
+            Foundry until this is properly set.
+        default: ""
+    artifacts_url:
+        type: string
+        description: |
+            The URL from which the artifacts can be retrieved.  You will not be
+            able to use Juju to deploy Cloud Foundry until this is properly set.
+        default: ""
     cf_version:
         type: string
-        desription: |
-            The release of CF to switch the deployed bundle to.
+        description: |
+            The release of CF to switch the deployed bundle to.  If set to
+            "latest", it will use the most recent version supported by this
+            charm.
+        default: "latest"
     domain:
         type: string
         description: |

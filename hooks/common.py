@@ -11,6 +11,7 @@ from charmgen.generator import CharmGenerator
 from cloudfoundry.releases import RELEASES
 from cloudfoundry.services import SERVICES
 from cloudfoundry.contexts import JujuAPICredentials
+from cloudfoundry.contexts import ArtifactsCache
 
 from deployer.cli import setup_parser
 from deployer.env.gui import GUIEnvironment
@@ -55,6 +56,10 @@ class APIEnvironment(GUIEnvironment):
             num_units=num_units, machine_spec=force_machine)
 
 
+def populate_artifacts_cache(s):
+    pass
+
+
 def generate(s):
     version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
@@ -96,13 +101,26 @@ def manage():
     manager = services.ServiceManager([
         {
             'service': 'bundle',
-            'required_data': [JujuAPICredentials()],
+            'required_data': [
+                JujuAPICredentials(),
+                ArtifactsCache(),
+            ],
             'data_ready': [
+                populate_artifacts_cache,
                 generate,
                 deploy,
             ],
             'start': [],
             'stop': [],
+        },
+        {
+            'service': 'nginx',
+            'required_data': [{'charm_dir': hookenv.charm_dir()}],
+            'data_ready': [
+                services.render_template(
+                    source='nginx.conf',
+                    target='/etc/nginx/sites-enabled/artifact_proxy'),
+            ],
         },
     ])
     manager.manage()

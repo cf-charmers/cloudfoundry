@@ -88,8 +88,10 @@ def build_service_block(charm_name, services=services.SERVICES):
     for job in service_def.get('jobs', []):
         job_def = {
             'service': job['job_name'],
-            'required_data': job.get('required_data', []),
-            'provided_data': job.get('provided_data', []),
+            'required_data': [r() for r in
+                              [contexts.OrchestratorRelation] +
+                              job.get('required_data', [])],
+            'provided_data': [p() for p in job.get('provided_data', [])],
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,

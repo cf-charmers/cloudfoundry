@@ -1,5 +1,4 @@
 import os
-import pkg_resources
 import re
 import subprocess
 import yaml
@@ -164,14 +163,16 @@ class CloudControllerRelation(RelationContext):
 class OrchestratorRelation(RelationContext):
     name = "orchestrator"
     interface = "orchestrator"
+    required_keys = ['artifacts_url', 'cf_version', 'domain']
 
-    @property
-    def required_keys(self):
-        config_yaml = pkg_resources.resource_filename(__name__,
-                                                      '../config.yaml')
-        config = yaml.safe_load(open(config_yaml))
-        options = [option for option in config['options']]
-        return ['artifacts_url'] + options
+    def provide_data(self):
+        config = hookenv.config()
+        private_addr = hookenv.unit_private_ip()
+        return {
+            'artifacts_url': 'https://{}:8019'.format(private_addr),
+            'cf_version': config['cf_version'],
+            'domain': config['domain'],
+        }
 
 
 class JujuAPICredentials(dict):
@@ -207,3 +208,12 @@ class JujuAPICredentials(dict):
         contents = yaml.load(open(agent_conf))
         return contents['apiinfo']['addrs'][0]
         return api_addresses.split()[0]
+
+
+class ArtifactsCache(dict):
+    def __init__(self):
+        config = hookenv.config()
+        if config.get('artifacts_url'):
+            self.update({
+                'artifacts_url': config['artifacts_url'],
+            })

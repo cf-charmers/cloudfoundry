@@ -141,17 +141,21 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(RubyTemplateCallback.call_count, len(expected_calls))
         load_spec.assert_called_once_with('job_name')
 
+    @mock.patch('charmhelpers.core.hookenv.relation_ids')
     @mock.patch('cloudfoundry.tasks.load_spec')
-    def test_build_service_block(self, load_spec):
+    def test_build_service_block(self, load_spec, relation_ids):
         load_spec.return_value = {'templates': {
             'src1': 'dest1',
             'src2': 'dest2',
         }}
+        relation_ids.return_value = []
         services = tasks.build_service_block('router_v1')
-        self.assertEqual(services[0]['provided_data'][0],
-                         contexts.RouterRelation)
-        self.assertEqual(services[0]['required_data'][0],
-                         contexts.NatsRelation)
+        self.assertIsInstance(services[0]['provided_data'][0],
+                              contexts.RouterRelation)
+        self.assertIsInstance(services[0]['required_data'][0],
+                              contexts.OrchestratorRelation)
+        self.assertIsInstance(services[0]['required_data'][1],
+                              contexts.NatsRelation)
         # Show that we converted to rubytemplatecallbacks
         self.assertIsInstance(services[0]['data_ready'][2],
                               templating.RubyTemplateCallback)
