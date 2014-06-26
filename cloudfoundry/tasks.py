@@ -26,9 +26,10 @@ def fetch_job_artifacts(job_name):
     job_path = get_job_path(job_name)
     if os.path.exists(job_path):
         return
-    artifact_url = '{}/{}/{}.tgz'.format(
+    artifact_url = os.path.join(
         orchestrator_data['artifacts_url'],
         orchestrator_data['cf_release'],
+        'amd64',  # TODO: Get this from somewhere...
         job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
     urllib.urlretrieve(artifact_url, job_archive)

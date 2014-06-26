@@ -55,10 +55,6 @@ class APIEnvironment(GUIEnvironment):
             num_units=num_units, machine_spec=force_machine)
 
 
-def populate_artifacts_cache(s):
-    pass
-
-
 def generate(s):
     version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
@@ -105,7 +101,6 @@ def manage():
                 ArtifactsCache(),
             ],
             'data_ready': [
-                populate_artifacts_cache,
                 generate,
                 deploy,
             ],

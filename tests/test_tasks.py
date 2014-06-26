@@ -40,7 +40,7 @@ class TestTasks(unittest.TestCase):
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
         urlretrieve.assert_called_once_with(
-            'http://url/version/job_name.tgz',
+            'http://url/version/amd64/job_name',
             'job_path/job_name.tgz')
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
