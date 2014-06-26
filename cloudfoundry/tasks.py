@@ -28,7 +28,7 @@ def fetch_job_artifacts(job_name):
         return
     artifact_url = os.path.join(
         orchestrator_data['artifacts_url'],
-        orchestrator_data['cf_release'],
+        orchestrator_data['cf_version'],
         'amd64',  # TODO: Get this from somewhere...
         job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
@@ -39,7 +39,7 @@ def fetch_job_artifacts(job_name):
 
 def install_job_packages(job_name):
     package_path = os.path.join(get_job_path(job_name), 'packages')
-    version = contexts.OrchestratorRelation()['cf_release']
+    version = contexts.OrchestratorRelation()['cf_version']
     dst_path = os.path.join(PACKAGES_BASE_DIR, job_name)
     versioned_path = os.path.join(PACKAGES_BASE_DIR, version, job_name)
     if os.path.exists(versioned_path):
@@ -52,7 +52,7 @@ def install_job_packages(job_name):
 @hookenv.cached
 def get_job_path(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
-    return os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_release'], job_name)
+    return os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_version'], job_name)
 
 
 @hookenv.cached
