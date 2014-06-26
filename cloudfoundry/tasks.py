@@ -67,8 +67,7 @@ def load_spec(job_name):
 
 def job_templates(job_name):
     """
-    Uses the job spec to generate the list of callbacks to render the job's
-    templates.
+    Uses the job spec to render the job's templates.
     """
     spec = load_spec(job_name)
     callbacks = []
@@ -80,7 +79,8 @@ def job_templates(job_name):
     callbacks.append(templating.RubyTemplateCallback(
         'monit', '/etc/monit.d/{}.cfg'.format(job_name),
         templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
-    return callbacks
+    for callback in callbacks:
+        callback(job_name)
 
 
 def build_service_block(charm_name, services=services.SERVICES):
@@ -96,7 +96,8 @@ def build_service_block(charm_name, services=services.SERVICES):
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,
-            ] + job_templates(job['job_name']),
+                job_templates,
+            ],
         }
         result.append(job_def)
     return result
