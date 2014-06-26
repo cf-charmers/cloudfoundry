@@ -3,8 +3,8 @@ import contexts
 __all__ = ['SERVICES']
 
 SERVICES = {
-    'cc_clock_v1': {},
-    'cloud_controller_v1': {
+    'cc-clock-v1': {},
+    'cloud-controller-v1': {
         'summary': 'CF Cloud Controller, the brains of the operation',
         'description': '',
         'jobs': [{
@@ -24,7 +24,7 @@ SERVICES = {
         }]
     },
 
-    'nats_v1': {
+    'nats-v1': {
         'service': 'nats',
         'summary': 'NATS message bus for CF',
         'jobs': [{
@@ -36,7 +36,7 @@ SERVICES = {
         }],
     },
 
-    'router_v1': {
+    'router-v1': {
         'service': 'router',
         'summary': 'CF Router',
         'jobs': [{

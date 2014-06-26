@@ -4,14 +4,14 @@
 # Service Definition to deployed service name
 # mapping
 COMMON_SERVICES = [
-    ('cloud_controller_v1', 'cc'),
-    ('router_v1', 'router'),
-    ('nats_v1', 'nats'),
-    #('dea_v1', 'dea'),
-    #('uaa_v1', 'uaa'),
-    #('logrouter_v1', 'logrouter'),
-    #('loggregator_v1', 'loggregator'),
-    #('hm9000_v1', 'hm'),
+    ('cloud-controller-v1', 'cc'),
+    ('router-v1', 'router'),
+    ('nats-v1', 'nats'),
+    #('dea-v1', 'dea'),
+    #('uaa-v1', 'uaa'),
+    #('logrouter-v1', 'logrouter'),
+    #('loggregator-v1', 'loggregator'),
+    #('hm9000-v1', 'hm'),
 
     ('cs:trusty/mysql', 'mysql'),
     ('cs:~hazmat/trusty/etcd', 'etcd'),
