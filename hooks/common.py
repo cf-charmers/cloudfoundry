@@ -110,7 +110,8 @@ def manage():
         },
         {
             'service': 'nginx',
-            'required_data': [{'charm_dir': hookenv.charm_dir()}],
+            'required_data': [{'charm_dir': hookenv.charm_dir(),
+                               'config': hookenv.config()}],
             'provided_data': [OrchestratorRelation()],
             'data_ready': [
                 services.render_template(

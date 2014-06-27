@@ -169,7 +169,7 @@ class OrchestratorRelation(RelationContext):
         config = hookenv.config()
         private_addr = hookenv.unit_private_ip()
         return {
-            'artifacts_url': 'https://{}:8019'.format(private_addr),
+            'artifacts_url': 'http://{}:8019'.format(private_addr),  # FIXME: this should use SSL
             'cf_version': config['cf_version'],
             'domain': config['domain'],
         }
