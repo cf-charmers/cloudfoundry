@@ -6,6 +6,7 @@ import yaml
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core.services import RelationContext
+from cloudfoundry.releases import RELEASES
 
 
 class StoredContext(dict):
@@ -168,9 +169,12 @@ class OrchestratorRelation(RelationContext):
     def provide_data(self):
         config = hookenv.config()
         private_addr = hookenv.unit_private_ip()
+        version = config['cf_version']
+        if version == 'latest':
+            version = RELEASES[0]['releases'][1]
         return {
             'artifacts_url': 'http://{}:8019'.format(private_addr),  # FIXME: this should use SSL
-            'cf_version': config['cf_version'],
+            'cf_version': version,
             'domain': config['domain'],
         }
 
