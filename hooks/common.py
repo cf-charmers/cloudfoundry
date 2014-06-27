@@ -12,6 +12,7 @@ from cloudfoundry.releases import RELEASES
 from cloudfoundry.services import SERVICES
 from cloudfoundry.contexts import JujuAPICredentials
 from cloudfoundry.contexts import ArtifactsCache
+from cloudfoundry.contexts import OrchestratorRelation
 
 from deployer.cli import setup_parser
 from deployer.env.gui import GUIEnvironment
@@ -110,6 +111,7 @@ def manage():
         {
             'service': 'nginx',
             'required_data': [{'charm_dir': hookenv.charm_dir()}],
+            'provided_data': [OrchestratorRelation()],
             'data_ready': [
                 services.render_template(
                     source='nginx.conf',

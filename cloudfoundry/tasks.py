@@ -27,8 +27,8 @@ def fetch_job_artifacts(job_name):
     if os.path.exists(job_path):
         return
     artifact_url = os.path.join(
-        orchestrator_data['artifacts_url'],
-        orchestrator_data['cf_version'],
+        orchestrator_data['orchestrator'][0]['artifacts_url'],
+        orchestrator_data['orchestrator'][0]['cf_version'],
         'amd64',  # TODO: Get this from somewhere...
         job_name)
     job_archive = job_path+'/'+job_name+'.tgz'
@@ -39,7 +39,7 @@ def fetch_job_artifacts(job_name):
 
 def install_job_packages(job_name):
     package_path = os.path.join(get_job_path(job_name), 'packages')
-    version = contexts.OrchestratorRelation()['cf_version']
+    version = contexts.OrchestratorRelation()['orchestrator'][0]['cf_version']
     dst_path = os.path.join(PACKAGES_BASE_DIR, job_name)
     versioned_path = os.path.join(PACKAGES_BASE_DIR, version, job_name)
     if os.path.exists(versioned_path):
@@ -52,7 +52,8 @@ def install_job_packages(job_name):
 @hookenv.cached
 def get_job_path(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
-    return os.path.join(hookenv.charm_dir(), 'jobs', orchestrator_data['cf_version'], job_name)
+    version = orchestrator_data['orchestrator'][0]['cf_version']
+    return os.path.join(hookenv.charm_dir(), 'jobs', version, job_name)
 
 
 @hookenv.cached
@@ -89,9 +90,8 @@ def build_service_block(charm_name, services=services.SERVICES):
     for job in service_def.get('jobs', []):
         job_def = {
             'service': job['job_name'],
-            'required_data': [r() for r in
-                              [contexts.OrchestratorRelation] +
-                              job.get('required_data', [])],
+            'required_data': [contexts.OrchestratorRelation()] +
+                             [r() for r in job.get('required_data', [])],
             'provided_data': [p() for p in job.get('provided_data', [])],
             'data_ready': [
                 fetch_job_artifacts,
