@@ -5,6 +5,7 @@ import tarfile
 import shutil
 import yaml
 
+from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers import fetch
 from cloudfoundry import TEMPLATES_BASE_DIR
@@ -26,6 +27,7 @@ def fetch_job_artifacts(job_name):
     job_path = get_job_path(job_name)
     if os.path.exists(job_path):
         return
+    host.mkdir(job_path)
     artifact_url = os.path.join(
         orchestrator_data['orchestrator'][0]['artifacts_url'],
         orchestrator_data['orchestrator'][0]['cf_version'],
