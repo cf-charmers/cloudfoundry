@@ -149,7 +149,6 @@ class CharmGenerator(object):
         for service_id in self.release['topology']['services']:
             charm_id, _, service_name = self._parse_charm_ref(service_id)
             services[service_name] = self._build_charm_ref(charm_id)
-            rel_data[service_name] = 'cloudfoundry'
 
         for rel in self.release['topology']['relations']:
             lhs = self._normalize_relation(rel[0])

@@ -20,6 +20,7 @@ from deployer.utils import get_qualified_charm_url
 from deployer.utils import parse_constraints
 from deployer.action.importer import Importer
 from deployer.deployment import Deployment
+from jujuclient import EnvError
 
 
 class JujuLoggingDeployment(Deployment):
@@ -89,6 +90,19 @@ def deploy(s):
         os.mkdir(juju_home)
     try:
         importer.run()
+        # manually add the implicit relation between the orchestrator and
+        # the generated charms; this can't be done in the bundle because
+        # the orchestrator is not defined in the bundle
+        orchestrator = hookenv.service_name()
+        for service_name, service_data in bundle['cloudfoundry']['services'].items():
+            if not service_data['charm'].startswith('cs:'):
+                try:
+                    env.add_relation(orchestrator, service_name)
+                except EnvError as e:
+                    if e.message.endswith('relation already exists'):
+                        continue  # existing relations are ok, just skip
+                    else:
+                        raise
     finally:
         env.close()
 
