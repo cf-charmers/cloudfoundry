@@ -1,9 +1,9 @@
 import unittest
 import mock
 
+from charmhelpers.core import services
 from cloudfoundry import contexts
 from cloudfoundry import tasks
-from cloudfoundry import templating
 
 
 class TestTasks(unittest.TestCase):
@@ -29,21 +29,75 @@ class TestTasks(unittest.TestCase):
                                             'charm_dir/files/' +
                                             'bosh-template-1.2611.0.pre.gem'])
 
+    @mock.patch('os.remove')
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('hashlib.md5')
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.host.mkdir')
     @mock.patch('cloudfoundry.tasks.tarfile.open')
     @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_job_artifacts(self, OrchRelation, get_job_path, urlretrieve, taropen):
-        OrchRelation.return_value = {'cf_release': 'version',
-                                     'artifacts_url': 'http://url'}
+    def test_fetch_job_artifacts(self, OrchRelation, get_job_path, urlretrieve,
+                                 taropen, mkdir, mopen, md5, log, remove):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
+        urlretrieve.return_value = (None, {'ETag': '"deadbeef"'})
+        mopen.return_value.__enter__().read.return_value = 'read'
+        md5.return_value.hexdigest.return_value = 'deadbeef'
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
         urlretrieve.assert_called_once_with(
-            'http://url/version/amd64/job_name',
+            'http://url/cf-version/amd64/job_name',
             'job_path/job_name.tgz')
+        md5.assert_called_once_with('read')
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
+
+    @mock.patch('os.remove')
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('hashlib.md5')
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.host.mkdir')
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_job_artifacts_missing_checksum(
+            self, OrchRelation, get_job_path, urlretrieve,
+            taropen, mkdir, mopen, md5, log, remove):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
+        get_job_path.return_value = 'job_path'
+        urlretrieve.return_value = (None, {})
+        mopen.return_value.__enter__().read.return_value = 'read'
+        md5.return_value.hexdigest.return_value = 'deadbeef'
+        self.assertRaises(AssertionError, tasks.fetch_job_artifacts, 'job_name')
+        assert not taropen.called
+        remove.assert_called_once_with('job_path/job_name.tgz')
+
+    @mock.patch('os.remove')
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('hashlib.md5')
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.host.mkdir')
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_job_artifacts_checksum_mismatch(
+            self, OrchRelation, get_job_path, urlretrieve,
+            taropen, mkdir, mopen, md5, log, remove):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
+        get_job_path.return_value = 'job_path'
+        urlretrieve.return_value = (None, {'ETag': '"ca11ab1e"'})
+        mopen.return_value.__enter__().read.return_value = 'read'
+        md5.return_value.hexdigest.return_value = 'deadbeef'
+        self.assertRaises(AssertionError, tasks.fetch_job_artifacts, 'job_name')
+        assert not taropen.called
+        remove.assert_called_once_with('job_path/job_name.tgz')
 
     @mock.patch('cloudfoundry.tasks.tarfile.open')
     @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
@@ -51,7 +105,8 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_fetch_job_artifacts_same_version(self, OrchRelation, get_job_path, exists, urlretrieve, taropen):
-        OrchRelation.return_value = {'cf_release': 'version', 'artifacts_url': 'http://url'}
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
         exists.return_value = True
         tasks.fetch_job_artifacts('job_name')
@@ -66,10 +121,13 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_install_job_packages(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
         get_job_path.return_value = 'job_path'
-        OrchRelation.return_value = {'cf_release': 'version'}
-        exists.return_value = False
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
+        exists.side_effect = [False, True]
         tasks.install_job_packages('job_name')
-        exists.assert_called_once_with('/var/vcap/packages/version/job_name')
+        self.assertEqual(exists.call_args_list, [
+            mock.call('/var/vcap/packages/version/job_name'),
+            mock.call('/var/vcap/packages/job_name'),
+        ])
         copytree.assert_called_once_with(
             'job_path/packages', '/var/vcap/packages/version/job_name')
         unlink.assert_called_once_with('/var/vcap/packages/job_name')
@@ -83,7 +141,7 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_install_job_packages_same_version(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
         get_job_path.return_value = 'job_path'
-        OrchRelation.return_value = {'cf_release': 'version'}
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         exists.return_value = True
         tasks.install_job_packages('job_name')
         exists.assert_called_once_with('/var/vcap/packages/version/job_name')
@@ -93,7 +151,7 @@ class TestTasks(unittest.TestCase):
 
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_get_job_path(self, OrchRelation):
-        OrchRelation.return_value = {'cf_release': 'version'}
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         self.assertEqual(tasks.get_job_path('job_name'), 'charm_dir/jobs/version/job_name')
 
     @mock.patch('cloudfoundry.tasks.get_job_path')
@@ -124,10 +182,12 @@ class TestTasks(unittest.TestCase):
             'src1': 'dest1',
             'src2': 'dest2',
         }}
-        expected_callbacks = RubyTemplateCallback.side_effect = [
-            'callback1', 'callback2', 'callback3']
-        actual_callbacks = tasks.job_templates('job_name')
-        self.assertEqual(actual_callbacks, expected_callbacks)
+        manager = mock.Mock()
+        generated_callbacks = RubyTemplateCallback.side_effect = [
+            mock.Mock(), mock.Mock(services.ManagerCallback()), mock.Mock()]
+        tasks.job_templates(manager, 'job_name', 'event_name')
+        generated_callbacks[0].assert_called_once_with('job_name')
+        generated_callbacks[1].assert_called_once_with(manager, 'job_name', 'event_name')
         expected_calls = [
             mock.call('templates/src1', '/var/vcap/jobs/job_name/dest1',
                       templates_dir='charm_dir/jobs'),
@@ -149,7 +209,7 @@ class TestTasks(unittest.TestCase):
             'src2': 'dest2',
         }}
         relation_ids.return_value = []
-        services = tasks.build_service_block('router_v1')
+        services = tasks.build_service_block('router-v1')
         self.assertIsInstance(services[0]['provided_data'][0],
                               contexts.RouterRelation)
         self.assertIsInstance(services[0]['required_data'][0],
@@ -158,4 +218,4 @@ class TestTasks(unittest.TestCase):
                               contexts.NatsRelation)
         # Show that we converted to rubytemplatecallbacks
         self.assertIsInstance(services[0]['data_ready'][2],
-                              templating.RubyTemplateCallback)
+                              tasks.JobTemplates)

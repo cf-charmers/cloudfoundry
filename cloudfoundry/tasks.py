@@ -3,16 +3,18 @@ import subprocess
 import urllib
 import tarfile
 import shutil
+import hashlib
 import yaml
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
+from charmhelpers.core import services
 from charmhelpers import fetch
 from cloudfoundry import TEMPLATES_BASE_DIR
 from cloudfoundry import PACKAGES_BASE_DIR
 from cloudfoundry import contexts
-from cloudfoundry import services
 from cloudfoundry import templating
+from cloudfoundry.services import SERVICES
 
 
 def install_bosh_template_renderer():
@@ -25,18 +27,32 @@ def install_bosh_template_renderer():
 def fetch_job_artifacts(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
     job_path = get_job_path(job_name)
-    if os.path.exists(job_path):
-        return
-    host.mkdir(job_path)
+    job_archive = job_path+'/'+job_name+'.tgz'
     artifact_url = os.path.join(
         orchestrator_data['orchestrator'][0]['artifacts_url'],
-        orchestrator_data['orchestrator'][0]['cf_version'],
+        'cf-'+orchestrator_data['orchestrator'][0]['cf_version'],
         'amd64',  # TODO: Get this from somewhere...
         job_name)
-    job_archive = job_path+'/'+job_name+'.tgz'
-    urllib.urlretrieve(artifact_url, job_archive)
-    with tarfile.open(job_archive) as tgz:
-        tgz.extractall(job_path)
+    if os.path.exists(job_archive):
+        return
+    host.mkdir(job_path)
+    _, resp = urllib.urlretrieve(artifact_url, job_archive)
+    try:
+        assert 'ETag' in resp, (
+            'Error downloading artifacts from {}; '
+            'missing ETag (md5) checksum (invalid job?)'.format(artifact_url))
+        expected_md5 = resp['ETag'].strip('"')
+        with open(job_archive) as fp:
+            actual_md5 = hashlib.md5(fp.read()).hexdigest()
+        assert actual_md5 == expected_md5, (
+            'Error downloading artifacts from {}; '
+            'ETag (md5) checksum mismatch'.format(artifact_url))
+        with tarfile.open(job_archive) as tgz:
+            tgz.extractall(job_path)
+    except Exception as e:
+        hookenv.log(str(e), hookenv.ERROR)
+        os.remove(job_archive)
+        raise
 
 
 def install_job_packages(job_name):
@@ -47,7 +63,8 @@ def install_job_packages(job_name):
     if os.path.exists(versioned_path):
         return
     shutil.copytree(package_path, versioned_path)
-    os.unlink(dst_path)
+    if os.path.exists(dst_path):
+        os.unlink(dst_path)
     os.symlink(versioned_path, dst_path)
 
 
@@ -68,25 +85,30 @@ def load_spec(job_name):
         return yaml.safe_load(fp)
 
 
-def job_templates(job_name):
-    """
-    Uses the job spec to render the job's templates.
-    """
-    spec = load_spec(job_name)
-    callbacks = []
-    for src, dst in spec.get('templates', {}).iteritems():
+class JobTemplates(services.ManagerCallback):
+    def __call__(self, manager, job_name, event_name):
+        """
+        Uses the job spec to render the job's templates.
+        """
+        spec = load_spec(job_name)
+        callbacks = []
+        for src, dst in spec.get('templates', {}).iteritems():
+            callbacks.append(templating.RubyTemplateCallback(
+                os.path.join('templates', src),
+                os.path.join(TEMPLATES_BASE_DIR, job_name, dst),
+                templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
         callbacks.append(templating.RubyTemplateCallback(
-            os.path.join('templates', src),
-            os.path.join(TEMPLATES_BASE_DIR, job_name, dst),
+            'monit', '/etc/monit.d/{}.cfg'.format(job_name),
             templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
-    callbacks.append(templating.RubyTemplateCallback(
-        'monit', '/etc/monit.d/{}.cfg'.format(job_name),
-        templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
-    for callback in callbacks:
-        callback(job_name)
+        for callback in callbacks:
+            if isinstance(callback, services.ManagerCallback):
+                callback(manager, job_name, event_name)
+            else:
+                callback(job_name)
+job_templates = JobTemplates()
 
 
-def build_service_block(charm_name, services=services.SERVICES):
+def build_service_block(charm_name, services=SERVICES):
     service_def = services[charm_name]
     result = []
     for job in service_def.get('jobs', []):

@@ -195,7 +195,7 @@ class TestGenerator(unittest.TestCase):
             self.assertTrue(os.path.exists(
                 os.path.join(tmpdir, 'bundles.yaml')))
             self.assertTrue(os.path.exists(os.path.join(
-                tmpdir, 'trusty', 'cloud_controller_v1')))
+                tmpdir, 'trusty', 'cloud-controller-v1')))
 
 
 if __name__ == '__main__':
