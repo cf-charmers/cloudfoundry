@@ -34,11 +34,11 @@ test:
 test-all:
 	tox
 
-coverage:
-	coverage run --source charmgen setup.py test
-	coverage run -a --source cloudfoundry setup.py test
-	coverage report -m
-	coverage html
+coverage: test-all
+	.tox/py27/bin/coverage run --source charmgen setup.py test
+	.tox/py27/bin/coverage run -a --source cloudfoundry setup.py test
+	.tox/py27/bin/coverage report -m
+	.tox/py27/bin/coverage html
 	xdg-open htmlcov/index.html
 
 docs:
