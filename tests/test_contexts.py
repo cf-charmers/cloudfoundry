@@ -130,6 +130,12 @@ class TestRouterRelation(unittest.TestCase):
         self.assertEqual(contexts.RouterRelation().to_ip('foo'), '0.0.0.0')
 
     @mock.patch(CONTEXT + 'RouterRelation.get_data')
+    @mock.patch('subprocess.check_output')
+    def test_to_ip_none(self, mcheck_output, mget_data):
+        mcheck_output.return_value = ' foo.maas\n bar\n'
+        self.assertEqual(contexts.RouterRelation().to_ip('foo'), None)
+
+    @mock.patch(CONTEXT + 'RouterRelation.get_data')
     @mock.patch(CONTEXT + 'RouterRelation.to_ip')
     @mock.patch('charmhelpers.core.hookenv.unit_get')
     @mock.patch('charmhelpers.core.hookenv.config')
@@ -241,6 +247,95 @@ class TestStoredContext(unittest.TestCase):
         with self.assertRaises(OSError):
             contexts.StoredContext(file_name, {'key': 'initial_value'})
         os.unlink(file_name)
+
+
+class TestOrchestratorRelation(unittest.TestCase):
+    @mock.patch('charmhelpers.core.services.RelationContext.get_data', mock.Mock())
+    @mock.patch('charmhelpers.core.hookenv.unit_private_ip')
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_provide_data(self, config, upi):
+        config.return_value = {'cf_version': 170, 'domain': 'domain'}
+        upi.return_value = 'upi'
+        result = contexts.OrchestratorRelation().provide_data()
+        self.assertEqual(result, {
+            'artifacts_url': 'http://upi:8019',
+            'cf_version': 170,
+            'domain': 'domain',
+        })
+
+    @mock.patch('charmhelpers.core.services.RelationContext.get_data', mock.Mock())
+    @mock.patch('charmhelpers.core.hookenv.unit_private_ip')
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_provide_data_latest(self, config, upi):
+        config.return_value = {'cf_version': 'latest', 'domain': 'domain'}
+        upi.return_value = 'upi'
+        result = contexts.OrchestratorRelation().provide_data()
+        self.assertEqual(result, {
+            'artifacts_url': 'http://upi:8019',
+            'cf_version': 173,
+            'domain': 'domain',
+        })
+
+
+class TestJujuAPICredentials(unittest.TestCase):
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_not_ready(self, config):
+        config.return_value = {}
+        self.assertEqual(contexts.JujuAPICredentials(), {})
+
+    @mock.patch.object(contexts.JujuAPICredentials, 'get_api_address')
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_ready(self, config, gaa):
+        config.return_value = {'admin_secret': 'secret'}
+        gaa.return_value = 'address'
+        self.assertEqual(contexts.JujuAPICredentials(), {
+            'api_address': 'wss://address',
+            'api_password': 'secret',
+        })
+
+    @mock.patch('charmhelpers.core.hookenv.config', dict)
+    @mock.patch('os.getenv')
+    def test_get_api_address_env(self, getenv):
+        getenv.return_value = 'address something'
+        creds = contexts.JujuAPICredentials()
+        self.assertEqual(creds.get_api_address(), 'address')
+
+    @mock.patch('charmhelpers.core.hookenv.config', dict)
+    @mock.patch('os.getenv', mock.Mock(return_value=None))
+    @mock.patch('os.listdir')
+    @mock.patch('charmhelpers.core.hookenv.charm_dir')
+    def test_get_api_address_not_found(self, charm_dir, listdir):
+        charm_dir.return_value = '/agent_dir/unit_dir/charm_dir'
+        listdir.return_value = ['foo', 'bar']
+        creds = contexts.JujuAPICredentials()
+        self.assertRaises(IOError, creds.get_api_address)
+        listdir.assert_called_once_with('/agent_dir')
+
+    @mock.patch('charmhelpers.core.hookenv.config', dict)
+    @mock.patch('os.getenv', mock.Mock(return_value=None))
+    @mock.patch('yaml.load')
+    @mock.patch('cloudfoundry.contexts.open', create=True)
+    @mock.patch('os.listdir')
+    def test_get_api_address_found(self, listdir, mopen, yload):
+        listdir.return_value = ['unit-foo', 'machine-bar']
+        creds = contexts.JujuAPICredentials()
+        yload.return_value = {'apiinfo': {'addrs': ['address', 'something']}}
+        self.assertEqual(creds.get_api_address('/agent/unit'), 'address')
+        listdir.assert_called_once_with('/agent')
+        mopen.assert_called_once_with('/agent/machine-bar/agent.conf')
+
+
+class TestArtifactCache(unittest.TestCase):
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_not_ready(self, config):
+        config.return_value = {}
+        self.assertEqual(contexts.ArtifactsCache(), {})
+
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_ready(self, config):
+        config.return_value = {'artifacts_url': 'url'}
+        self.assertEqual(contexts.ArtifactsCache(), {'artifacts_url': 'url'})
+
 
 if __name__ == '__main__':
     unittest.main()

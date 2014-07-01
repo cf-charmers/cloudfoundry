@@ -211,7 +211,6 @@ class JujuAPICredentials(dict):
             raise IOError('Juju agent configuration file not found.')
         contents = yaml.load(open(agent_conf))
         return contents['apiinfo']['addrs'][0]
-        return api_addresses.split()[0]
 
 
 class ArtifactsCache(dict):

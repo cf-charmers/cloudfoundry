@@ -88,19 +88,19 @@ class TestGenerator(unittest.TestCase):
         g.select_release(173)
         cc = g.release['topology']['services'][0]
         with tempdir() as tmpdir:
-            g.generate_charm(cc, tmpdir)
+            g.generate_charm(cc, os.path.join(tmpdir, 'build'))
             self.assertTrue(os.path.exists(
-                os.path.join(tmpdir, 'metadata.yaml')))
+                os.path.join(tmpdir, 'build', 'metadata.yaml')))
             self.assertTrue(os.path.isdir(
-                os.path.join(tmpdir, 'hooks')))
+                os.path.join(tmpdir, 'build', 'hooks')))
             self.assertTrue(os.path.islink(
-                os.path.join(tmpdir, 'hooks', 'db-relation-changed')))
+                os.path.join(tmpdir, 'build', 'hooks', 'db-relation-changed')))
             self.assertTrue(os.path.isfile(
-                os.path.join(tmpdir, 'hooks', 'entry.py')))
+                os.path.join(tmpdir, 'build', 'hooks', 'entry.py')))
             self.assertTrue(os.path.isfile(
-                os.path.join(tmpdir, 'hooks', 'entry.py')))
+                os.path.join(tmpdir, 'build', 'hooks', 'entry.py')))
             self.assertTrue(os.access(
-                os.path.join(tmpdir, 'hooks', 'entry.py'),
+                os.path.join(tmpdir, 'build', 'hooks', 'entry.py'),
                 os.R_OK | os.X_OK))
 
     def test_build_charm_ref(self):
@@ -149,8 +149,8 @@ class TestGenerator(unittest.TestCase):
         g = CharmGenerator(RELEASES, SERVICES)
         g.select_release(173)
         with tempdir() as tmpdir:
-            g.generate_deployment(tmpdir)
-            bundle = os.path.join(tmpdir, 'bundles.yaml')
+            g.generate_deployment(os.path.join(tmpdir, 'build'))
+            bundle = os.path.join(tmpdir, 'build', 'bundles.yaml')
             self.assertTrue(os.path.exists(bundle))
             with open(bundle) as fp:
                 data = yaml.safe_load(fp)
@@ -182,6 +182,7 @@ class TestGenerator(unittest.TestCase):
     def test_generate_missing_service(self):
         releases = [{'releases': (1, 1), 'topology': {
             'services': [('missing', '??')],
+            'relations': [],
         }}]
         services = {}
         g = CharmGenerator(releases, services)
