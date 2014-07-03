@@ -90,21 +90,34 @@ class JobTemplates(services.ManagerCallback):
         """
         Uses the job spec to render the job's templates.
         """
+        version = contexts.OrchestratorRelation()['orchestrator'][0]['cf_version']
+        versioned_src_dir = os.path.join(hookenv.charm_dir(), 'jobs', version, job_name)
+        dst_dir = os.path.join(TEMPLATES_BASE_DIR, job_name)
+        versioned_dst_dir = os.path.join(TEMPLATES_BASE_DIR, version, job_name)
+        templates_dir = os.path.join(versioned_src_dir, 'templates')
         spec = load_spec(job_name)
         callbacks = []
         for src, dst in spec.get('templates', {}).iteritems():
+            versioned_dst = os.path.join(versioned_dst_dir, dst)
             callbacks.append(templating.RubyTemplateCallback(
-                os.path.join('templates', src),
-                os.path.join(TEMPLATES_BASE_DIR, job_name, dst),
-                templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
+                src, versioned_dst,
+                templates_dir=templates_dir))
+        versioned_monit_dst = os.path.join(versioned_dst_dir, 'monit', job_name+'.cfg')
         callbacks.append(templating.RubyTemplateCallback(
-            'monit', '/etc/monit.d/{}.cfg'.format(job_name),
-            templates_dir=os.path.join(hookenv.charm_dir(), 'jobs')))
+            'monit', versioned_monit_dst,
+            templates_dir=versioned_src_dir))
         for callback in callbacks:
             if isinstance(callback, services.ManagerCallback):
                 callback(manager, job_name, event_name)
             else:
                 callback(job_name)
+        if os.path.exists(dst_dir):
+            os.unlink(dst_dir)
+        os.symlink(versioned_dst_dir, dst_dir)
+        monit_dst = '/etc/monit.d/{}.cfg'.format(job_name)
+        if os.path.exists(monit_dst):
+            os.unlink(monit_dst)
+        os.symlink(versioned_monit_dst, monit_dst)
 job_templates = JobTemplates()
 
 

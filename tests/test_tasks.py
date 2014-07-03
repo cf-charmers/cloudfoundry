@@ -175,13 +175,19 @@ class TestTasks(unittest.TestCase):
             mock.call('job_path2/spec'),
         ])
 
+    @mock.patch('os.path.exists')
+    @mock.patch('os.symlink')
+    @mock.patch('os.unlink')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     @mock.patch('cloudfoundry.tasks.load_spec')
     @mock.patch('cloudfoundry.templating.RubyTemplateCallback')
-    def test_job_templates(self, RubyTemplateCallback, load_spec):
+    def test_job_templates(self, RubyTemplateCallback, load_spec, OrchRelation, unlink, symlink, exists):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         load_spec.return_value = {'templates': {
             'src1': 'dest1',
             'src2': 'dest2',
         }}
+        exists.return_value = True
         manager = mock.Mock()
         generated_callbacks = RubyTemplateCallback.side_effect = [
             mock.Mock(), mock.Mock(services.ManagerCallback()), mock.Mock()]
@@ -189,17 +195,25 @@ class TestTasks(unittest.TestCase):
         generated_callbacks[0].assert_called_once_with('job_name')
         generated_callbacks[1].assert_called_once_with(manager, 'job_name', 'event_name')
         expected_calls = [
-            mock.call('templates/src1', '/var/vcap/jobs/job_name/dest1',
-                      templates_dir='charm_dir/jobs'),
-            mock.call('templates/src2', '/var/vcap/jobs/job_name/dest2',
-                      templates_dir='charm_dir/jobs'),
-            mock.call('monit', '/etc/monit.d/job_name.cfg',
-                      templates_dir='charm_dir/jobs'),
+            mock.call('src1', '/var/vcap/jobs/version/job_name/dest1',
+                      templates_dir='charm_dir/jobs/version/job_name/templates'),
+            mock.call('src2', '/var/vcap/jobs/version/job_name/dest2',
+                      templates_dir='charm_dir/jobs/version/job_name/templates'),
+            mock.call('monit', '/var/vcap/jobs/version/job_name/monit/job_name.cfg',
+                      templates_dir='charm_dir/jobs/version/job_name'),
         ]
         for expected_call in expected_calls:
             self.assertIn(expected_call, RubyTemplateCallback.call_args_list)
         self.assertEqual(RubyTemplateCallback.call_count, len(expected_calls))
         load_spec.assert_called_once_with('job_name')
+        self.assertEqual(unlink.call_args_list, [
+            mock.call('/var/vcap/jobs/job_name'),
+            mock.call('/etc/monit.d/job_name.cfg'),
+        ])
+        self.assertEqual(symlink.call_args_list, [
+            mock.call('/var/vcap/jobs/version/job_name', '/var/vcap/jobs/job_name'),
+            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit.d/job_name.cfg'),
+        ])
 
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
     @mock.patch('cloudfoundry.tasks.load_spec')
