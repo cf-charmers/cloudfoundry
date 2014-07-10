@@ -3,6 +3,7 @@
 import argparse
 import os
 import re
+import sys
 import yaml
 
 import git
@@ -122,6 +123,7 @@ def run_rev(repo, rev, options):
         return
     repo.head.reference = ref
     repo.head.reset(index=True, working_tree=True)
+    import pdb; pdb.set_trace()
     if options.verbose:
         print(ref.name)
 
@@ -132,6 +134,7 @@ def run_rev(repo, rev, options):
         d = os.path.join(options.directory, d)
         if os.path.isdir(d):
             dirs.append(d)
+    summary = len(dirs)
     for d in dirs:
         job_name = os.path.basename(d)
         spec_path = os.path.join(d, 'spec')
@@ -151,6 +154,7 @@ def run_rev(repo, rev, options):
                  relations=relations,
                  revision=ref.name),
             fp, default_flow_style=False)
+    return summary
 
 
 def main():
@@ -160,8 +164,13 @@ def main():
     revs = parse_revs(options.revs)
     if revs == []:
         revs = [None]
+    summary = []
     for rev in revs:
-        run_rev(repo, rev, options)
+        result = run_rev(repo, rev, options)
+        if rev is not None and result is not None:
+            summary.append([rev, result])
+
+    yaml.safe_dump(summary, sys.stdout)
 
 
 if __name__ == '__main__':

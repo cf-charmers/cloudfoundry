@@ -9,6 +9,7 @@ from getrels import parse_revs
 
 def setup():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--summary', action='store_true')
     parser.add_argument('revs', nargs="+")
     options = parser.parse_args()
 
@@ -23,7 +24,22 @@ def setup():
 
         with open(r) as fp:
             data.append(yaml.safe_load(fp))
-    return data
+    return options, data
+
+
+def summarize(a, b):
+    print "{}\t{}\t{}\t{}".format(a['revision'][1:],
+                                  len(a['interfaces']),
+                                  len(a['relations']),
+                                  b['revision'])
+    services = set(a['interfaces'].keys()).symmetric_difference(
+        set(b['interfaces'].keys()))
+
+    services.update(set(a['relations'].keys()).symmetric_difference(
+        set(b['relations'].keys())))
+
+    if services:
+        print ' '.join(sorted(services))
 
 
 def diffkey(a, b, key=None):
@@ -48,14 +64,20 @@ def diffkey(a, b, key=None):
 
 
 def main():
-    data = setup()
+    options, data = setup()
     last = len(data) - 1
     for i, a in enumerate(data):
         if i + 1 > last:
             break
         b = data[i + 1]
-        diffkey(a, b, 'interfaces')
-        diffkey(a, b, 'relations')
+        if options.summary:
+            summarize(a, b)
+        else:
+            diffkey(a, b, 'interfaces')
+            diffkey(a, b, 'relations')
+
+    if len(data) > 2:
+        summarize(data[0], data[-1])
 
 if __name__ == '__main__':
     main()
