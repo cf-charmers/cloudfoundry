@@ -86,9 +86,8 @@ def load_spec(job_name):
 
 
 class JobTemplates(services.ManagerCallback):
-    def __init__(self, mapping, spec):
+    def __init__(self, mapping):
         self.mapping = mapping
-        self.spec = spec
 
     def __call__(self, manager, job_name, event_name):
         """
@@ -104,11 +103,11 @@ class JobTemplates(services.ManagerCallback):
         for src, dst in spec.get('templates', {}).iteritems():
             versioned_dst = os.path.join(versioned_dst_dir, dst)
             callbacks.append(templating.RubyTemplateCallback(
-                src, versioned_dst, self.mapping, self.spec,
+                src, versioned_dst, self.mapping, spec,
                 templates_dir=templates_dir))
         versioned_monit_dst = os.path.join(versioned_dst_dir, 'monit', job_name+'.cfg')
         callbacks.append(templating.RubyTemplateCallback(
-            'monit', versioned_monit_dst, self.mapping, self.spec,
+            'monit', versioned_monit_dst, self.mapping, spec,
             templates_dir=versioned_src_dir))
         for callback in callbacks:
             if isinstance(callback, services.ManagerCallback):
@@ -137,7 +136,7 @@ def build_service_block(charm_name, services=SERVICES):
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,
-                job_templates(job['mapping'], load_spec(job['job_name'])),
+                job_templates(job['mapping']),
             ],
         }
         result.append(job_def)

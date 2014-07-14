@@ -183,7 +183,7 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.templating.RubyTemplateCallback')
     def test_job_templates(self, RubyTemplateCallback, load_spec, OrchRelation, unlink, symlink, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        load_spec.return_value = {'templates': {
+        spec = load_spec.return_value = {'templates': {
             'src1': 'dest1',
             'src2': 'dest2',
         }}
@@ -191,15 +191,15 @@ class TestTasks(unittest.TestCase):
         manager = mock.Mock()
         generated_callbacks = RubyTemplateCallback.side_effect = [
             mock.Mock(), mock.Mock(services.ManagerCallback()), mock.Mock()]
-        tasks.job_templates('map', 'spec')(manager, 'job_name', 'event_name')
+        tasks.job_templates('map')(manager, 'job_name', 'event_name')
         generated_callbacks[0].assert_called_once_with('job_name')
         generated_callbacks[1].assert_called_once_with(manager, 'job_name', 'event_name')
         expected_calls = [
-            mock.call('src1', '/var/vcap/jobs/version/job_name/dest1', 'map', 'spec',
+            mock.call('src1', '/var/vcap/jobs/version/job_name/dest1', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name/templates'),
-            mock.call('src2', '/var/vcap/jobs/version/job_name/dest2', 'map', 'spec',
+            mock.call('src2', '/var/vcap/jobs/version/job_name/dest2', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name/templates'),
-            mock.call('monit', '/var/vcap/jobs/version/job_name/monit/job_name.cfg', 'map', 'spec',
+            mock.call('monit', '/var/vcap/jobs/version/job_name/monit/job_name.cfg', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name'),
         ]
         for expected_call in expected_calls:
@@ -216,12 +216,7 @@ class TestTasks(unittest.TestCase):
         ])
 
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    @mock.patch('cloudfoundry.tasks.load_spec')
-    def test_build_service_block(self, load_spec, relation_ids):
-        load_spec.return_value = {'templates': {
-            'src1': 'dest1',
-            'src2': 'dest2',
-        }}
+    def test_build_service_block(self, relation_ids):
         relation_ids.return_value = []
         services = tasks.build_service_block('router-v1')
         self.assertIsInstance(services[0]['provided_data'][0],
