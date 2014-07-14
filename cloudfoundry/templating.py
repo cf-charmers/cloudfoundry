@@ -6,6 +6,7 @@ import subprocess
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
+from cloudfoundry.mapper import NestedDict, property_mapper
 
 
 def render_erb(source, target, context, owner='root', group='root', perms=0444, templates_dir=None):
@@ -49,15 +50,24 @@ class RubyTemplateCallback(services.TemplateCallback):
     """
     Callback class that will render a Ruby template, for use as a ready action.
     """
-    def __init__(self, source, target, owner='root', group='root', perms=0444, templates_dir=None):
+    def __init__(self, source, target, mapping, spec, owner='root', group='root', perms=0444, templates_dir=None):
         super(RubyTemplateCallback, self).__init__(source, target, owner, group, perms)
         self.templates_dir = templates_dir
+        self.mapping = mapping
+        self.defaults = NestedDict()
+        self.defaults.update({k: v['default'] for k, v in spec['properties'].iteritems()})
 
     def collect_data(self, manager, service_name):
         service = manager.get_service(service_name)
         data = {}
         for data_source in service.get('required_data', []):
             data = deepmerge(data, data_source)
+        defaults = {
+            'networks': {'apps': {'ip': hookenv.unit_get('private-address')}},
+            'properties': NestedDict(self.defaults),
+        }
+        data = property_mapper(self.mapping, data)
+        data = deepmerge(defaults, data)
         return data
 
     def __call__(self, manager, service_name, event_name):

@@ -7,7 +7,11 @@ class NestedDict(dict):
         o = self
         for part in key[:-1]:
             o = o.setdefault(part, {})
-        o[key[-1]] = value
+        dict.__setitem__(o, key[-1], value)
+
+    def update(self, other):
+        for k, v in other.items():
+            self[k] = v
 
 
 def flatten(data):
@@ -30,7 +34,11 @@ def property_mapper(property_expressions, data):
     for k, v in data.items():
         for input_re, dest_path in property_expressions:
             if re.match(input_re, k):
-                target = re.sub(input_re, dest_path, k)
-                result[target] = v
+                if isinstance(dest_path, basestring):
+                    target = re.sub(input_re, dest_path, k)
+                    result[target] = v
+                elif callable(dest_path):
+                    new_data = dest_path(k, v)
+                    result.update(new_data)
                 break
     return result

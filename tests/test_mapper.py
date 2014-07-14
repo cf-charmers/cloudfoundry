@@ -3,7 +3,7 @@
 
 import unittest
 
-from charmgen.mapper import property_mapper, flatten, NestedDict
+from cloudfoundry.mapper import property_mapper, flatten, NestedDict
 
 
 class TestMapper(unittest.TestCase):

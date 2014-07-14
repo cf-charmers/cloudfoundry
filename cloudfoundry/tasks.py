@@ -86,6 +86,10 @@ def load_spec(job_name):
 
 
 class JobTemplates(services.ManagerCallback):
+    def __init__(self, mapping, spec):
+        self.mapping = mapping
+        self.spec = spec
+
     def __call__(self, manager, job_name, event_name):
         """
         Uses the job spec to render the job's templates.
@@ -100,11 +104,11 @@ class JobTemplates(services.ManagerCallback):
         for src, dst in spec.get('templates', {}).iteritems():
             versioned_dst = os.path.join(versioned_dst_dir, dst)
             callbacks.append(templating.RubyTemplateCallback(
-                src, versioned_dst,
+                src, versioned_dst, self.mapping, self.spec,
                 templates_dir=templates_dir))
         versioned_monit_dst = os.path.join(versioned_dst_dir, 'monit', job_name+'.cfg')
         callbacks.append(templating.RubyTemplateCallback(
-            'monit', versioned_monit_dst,
+            'monit', versioned_monit_dst, self.mapping, self.spec,
             templates_dir=versioned_src_dir))
         for callback in callbacks:
             if isinstance(callback, services.ManagerCallback):
@@ -118,7 +122,7 @@ class JobTemplates(services.ManagerCallback):
         if os.path.exists(monit_dst):
             os.unlink(monit_dst)
         os.symlink(versioned_monit_dst, monit_dst)
-job_templates = JobTemplates()
+job_templates = JobTemplates
 
 
 def build_service_block(charm_name, services=SERVICES):
@@ -133,7 +137,7 @@ def build_service_block(charm_name, services=SERVICES):
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,
-                job_templates,
+                job_templates(job['mapping'], load_spec(job['job_name'])),
             ],
         }
         result.append(job_def)
