@@ -1,10 +1,10 @@
-===============================
+==================
 CF Charm Generator
-===============================
+==================
 
 .. image:: https://badge.fury.io/py/charmgen.png
     :target: http://badge.fury.io/py/charmgen
-    
+
 .. image:: https://travis-ci.org/bcsaller/charmgen.png?branch=master
         :target: https://travis-ci.org/bcsaller/charmgen
 
@@ -12,7 +12,7 @@ CF Charm Generator
         :target: https://pypi.python.org/pypi/charmgen
 
 
-A Juju charm to generate CF charms from metadata and 
+A Juju charm to generate CF charms from metadata and
 manage them at runtime.
 
 * Free software: BSD license
@@ -45,4 +45,6 @@ in various tagged versions of cf-release.
 
 
 * TODO
-  Attempt to generate service definitions and relation classes from cf-release.
+
+  Attempt to generate service definitions and relation classes from
+  cf-release.
