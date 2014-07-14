@@ -69,7 +69,7 @@ SERVICES = {
         }]
     },
 
-    'cc_worker-v1':{
+    'cc-worker-v1':{
         'summary': "Worker for cc",
         'description': '',
         'jobs': [
@@ -143,7 +143,7 @@ SERVICES = {
         }],
     },
 
-    'nats_stream_forwarder-v1':{},
+    'nats-stream-forwarder-v1':{},
 
     'router-v1': {
         'service': 'router',
@@ -181,11 +181,11 @@ SERVICES = {
 
     'loggregator-v1': {},
 
-    'loggregator_trafficcontroller-v1': {},
+    'loggregator-trafficcontroller-v1': {},
 
     'hm9000-v1': {},
 
-    'syslog_aggregator-v1': {},
+    'syslog-aggregator-v1': {},
 
     'haproxy-v1': {}
 }
