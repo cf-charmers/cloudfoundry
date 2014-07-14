@@ -42,9 +42,9 @@ SERVICES = {
         'jobs': [{
             'job_name': 'gorouter',
             'ports': [80],
-            'mapping': {
-                'router.(\w+)': r'properties.router.\1'
-            },
+            'mapping': [
+                ('router.(\w+)', r'properties.router.\1'),
+            ],
             'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LogRouterRelation],
