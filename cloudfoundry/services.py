@@ -3,7 +3,7 @@ import contexts
 __all__ = ['SERVICES']
 
 SERVICES = {
-    'cc-clock-v1': {
+    'cloud-controller-clock-v1': {
         'summary': "A shared clock",
         'description': '',
         'jobs':[{
@@ -32,7 +32,7 @@ SERVICES = {
 
     },
 
-    'cc-v1': {
+    'cloud-controller-v1': {
         'summary': 'CF Cloud Controller, the brains of the operation',
         'description': '',
         'jobs': [{
@@ -69,7 +69,7 @@ SERVICES = {
         }]
     },
 
-    'cc-worker-v1':{
+    'cloud-controller-worker-v1':{
         'summary': "Worker for cc",
         'description': '',
         'jobs': [
