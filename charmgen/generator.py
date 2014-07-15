@@ -3,11 +3,12 @@ import argparse
 import os
 import shutil
 from itertools import chain
+import inspect
 
 import pkg_resources
 import yaml
 
-from cloudfoundry.contexts import OrchestratorRelation
+from cloudfoundry import contexts
 
 
 class CharmGenerator(object):
@@ -52,16 +53,18 @@ class CharmGenerator(object):
             description=service.get('description', ''),
             author=self.author,
             requires={
-                OrchestratorRelation.name: dict(
-                    interface=OrchestratorRelation.interface)
+                contexts.OrchestratorRelation.name: dict(
+                    interface=contexts.OrchestratorRelation.interface)
             })
         provides = {}
         for job in service.get('jobs', []):
             for relation in job.get('provided_data', []):
-                provides[relation.name] = dict(interface=relation.interface)
+                if inspect.isclass(relation) and issubclass(relation, contexts.RelationContext):
+                    provides[relation.name] = dict(interface=relation.interface)
             for relation in job.get('required_data', []):
-                result['requires'][relation.name] = dict(
-                    interface=relation.interface)
+                if inspect.isclass(relation) and issubclass(relation, contexts.RelationContext):
+                    result['requires'][relation.name] = dict(
+                        interface=relation.interface)
         if provides:
             result['provides'] = provides
 
