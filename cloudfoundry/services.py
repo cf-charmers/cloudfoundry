@@ -23,9 +23,9 @@ SERVICES = {
                              contexts.LoggregatorRelation,
                              contexts.MysqlRelation,
                              contexts.CloudControllerRelation,
-                             #TODO: context.LoginRelation
-                             #TODO: context.UAARelation,
-                             #TODO: context.SyslogAggregatorRelation
+                             contexts.LoginRelation,
+                             contexts.UAARelation,
+                             contexts.SyslogAggregatorRelation
                              # diego is coming
                 ]
             }],
@@ -262,9 +262,9 @@ SERVICES = {
                        ('nats.(\w+)', r'properties.nats.\1')),
             'provided_data':[],
             'required_data':[contexts.NatsRelation,
-                             contexts.CloudControllerRelation
-                             #TODO: context.EtcdRelation
-                             #TODO: context.SyslogAggregatorRelation
+                             contexts.CloudControllerRelation,
+                             contexts.EtcdRelation
+                             #TODO: contexts.SyslogAggregatorRelation
                             ]
             }]
         },

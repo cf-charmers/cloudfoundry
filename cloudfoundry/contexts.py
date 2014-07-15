@@ -70,6 +70,30 @@ class MysqlRelation(RelationContext):
                 unit['dsn'] = self.dsn_template.format(**unit)
 
 
+class ClockRelation(RelationContext):
+    name = 'clock'
+    interface = 'clock'
+    required_keys = []
+
+
+class UAARelation(RelationContext):
+    name = 'uaa'
+    interface = 'http'
+    required_keys = []
+
+
+class SyslogAggregatorRelation(RelationContext):
+    name = 'syslog_aggregator'
+    interface = 'syslog'
+    required_keys = []
+
+
+class LoginRelation(RelationContext):
+    name = 'login'
+    interface = 'http'
+    required_keys = []
+
+
 class RouterRelation(RelationContext):
     name = 'router'
     interface = 'router'
