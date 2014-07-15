@@ -48,9 +48,6 @@ SERVICES = {
                 #TODO see: logger_endpoint.. may need to extend loggregator context
                 'loggregator_endpoint.(\w+)':r'properties.loggregator_endpoint.\1'
             },
-            "provided_data": [contexts.CloudControllerRelation],
-            'job_name': 'cf-cloudcontroller-ng',
-            'mapping': (),
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.RouterRelation,
@@ -125,7 +122,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'dea_logging_agent',
-            'mapping': (('dea_logging_agent.(\w+)', r'properties'),),
+            'mapping': (('dea_logging_agent.(\w+)', r'properties.\1'),),
             'required_data': [
                 contexts.NatsRelation,
                 contexts.RouterRelation
