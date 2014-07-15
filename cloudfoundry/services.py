@@ -238,6 +238,7 @@ SERVICES = {
         'jobs': [{
             'job_name': 'loggregator_trafficcontroller',
             'mapping':(('loggregator.(\w+)', r'properties.loggregator.\1'), # needs callable
+                       ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                        ('nats.(\w+)', r'properties.nats.\1'), # needs callable
                        ),
             'provided_data': [],
@@ -254,9 +255,16 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'hm9000',
-            'mapping':(),
+            'mapping':(('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
+                       ('cc.(\w+)', r'properties.cc.\1'),
+                       ('etcd.(\w+)', r'properties.etcd.\1'),
+                       ('nats.(\w+)', r'properties.nats.\1')),
             'provided_data':[],
-            'required_data':[]
+            'required_data':[contexts.NatsRelation,
+                             contexts.CloudControllerRelation
+                             #TODO: context.EtcdRelation
+                             #TODO: context.SyslogAggregatorRelation
+                            ]
             }]
         },
 
@@ -264,7 +272,8 @@ SERVICES = {
         'jobs': [{
             'job_name': 'syslog_aggregator',
             'mapping':(),
-            'provided_data':[],
+            'provided_data':[#TODO: context.SyslogAggregatorRelation
+                            ],
             'required_data':[]
             }]
         },
