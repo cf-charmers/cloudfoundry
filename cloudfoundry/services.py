@@ -144,7 +144,7 @@ SERVICES = {
     },
 
     'nats-stream-forwarder-v1':{
-        'service':'nats-sf',
+        'service':'nats-stream-forwarder',
         'summary': 'NATS stream forwarder',
         'description': '',
         'jobs':[{
