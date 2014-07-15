@@ -94,6 +94,12 @@ class LoginRelation(RelationContext):
     required_keys = []
 
 
+class DEARelation(RelationContext):
+    name = 'dea'
+    interface = 'dea'
+    required_keys = []
+
+
 class RouterRelation(RelationContext):
     name = 'router'
     interface = 'router'

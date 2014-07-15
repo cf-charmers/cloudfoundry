@@ -54,11 +54,11 @@ SERVICES = {
                               contexts.RouterRelation,
                               contexts.MysqlRelation,
                               contexts.LoggregatorRelation,
-                              #TODO: context.ClockRelation,
-                              #TODO: context.UAARelation,
-                              #TODO: context.DEARelation
-                              #TODO: context.LoginRelation
-                              #TODO: context.SyslogAggregatorRelation
+                              contexts.ClockRelation,
+                              contexts.UAARelation,
+                              contexts.DEARelation,
+                              contexts.LoginRelation,
+                              contexts.SyslogAggregatorRelation
                               # diego is coming
                               # contexts.BundleConfig,
                               # All job context keys
