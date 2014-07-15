@@ -8,16 +8,16 @@ SERVICES = {
         'description': '',
         'jobs':[{
             'job_name': 'cloud_controller_clock',
-            'mapping': {
-                'nats.(\w+)': r'properties.nats.\1', #TODO: use callback for list
-                'db.(\w+)': r'properties.ccdb.\1',
-                'uaa.(\w+)': r'properties.uaa.\1',
-                'cc.(\w+)': r'properties.cc.\1',
-                'login.(\w+)': r'properties.login.\1',
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
+            'mapping': (
+                ('nats.(\w+)', r'properties.nats.\1'), #TODO, use callback for list
+                ('db.(\w+)', r'properties.ccdb.\1'),
+                ('uaa.(\w+)', r'properties.uaa.\1'),
+                ('cc.(\w+)', r'properties.cc.\1'),
+                ('login.(\w+)', r'properties.login.\1'),
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 #TODO see: logger_endpoint.. may need to extend loggregator context
-                'loggregator_endpoint.(\w+)':r'properties.loggregator_endpoint.\1'
-                },
+                ('loggregator_endpoint.(\w+)',
+                 r'properties.loggregator_endpoint.\1')),
             'provided_data':[], #TODO: context.ClockRelation
             'required_data':[contexts.NatsRelation,
                              contexts.LoggregatorRelation,
@@ -37,17 +37,17 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cf_cloudcontroller_ng',
-            'mapping': {
-                'cc.(\w+)': r'properties.cc.\1',
-                'nats.(\w+)': r'properties.nats.\1', #TODO: use callback for list
-                'uaa.(\w+)': r'properties.uaa.\1',
-                'db.(\w+)': r'properties.ccdb.\1',
-                'dea.(\w+)': r'properties.dea_next.\1',
-                'login.(\w+)': r'properties.login.\1',
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
+            'mapping': (
+                ('cc.(\w+)', r'properties.cc.\1'),
+                ('nats.(\w+)', r'properties.nats.\1'), #TODO: use callback for list
+                ('uaa.(\w+)', r'properties.uaa.\1'),
+                ('db.(\w+)', r'properties.ccdb.\1'),
+                ('dea.(\w+)', r'properties.dea_next.\1'),
+                ('login.(\w+)', r'properties.login.\1'),
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 #TODO see: logger_endpoint.. may need to extend loggregator context
-                'loggregator_endpoint.(\w+)':r'properties.loggregator_endpoint.\1'
-            },
+                ('loggregator_endpoint.(\w+)',
+                 r'properties.loggregator_endpoint.\1')),
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.RouterRelation,
@@ -71,16 +71,17 @@ SERVICES = {
         'description': '',
         'jobs': [
             {'job_name': 'cloud_controller_worker',
-             'mapping': {
-                'nats.(\w+)': r'properties.nats.\1', #TODO: use callback for list
-                'uaa.(\w+)': r'properties.uaa.\1',
-                'db.(\w+)': r'properties.ccdb.\1',
-                'dea.(\w+)': r'properties.dea_next.\1',
-                'login.(\w+)': r'properties.login.\1',
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
+             'mapping': (
+                ('nats.(\w+)', r'properties.nats.\1'), #TODO: use callback for list
+                ('uaa.(\w+)', r'properties.uaa.\1'),
+                ('db.(\w+)', r'properties.ccdb.\1'),
+                ('dea.(\w+)', r'properties.dea_next.\1'),
+                ('login.(\w+)', r'properties.login.\1'),
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 #TODO see: logger_endpoint.. may need to extend loggregator context
-                'loggregator_endpoint.(\w+)':r'properties.loggregator_endpoint.\1'
-            },
+                ('loggregator_endpoint.(\w+)',
+                 r'properties.loggregator_endpoint.\1')
+            ),
             "provided_data": [],
             'required_data': [contexts.NatsRelation,
                               contexts.RouterRelation,
@@ -140,7 +141,22 @@ SERVICES = {
         }],
     },
 
-    'nats-stream-forwarder-v1':{},
+    'nats-stream-forwarder-v1':{
+        'service':'nats-sf',
+        'summary': 'NATS stream forwarder',
+        'description': '',
+        'jobs':[{
+            'job_name': 'nats_stream_forwarder',
+            'mapping':(
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
+                ('nats.(\w+)', r'properties.nats.\1')
+                ),
+            'provided_data':[],
+            'required_data':[contexts.NatsRelation
+                             #TODO: context.SyslogAggregatorRelation
+                             ]
+            }]
+    },
 
     'router-v1': {
         'service': 'router',
@@ -164,10 +180,10 @@ SERVICES = {
         'jobs':[
             {'job_name': 'uaa',
              'ports': [8080],
-             'mapping':{
-                 'uaa.(\w+)': r'properties.uaa.\1',
-                 'db.(\w+)': r'properties.uaa.db.\1'
-                },
+             'mapping':(
+                 ('uaa.(\w+)', r'properties.uaa.\1'),
+                 ('db.(\w+)', r'properties.uaa.db.\1')
+                ),
              'provided_data':[],
              'required_data':[contexts.MysqlRelation]
             }
