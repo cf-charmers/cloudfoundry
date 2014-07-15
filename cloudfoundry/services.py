@@ -18,7 +18,7 @@ SERVICES = {
                 #TODO see: logger_endpoint.. may need to extend loggregator context
                 ('loggregator_endpoint.(\w+)',
                  r'properties.loggregator_endpoint.\1')),
-            'provided_data':[], #TODO: context.ClockRelation
+            'provided_data':[contexts.ClockRelation],
             'required_data':[contexts.NatsRelation,
                              contexts.LoggregatorRelation,
                              contexts.MysqlRelation,
