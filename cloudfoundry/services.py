@@ -149,7 +149,7 @@ SERVICES = {
             'job_name': 'nats_stream_forwarder',
             'mapping':(
                 ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
-                ('nats.(\w+)', r'properties.nats.\1')
+                ('nats.(\w+)', r'properties.nats.\1') # needs callable
                 ),
             'provided_data':[],
             'required_data':[contexts.NatsRelation
@@ -166,10 +166,15 @@ SERVICES = {
             'ports': [80],
             'mapping': [
                 ('router.(\w+)', r'properties.router.\1'),
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
+                ('nats.(\w+)', r'properties.nats.\1') # needs callable
             ],
             'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
-                              contexts.LogRouterRelation],
+                              contexts.LogRouterRelation,
+                              contexts.LoggregatorRelation,
+                              #TODO: context.SyslogAggregatorRelation
+                              ],
         }],
 
     },
