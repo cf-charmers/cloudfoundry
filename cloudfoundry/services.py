@@ -154,8 +154,8 @@ SERVICES = {
                 ('nats.(\w+)', r'properties.nats.\1') # needs callable
                 ),
             'provided_data':[],
-            'required_data':[contexts.NatsRelation
-                             #TODO: context.SyslogAggregatorRelation
+            'required_data':[contexts.NatsRelation,
+                             contexts.SyslogAggregatorRelation
                              ]
             }]
     },
@@ -174,7 +174,7 @@ SERVICES = {
             'required_data': [contexts.NatsRelation,
                               contexts.LogRouterRelation,
                               contexts.LoggregatorRelation,
-                              #TODO: context.SyslogAggregatorRelation
+                              contexts.SyslogAggregatorRelation
                               ],
         }],
 
@@ -209,9 +209,9 @@ SERVICES = {
                 ('nats.(\w+)', r'properties.nats.\1'), # needs callable
                 ),
             'provided_data': [],
-            'required_data': [contexts.NatsRelation
-                              #TODO: context.UAARelation,
-                              #TODO: context.SyslogAggregatorRelation
+            'required_data': [contexts.NatsRelation,
+                              contexts.UAARelation,
+                              contexts.SyslogAggregatorRelation
                               ]
             }]
         },
@@ -226,8 +226,8 @@ SERVICES = {
                        ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1')
                        ),
             'provided_data': [contexts.LoggregatorRelation],
-            'required_data': [contexts.NatsRelation
-                              #TODO: context.SyslogAggregatorRelation
+            'required_data': [contexts.NatsRelation,
+                              contexts.SyslogAggregatorRelation
                               ]
             }]
         },
@@ -245,7 +245,7 @@ SERVICES = {
             'provided_data': [],
             'required_data': [contexts.LoggregatorRelation,
                               contexts.NatsRelation,
-                              #TODO: context.SyslogAggregatorRelation
+                              contexts.SyslogAggregatorRelation,
                               ]
             }]
         },
@@ -263,8 +263,8 @@ SERVICES = {
             'provided_data':[],
             'required_data':[contexts.NatsRelation,
                              contexts.CloudControllerRelation,
-                             contexts.EtcdRelation
-                             #TODO: contexts.SyslogAggregatorRelation
+                             contexts.EtcdRelation,
+                             contexts.SyslogAggregatorRelation
                             ]
             }]
         },
@@ -276,8 +276,7 @@ SERVICES = {
         'jobs': [{
             'job_name': 'syslog_aggregator',
             'mapping':(),
-            'provided_data':[#TODO: context.SyslogAggregatorRelation
-                            ],
+            'provided_data':[contexts.SyslogAggregatorRelation],
             'required_data':[]
             }]
         },
@@ -292,8 +291,7 @@ SERVICES = {
                        ('router.(\w+)', r'properties.router.\1')),
             'provided_data':[],
             'required_data':[contexts.RouterRelation,
-                             #TODO: context.SyslogAggregatorRelation
-                             ]
+                             contexts.SyslogAggregatorRelation]
             }]
         }
 }
