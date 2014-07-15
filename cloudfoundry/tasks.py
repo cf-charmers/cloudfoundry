@@ -36,7 +36,20 @@ def fetch_job_artifacts(job_name):
     if os.path.exists(job_archive):
         return
     host.mkdir(job_path)
-    _, resp = urllib.urlretrieve(artifact_url, job_archive)
+    for i in range(3):
+        try:
+            _, resp = urllib.urlretrieve(artifact_url, job_archive)
+        except urllib.ContentTooShortError as e:
+            if i < 2:
+                hookenv.log(
+                    'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
+                    hookenv.INFO)
+            else:
+                hookenv.log('Unable to download artifact: {}'.format(str(e)), hookenv.ERROR)
+                raise
+        else:
+            break
+
     try:
         assert 'ETag' in resp, (
             'Error downloading artifacts from {}; '

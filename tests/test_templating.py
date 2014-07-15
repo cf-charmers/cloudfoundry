@@ -79,8 +79,9 @@ class TestTemplating(unittest.TestCase):
         callback = templating.RubyTemplateCallback('source', 'target', mapping, spec)
         context = callback.collect_data(manager, 'service_name')
         self.assertEqual(context, {
-            'networks': {'apps': {'ip': 'private-addr'}},
+            'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
+                'networks': {'apps': 'default'},
                 'job1': {'prop1': ['val1', 'val2'], 'prop5': 'default5'},
                 'job2': {'prop3': ['val3'], 'prop4': 'val4'},
             },
