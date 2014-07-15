@@ -153,9 +153,9 @@ SERVICES = {
                 ('router.(\w+)', r'properties.router.\1'),
             ],
             'provided_data': [contexts.RouterRelation],
-            'required_data': [contexts.RouterRelation.remote_view,
-                              contexts.NatsRelation,
-                              contexts.LogRouterRelation],
+            'required_data': [contexts.NatsRelation,
+                              contexts.LogRouterRelation,
+                              contexts.RouterRelation.remote_view],
         }],
 
     },

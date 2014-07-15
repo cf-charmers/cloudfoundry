@@ -245,8 +245,9 @@ class TestTasks(unittest.TestCase):
             mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit.d/job_name.cfg'),
         ])
 
+    @mock.patch('charmhelpers.core.hookenv.config')
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids):
+    def test_build_service_block(self, relation_ids, mconfig):
         relation_ids.return_value = []
         services = tasks.build_service_block('router-v1')
         self.assertIsInstance(services[0]['provided_data'][0],
