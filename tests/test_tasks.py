@@ -1,5 +1,6 @@
 import unittest
 import mock
+import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
@@ -113,6 +114,35 @@ class TestTasks(unittest.TestCase):
         assert not urlretrieve.called
         assert not taropen.called
 
+    @mock.patch('os.remove')
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('hashlib.md5')
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.host.mkdir')
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_job_artifacts_retry(self, OrchRelation, get_job_path, urlretrieve,
+                                       taropen, mkdir, mopen, md5, log, remove):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
+        get_job_path.return_value = 'job_path'
+        urlretrieve.side_effect = [
+            urllib.ContentTooShortError('too short', {}),
+            (None, {'ETag': '"deadbeef"'})]
+        mopen.return_value.__enter__().read.return_value = 'read'
+        md5.return_value.hexdigest.return_value = 'deadbeef'
+        tgz = taropen.return_value.__enter__.return_value
+        tasks.fetch_job_artifacts('job_name')
+        self.assertEqual(urlretrieve.call_args_list, [mock.call(
+            'http://url/cf-version/amd64/job_name',
+            'job_path/job_name.tgz')]*2)
+        md5.assert_called_once_with('read')
+        taropen.assert_called_once_with('job_path/job_name.tgz')
+        tgz.extractall.assert_called_once_with('job_path')
+        log.assert_called_with('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO')
+
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
     @mock.patch('shutil.copytree')
@@ -183,7 +213,7 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.templating.RubyTemplateCallback')
     def test_job_templates(self, RubyTemplateCallback, load_spec, OrchRelation, unlink, symlink, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        load_spec.return_value = {'templates': {
+        spec = load_spec.return_value = {'templates': {
             'src1': 'dest1',
             'src2': 'dest2',
         }}
@@ -191,15 +221,15 @@ class TestTasks(unittest.TestCase):
         manager = mock.Mock()
         generated_callbacks = RubyTemplateCallback.side_effect = [
             mock.Mock(), mock.Mock(services.ManagerCallback()), mock.Mock()]
-        tasks.job_templates('map', 'spec')(manager, 'job_name', 'event_name')
+        tasks.job_templates('map')(manager, 'job_name', 'event_name')
         generated_callbacks[0].assert_called_once_with('job_name')
         generated_callbacks[1].assert_called_once_with(manager, 'job_name', 'event_name')
         expected_calls = [
-            mock.call('src1', '/var/vcap/jobs/version/job_name/dest1', 'map', 'spec',
+            mock.call('src1', '/var/vcap/jobs/version/job_name/dest1', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name/templates'),
-            mock.call('src2', '/var/vcap/jobs/version/job_name/dest2', 'map', 'spec',
+            mock.call('src2', '/var/vcap/jobs/version/job_name/dest2', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name/templates'),
-            mock.call('monit', '/var/vcap/jobs/version/job_name/monit/job_name.cfg', 'map', 'spec',
+            mock.call('monit', '/var/vcap/jobs/version/job_name/monit/job_name.cfg', 'map', spec,
                       templates_dir='charm_dir/jobs/version/job_name'),
         ]
         for expected_call in expected_calls:
@@ -216,12 +246,7 @@ class TestTasks(unittest.TestCase):
         ])
 
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    @mock.patch('cloudfoundry.tasks.load_spec')
-    def test_build_service_block(self, load_spec, relation_ids):
-        load_spec.return_value = {'templates': {
-            'src1': 'dest1',
-            'src2': 'dest2',
-        }}
+    def test_build_service_block(self, relation_ids):
         relation_ids.return_value = []
         services = tasks.build_service_block('router-v1')
         self.assertIsInstance(services[0]['provided_data'][0],

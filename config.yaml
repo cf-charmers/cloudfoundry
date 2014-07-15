@@ -11,7 +11,7 @@ options:
         description: >
             The URL from which the artifacts can be retrieved.  You will not be
             able to use Juju to deploy Cloud Foundry until this is properly set.
-        default: ""
+        default: "http://cf-compiled-packages.s3-website-us-east-1.amazonaws.com"
     cf_version:
         type: string
         description: >
