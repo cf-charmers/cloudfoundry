@@ -136,6 +136,7 @@ SERVICES = {
         'jobs': [{
             'job_name': 'nats',
             'mapping': (('nats.(\w+)', r'properties.nats.\1'),),
+            'required_data': [contexts.NatsRelation.remote_view],
             'provided_data': [contexts.NatsRelation],
         }],
     },
@@ -152,7 +153,8 @@ SERVICES = {
                 ('router.(\w+)', r'properties.router.\1'),
             ],
             'provided_data': [contexts.RouterRelation],
-            'required_data': [contexts.NatsRelation,
+            'required_data': [contexts.RouterRelation.remote_view,
+                              contexts.NatsRelation,
                               contexts.LogRouterRelation],
         }],
 
