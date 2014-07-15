@@ -195,15 +195,86 @@ SERVICES = {
         ]
     },
 
-    'login-v1': {},
+    'login-v1': {
+        'service': 'login',
+        'summary': 'login',
+        'description': '',
+        'jobs':[{
+            'job_name': 'login',
+            'ports': [8080],
+            'mapping': (
+                ('uaa.(\w+)', r'properties.uaa.\1'),
+                ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
+                ('nats.(\w+)', r'properties.nats.\1'), # needs callable
+                ),
+            'provided_data': [],
+            'required_data': [contexts.NatsRelation
+                              #TODO: context.UAARelation,
+                              #TODO: context.SyslogAggregatorRelation
+                              ]
+            }]
+        },
 
-    'loggregator-v1': {},
+    'loggregator-v1': {
+        'service': 'loggregator',
+        'summary': 'loggregating',
+        'description': 'loggregating',
+        'jobs': [{
+            'job_name': 'loggregator',
+            'mapping':(('nats.(\w+)', r'properties.nats.\1'), # needs callable
+                       ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1')
+                       ),
+            'provided_data': [contexts.LoggregatorRelation],
+            'required_data': [contexts.NatsRelation
+                              #TODO: context.SyslogAggregatorRelation
+                              ]
+            }]
+        },
 
-    'loggregator-trafficcontroller-v1': {},
+    'loggregator-trafficcontroller-v1': {
+        'service': 'loggregator-trafficcontroller',
+        'summary': 'loggregator-trafficcontroller',
+        'description': '',
+        'jobs': [{
+            'job_name': 'loggregator_trafficcontroller',
+            'mapping':(('loggregator.(\w+)', r'properties.loggregator.\1'), # needs callable
+                       ('nats.(\w+)', r'properties.nats.\1'), # needs callable
+                       ),
+            'provided_data': [],
+            'required_data': [contexts.LoggregatorRelation,
+                              contexts.NatsRelation,
+                              #TODO: context.SyslogAggregatorRelation
+                              ]
+            }]
+        },
 
-    'hm9000-v1': {},
+    'hm9000-v1': {
+        'service': 'hm9000',
+        'summary': 'health monitor',
+        'description': '',
+        'jobs': [{
+            'job_name': 'hm9000',
+            'mapping':(),
+            'provided_data':[],
+            'required_data':[]
+            }]
+        },
 
-    'syslog-aggregator-v1': {},
+    'syslog-aggregator-v1': {
+        'jobs': [{
+            'job_name': 'syslog_aggregator',
+            'mapping':(),
+            'provided_data':[],
+            'required_data':[]
+            }]
+        },
 
-    'haproxy-v1': {}
+    'haproxy-v1': {
+        'jobs': [{
+            'job_name': 'haproxy',
+            'mapping':(),
+            'provided_data':[],
+            'required_data':[]
+            }]
+        }
 }
