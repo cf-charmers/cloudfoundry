@@ -56,6 +56,7 @@ class RubyTemplateCallback(services.TemplateCallback):
         self.mapping = mapping
         self.defaults = NestedDict()
         self.defaults.update({k: v.get('default') for k, v in spec['properties'].iteritems()})
+        self.defaults.setdefault('networks', {})['apps'] = 'default'
 
     def collect_data(self, manager, service_name):
         service = manager.get_service(service_name)
@@ -63,7 +64,7 @@ class RubyTemplateCallback(services.TemplateCallback):
         for data_source in service.get('required_data', []):
             data = deepmerge(data, data_source)
         defaults = {
-            'networks': {'apps': {'ip': hookenv.unit_get('private-address')}},
+            'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
             'properties': NestedDict(self.defaults),
         }
         data = property_mapper(self.mapping, data)
