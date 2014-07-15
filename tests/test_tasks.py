@@ -1,5 +1,6 @@
 import unittest
 import mock
+import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
@@ -112,6 +113,35 @@ class TestTasks(unittest.TestCase):
         tasks.fetch_job_artifacts('job_name')
         assert not urlretrieve.called
         assert not taropen.called
+
+    @mock.patch('os.remove')
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('hashlib.md5')
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('charmhelpers.core.host.mkdir')
+    @mock.patch('cloudfoundry.tasks.tarfile.open')
+    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('cloudfoundry.tasks.get_job_path')
+    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
+    def test_fetch_job_artifacts_retry(self, OrchRelation, get_job_path, urlretrieve,
+                                       taropen, mkdir, mopen, md5, log, remove):
+        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
+                                     'artifacts_url': 'http://url'}]}
+        get_job_path.return_value = 'job_path'
+        urlretrieve.side_effect = [
+            urllib.ContentTooShortError('too short', {}),
+            (None, {'ETag': '"deadbeef"'})]
+        mopen.return_value.__enter__().read.return_value = 'read'
+        md5.return_value.hexdigest.return_value = 'deadbeef'
+        tgz = taropen.return_value.__enter__.return_value
+        tasks.fetch_job_artifacts('job_name')
+        self.assertEqual(urlretrieve.call_args_list, [mock.call(
+            'http://url/cf-version/amd64/job_name',
+            'job_path/job_name.tgz')]*2)
+        md5.assert_called_once_with('read')
+        taropen.assert_called_once_with('job_path/job_name.tgz')
+        tgz.extractall.assert_called_once_with('job_path')
+        log.assert_called_with('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO')
 
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
