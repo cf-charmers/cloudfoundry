@@ -44,6 +44,7 @@ SERVICES = {
                 ('db.(\w+)', r'properties.ccdb.\1'),
                 ('dea.(\w+)', r'properties.dea_next.\1'),
                 ('login.(\w+)', r'properties.login.\1'),
+                ('router.(\w+)', r'properties.router.\1'),
                 ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 #TODO see: logger_endpoint.. may need to extend loggregator context
                 ('loggregator_endpoint.(\w+)',
@@ -77,6 +78,7 @@ SERVICES = {
                 ('db.(\w+)', r'properties.ccdb.\1'),
                 ('dea.(\w+)', r'properties.dea_next.\1'),
                 ('login.(\w+)', r'properties.login.\1'),
+                ('router.(\w+)', r'properties.router.\1'),
                 ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 #TODO see: logger_endpoint.. may need to extend loggregator context
                 ('loggregator_endpoint.(\w+)',
@@ -165,7 +167,6 @@ SERVICES = {
             'job_name': 'gorouter',
             'ports': [80],
             'mapping': [
-                ('router.(\w+)', r'properties.router.\1'),
                 ('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
                 ('nats.(\w+)', r'properties.nats.\1') # needs callable
             ],
@@ -269,6 +270,9 @@ SERVICES = {
         },
 
     'syslog-aggregator-v1': {
+        'service': 'syslog-aggregator',
+        'summary': 'aggregates the syslogs',
+        'description':'',
         'jobs': [{
             'job_name': 'syslog_aggregator',
             'mapping':(),
@@ -279,11 +283,17 @@ SERVICES = {
         },
 
     'haproxy-v1': {
+        'service': 'haproxy',
+        'summary': 'loadbalance the routers',
+        'description':'',
         'jobs': [{
             'job_name': 'haproxy',
-            'mapping':(),
+            'mapping':(('syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'),
+                       ('router.(\w+)', r'properties.router.\1')),
             'provided_data':[],
-            'required_data':[]
+            'required_data':[contexts.RouterRelation,
+                             #TODO: context.SyslogAggregatorRelation
+                             ]
             }]
         }
 }
