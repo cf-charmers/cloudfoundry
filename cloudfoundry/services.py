@@ -50,7 +50,6 @@ SERVICES = {
             },
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
-                              contexts.RouterRelation,
                               contexts.MysqlRelation,
                               contexts.LoggregatorRelation,
                               #TODO: context.ClockRelation,
@@ -83,7 +82,6 @@ SERVICES = {
              },
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
-                               contexts.RouterRelation,
                                contexts.MysqlRelation,
                                contexts.LoggregatorRelation,
                                #TODO: context.UAARelation,
@@ -111,7 +109,6 @@ SERVICES = {
             'required_data': [
                 contexts.NatsRelation,
                 contexts.LogRouterRelation,
-                contexts.RouterRelation
             ],
         }]
 
@@ -125,7 +122,6 @@ SERVICES = {
             'mapping': {'dea_logging_agent.(\w+)': r'properties.\1'},
             'required_data': [
                 contexts.NatsRelation,
-                contexts.RouterRelation
             ]
         }]
     },
@@ -152,10 +148,9 @@ SERVICES = {
             'mapping': {
                 'router.(\w+)': r'properties.router.\1',
             },
-            'provided_data': [contexts.RouterRelation],
+            'provided_data': [],
             'required_data': [contexts.NatsRelation,
-                              contexts.LogRouterRelation,
-                              contexts.RouterRelation.remote_view],
+                              contexts.LogRouterRelation],
         }],
 
     },

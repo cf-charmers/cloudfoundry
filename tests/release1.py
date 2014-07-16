@@ -22,7 +22,6 @@ SERVICES = {
             },
             "provided_data": [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
-                              contexts.RouterRelation,
                               contexts.MysqlRelation,
                               # contexts.BundleConfig,
                               # All job context keys

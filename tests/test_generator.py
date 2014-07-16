@@ -58,8 +58,8 @@ class TestGenerator(unittest.TestCase):
             'interface'], contexts.CloudControllerRelation.interface)
         self.assertEqual(requires[contexts.NatsRelation.name]['interface'],
                          contexts.NatsRelation.interface)
-        self.assertEqual(requires[contexts.RouterRelation.name]['interface'],
-                         contexts.RouterRelation.interface)
+        self.assertEqual(requires[contexts.OrchestratorRelation.name]['interface'],
+                         contexts.OrchestratorRelation.interface)
         # This interface is added implicitly by our model, generated
         # charms have a relation to their Orchestrator.
         self.assertEqual(requires[OrchestratorRelation.name][

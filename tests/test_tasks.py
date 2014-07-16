@@ -250,8 +250,7 @@ class TestTasks(unittest.TestCase):
     def test_build_service_block(self, relation_ids, mconfig):
         relation_ids.return_value = []
         services = tasks.build_service_block('router-v1')
-        self.assertIsInstance(services[0]['provided_data'][0],
-                              contexts.RouterRelation)
+        self.assertEqual(services[0]['provided_data'], [])
         self.assertIsInstance(services[0]['required_data'][0],
                               contexts.OrchestratorRelation)
         self.assertIsInstance(services[0]['required_data'][1],
