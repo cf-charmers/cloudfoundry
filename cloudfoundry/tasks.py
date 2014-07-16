@@ -149,7 +149,7 @@ def build_service_block(charm_name, services=SERVICES):
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,
-                job_templates(job['mapping']),
+                job_templates(job.get('mapping', {})),
             ],
         }
         result.append(job_def)
