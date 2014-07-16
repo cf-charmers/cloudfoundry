@@ -61,7 +61,7 @@ def generate(s):
     version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
     if os.path.exists(build_dir):
-        return  # TODO: Handle re-run using upgrade-charm
+        shutil.rmtree(build_dir)
     generator = CharmGenerator(RELEASES, SERVICES)
     generator.select_release(version)
     generator.generate(build_dir)
