@@ -54,6 +54,15 @@ class NatsRelation(RelationContext):
                     address=hookenv.unit_get(
                         'private-address').encode('utf-8'))
 
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'nats.machines': [u['address'] for u in data],
+            'nats.port': u[0]['port'],
+            'nats.user': u[0]['user'],
+            'nats.password': u[0]['password'],
+        }
+
 
 class MysqlRelation(RelationContext):
     name = 'db'
@@ -122,6 +131,14 @@ class LogRouterRelation(RelationContext):
             'shared_secret': self.get_shared_secret(),
         }
 
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'loggregator_endpoint.host': data[0]['address'],
+            'loggregator_endpoint.port': data[0]['incoming_port'],
+            'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
+        }
+
 
 class LoggregatorRelation(RelationContext):
     name = 'loggregator'
@@ -138,11 +155,25 @@ class LoggregatorRelation(RelationContext):
             'outgoing_port': self.outgoing_port,
         }
 
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'loggregator.servers': [d['address'] for d in data],
+            'loggregator.incoming_port': data[0]['incoming_port'],
+            'loggregator.outgoing_port': data[0]['outgoing_port'],
+        }
+
 
 class EtcdRelation(RelationContext):
     name = 'etcd'
     interface = 'etcd'
     required_keys = ['hostname', 'port']
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'etcd.machines': [d['hostname'] for d in data],
+        }
 
 
 class CloudControllerRelation(RelationContext):
@@ -160,6 +191,14 @@ class CloudControllerRelation(RelationContext):
         return dict(self.get_credentials(),
                     hostname=hookenv.unit_get('private-address').encode('utf-8'),
                     port=9022)
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'cc.srv_api_url': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
+            'cc.srv_api_user': data[0]['user'],
+            'cc.srv_api_password': data[0]['password'],
+        }
 
 
 class OrchestratorRelation(RelationContext):
