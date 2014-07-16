@@ -58,9 +58,9 @@ class NatsRelation(RelationContext):
         data = self[self.name]
         return {
             'nats.machines': [u['address'] for u in data],
-            'nats.port': u[0]['port'],
-            'nats.user': u[0]['user'],
-            'nats.password': u[0]['password'],
+            'nats.port': data[0]['port'],
+            'nats.user': data[0]['user'],
+            'nats.password': data[0]['password'],
         }
 
 
