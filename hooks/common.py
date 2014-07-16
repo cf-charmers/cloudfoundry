@@ -97,8 +97,7 @@ def deploy(s):
         # the orchestrator is not defined in the bundle
         orchestrator = hookenv.service_name()
         for service_name, service_data in bundle['cloudfoundry']['services'].items():
-            # XXX: explicitly check if service has orchestrator interface or
-            # not
+            # XXX: explicitly check if service has orchestrator interface
             if not service_data['charm'].startswith('cs:'):
                 try:
                     env.add_relation(orchestrator, service_name)
@@ -106,7 +105,7 @@ def deploy(s):
                     if e.message.endswith('relation already exists'):
                         continue  # existing relations are ok, just skip
                     else:
-                        raise
+                        hookenv.log('Error adding orchestrator relation: {}'.format(str(e)), hookenv.ERROR)
     finally:
         env.close()
 
