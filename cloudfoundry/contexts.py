@@ -84,8 +84,11 @@ class UAARelation(RelationContext):
 
 class SyslogAggregatorRelation(RelationContext):
     name = 'syslog_aggregator'
-    interface = 'syslog'
-    required_keys = []
+    interface = 'syslog_aggregator'
+    required_keys = ['address', 'port', 'transport', 'all']
+
+    def provide_data(self):
+        return {}
 
 
 class LoginRelation(RelationContext):
@@ -100,24 +103,52 @@ class DEARelation(RelationContext):
     required_keys = []
 
 
-class LogRouterRelation(RelationContext):
-    name = 'logrouter'
-    interface = 'logrouter'
-    required_keys = ['shared_secret', 'address', 'incoming_port', 'outgoing_port']
-    incoming_port = 3456
+class RouterRelation(RelationContext):
+    name = 'router'
+    interface = 'router'
+    required_keys = ['domain']
+
+    def provide_data(self):
+        return {'domain': self.get_domain()}
+
+    def get_domain(self):
+        domain = hookenv.config()['domain']
+        if domain == 'xip.io':
+            public_address = hookenv.unit_get('public-address')
+            domain = "%s.xip.io" % self.to_ip(public_address)
+        return domain
+
+    def to_ip(self, address):
+        ip_pat = re.compile('^(\d{1,3}\.){3}\d{1,3}$')
+        if ip_pat.match(address):
+            return address  # already an IP
+        else:
+            result = subprocess.check_output(
+                ['dig', '+short', '@8.8.8.8', address])
+            for candidate in result.split('\n'):
+                candidate = candidate.strip()
+                if ip_pat.match(candidate):
+                    return candidate
+            return None
+
+
+class LTCRelation(RelationContext):
+    name = 'ltc'
+    interface = 'loggregator_trafficcontroller'
+    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port'],
     outgoing_port = 8083
-    varz_port = 8882
+    port = 8882
 
     def get_shared_secret(self):
         secret_context = StoredContext(
-            os.path.join(hookenv.charm_dir(), '.logrouter-secret.yml'),
+            os.path.join(hookenv.charm_dir(), '.ltc-secret.yml'),
             {'shared_secret': host.pwgen(20)})
         return secret_context['shared_secret']
 
     def provide_data(self):
         return {
-            'address': hookenv.unit_get('private-address').encode('utf-8'),
-            'incoming_port': self.incoming_port,
+            'host': hookenv.unit_get('private-address').encode('utf-8'),
+            'port': self.port,
             'outgoing_port': self.outgoing_port,
             'shared_secret': self.get_shared_secret(),
         }

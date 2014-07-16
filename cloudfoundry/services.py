@@ -14,12 +14,11 @@ SERVICES = {
                 'uaa.(\w+)': r'properties.uaa.\1',
                 'cc.(\w+)': r'properties.cc.\1',
                 'login.(\w+)': r'properties.login.\1',
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
-                # TODO see: logger_endpoint.. may need to extend loggregator context
-                'loggregator_endpoint.(\w+)': r'properties.loggregator_endpoint.\1'
+                'ltc.(\w+)':r'properties.loggregator_endpoint.\1'
                 },
             'provided_data': [contexts.ClockRelation],
             'required_data': [contexts.NatsRelation,
+                              contexts.LTCRelation,
                               contexts.LoggregatorRelation,
                               contexts.MysqlRelation,
                               contexts.CloudControllerRelation,
@@ -44,19 +43,17 @@ SERVICES = {
                 'db.(\w+)': r'properties.ccdb.\1',
                 'dea.(\w+)': r'properties.dea_next.\1',
                 'login.(\w+)': r'properties.login.\1',
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
-                #TODO see: logger_endpoint.. may need to extend loggregator context
-                'loggregator_endpoint.(\w+)': r'properties.loggregator_endpoint.\1'
+                'ltc.(\w+)':r'properties.loggregator_endpoint.\1',
             },
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
-                              contexts.LoggregatorRelation,
+                              contexts.LTCRelation,
                               contexts.ClockRelation,
                               contexts.UAARelation,
                               contexts.DEARelation,
                               contexts.LoginRelation,
-                              contexts.SyslogAggregatorRelation
+
                               # diego is coming
                               # contexts.BundleConfig,
                               # All job context keys
@@ -76,26 +73,22 @@ SERVICES = {
                  'db.(\w+)': r'properties.ccdb.\1',
                  'dea.(\w+)': r'properties.dea_next.\1',
                  'login.(\w+)': r'properties.login.\1',
-                 'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
-                 #TODO see: logger_endpoint.. may need to extend loggregator context
-                 'loggregator_endpoint.(\w+)': r'properties.loggregator_endpoint.\1'
+                 'ltc.(\w+)':r'properties.loggregator_endpoint.\1',
              },
-             'provided_data': [],
-             'required_data': [contexts.NatsRelation,
-                               contexts.MysqlRelation,
-                               contexts.LoggregatorRelation,
-                               contexts.UAARelation,
-                               contexts.DEARelation,
-                               contexts.LoginRelation,
-                               contexts.SyslogAggregatorRelation
-                               # diego is coming
-                               # contexts.BundleConfig,
-                               # All job context keys
-                               # get processed by a name mapper
-                               ],
+            'provided_data': [],
+            'required_data': [contexts.NatsRelation,
+                              contexts.RouterRelation,
+                              contexts.MysqlRelation,
+                              contexts.LTCRelation,
+                              contexts.UAARelation,
+                              contexts.DEARelation,
+                              contexts.LoginRelation,
+                              # diego is coming
+                              # contexts.BundleConfig,
+                              ],
+
              }
             ]
-
     },
 
     'dea-v1': {
@@ -108,7 +101,8 @@ SERVICES = {
             },
             'required_data': [
                 contexts.NatsRelation,
-                contexts.LogRouterRelation,
+                contexts.LTCRelation,
+                contexts.RouterRelation
             ],
         }]
 
@@ -144,12 +138,10 @@ SERVICES = {
         'jobs': [{
             'job_name': 'nats_stream_forwarder',
             'mapping': {
-                'syslog_aggregator.(\w+)': r'properties.syslog_aggregator.\1',
                 'nats.(\w+)': r'properties.nats.\1'  # needs callable
                 },
-            'provided_data': [],
-            'required_data': [contexts.NatsRelation,
-                              contexts.SyslogAggregatorRelation]
+            'provided_data':[],
+            'required_data':[contexts.NatsRelation]
             }]
     },
 
@@ -162,11 +154,10 @@ SERVICES = {
             'mapping': {
                 'router.(\w+)': r'properties.router.\1',
             },
-            'provided_data': [],
+            'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
-                              contexts.LogRouterRelation,
-                              contexts.LoggregatorRelation,
-                              contexts.SyslogAggregatorRelation],
+                              contexts.LTCRelation,
+                              contexts.LoggregatorRelation],
         }],
 
     },
@@ -181,28 +172,27 @@ SERVICES = {
                  'uaa.(\w+)': r'properties.uaa.\1',
                  'db.(\w+)': r'properties.uaa.db.\1'
                  },
-             'provided_data': [],
-             'required_data':[contexts.MysqlRelation]
+             'provided_data': [contexts.UAARelation],
+             'required_data':[contexts.MysqlRelation,
+                              contexts.NatsRelation]
              }
         ]
     },
 
     'login-v1': {
         'service': 'login',
-        'summary': 'login',
+        'summary': 'login service',
         'description': '',
         'jobs': [{
             'job_name': 'login',
             'ports': [8080],
             'mapping': {
                 'uaa.(\w+)', r'properties.uaa.\1',
-                'syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1',
                 'nats.(\w+)', r'properties.nats.\1',  # needs callable
             },
-            'provided_data': [],
+            'provided_data': [contexts.LoginRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.UAARelation,
-                              contexts.SyslogAggregatorRelation
                               ]
             }]
         },
@@ -213,13 +203,9 @@ SERVICES = {
         'description': 'loggregating',
         'jobs': [{
             'job_name': 'loggregator',
-            'mapping': {'nats.(\w+)', r'properties.nats.\1',  # needs callable
-                        'syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1'
-                        },
+            'mapping': {'nats.(\w+)', r'properties.nats.\1'},  # needs callable
             'provided_data': [contexts.LoggregatorRelation],
-            'required_data': [contexts.NatsRelation,
-                              contexts.SyslogAggregatorRelation
-                              ]
+            'required_data': [contexts.NatsRelation]
             }]
         },
 
@@ -230,14 +216,12 @@ SERVICES = {
         'jobs': [{
             'job_name': 'loggregator_trafficcontroller',
             'mapping': {'loggregator.(\w+)', r'properties.loggregator.\1',  # needs callable
-                        'syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1',
                         'nats.(\w+)', r'properties.nats.\1',  # needs callable
                         },
+
             'provided_data': [],
             'required_data': [contexts.LoggregatorRelation,
-                              contexts.NatsRelation,
-                              contexts.SyslogAggregatorRelation,
-                              ]
+                              contexts.NatsRelation]
             }]
         },
 
@@ -247,27 +231,14 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'hm9000',
-            'mapping': {'syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1',
+            'mapping': {
                         'cc.(\w+)', r'properties.cc.\1',
                         'etcd.(\w+)', r'properties.etcd.\1',
                         'nats.(\w+)', r'properties.nats.\1'},
             'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.CloudControllerRelation,
-                              contexts.EtcdRelation,
-                              contexts.SyslogAggregatorRelation]
-            }]
-        },
-
-    'syslog-aggregator-v1': {
-        'service': 'syslog-aggregator',
-        'summary': 'aggregates the syslogs',
-        'description': '',
-        'jobs': [{
-            'job_name': 'syslog_aggregator',
-            'mapping': {},
-            'provided_data': [contexts.SyslogAggregatorRelation],
-            'required_data': []
+                              contexts.EtcdRelation]
             }]
         },
 
@@ -277,10 +248,10 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'haproxy',
-            'mapping': {'syslog_aggregator.(\w+)', r'properties.syslog_aggregator.\1',
-                        'router.(\w+)', r'properties.router.\1'},
+            'mapping': {'router.(\w+)', r'properties.router.\1'},
             'provided_data': [],
-            'required_data':[contexts.SyslogAggregatorRelation]
+            'required_data':[contexts.RouterRelation]
+
             }]
         }
 }

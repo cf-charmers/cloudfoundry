@@ -189,6 +189,7 @@ class CharmGenerator(object):
             charm_path = os.path.join(repo, charm_name)
             if not os.path.exists(charm_path):
                 os.makedirs(charm_path)
+
             self.generate_charm(service, charm_path)
             shutil.copytree(pkg_resources.resource_filename(
                 __name__, '../cloudfoundry'),
