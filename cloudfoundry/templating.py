@@ -37,13 +37,18 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
 
 
 def deepmerge(dest, src):
-    result = copy.deepcopy(dest)
+    """
+    Deep merge of two dicts.
+
+    This is destructive (`dest` is modified), but values
+    from `src` are passed through `copy.deepcopy`.
+    """
     for k, v in src.iteritems():
         if k in dest and isinstance(v, dict):
-            result[k] = deepmerge(dest[k], v)
+            deepmerge(dest[k], v)
         else:
-            result[k] = copy.deepcopy(v)
-    return result
+            dest[k] = copy.deepcopy(v)
+    return dest
 
 
 class RubyTemplateCallback(services.TemplateCallback):
@@ -60,15 +65,12 @@ class RubyTemplateCallback(services.TemplateCallback):
 
     def collect_data(self, manager, service_name):
         service = manager.get_service(service_name)
-        data = {}
-        for data_source in service.get('required_data', []):
-            data = deepmerge(data, data_source)
-        defaults = {
+        data = {
             'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
-            'properties': NestedDict(self.defaults),
+            'properties': copy.deepcopy(self.defaults),
         }
-        data = property_mapper(self.mapping, data)
-        data = deepmerge(defaults, data)
+        for data_source in service.get('required_data', []):
+            deepmerge(data['properties'], property_mapper(self.mapping, data_source))
         return data
 
     def __call__(self, manager, service_name, event_name):

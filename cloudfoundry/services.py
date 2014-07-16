@@ -105,9 +105,9 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'dea_next',
-            'mapping': (
-                ('dea.(\w+)', r'properties.dea_next.\1'),
-            ),
+            'mapping': {
+                'dea.(\w+)': r'properties.dea_next.\1',
+            },
             'required_data': [
                 contexts.NatsRelation,
                 contexts.LogRouterRelation,
@@ -122,7 +122,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'dea_logging_agent',
-            'mapping': (('dea_logging_agent.(\w+)', r'properties.\1'),),
+            'mapping': {'dea_logging_agent.(\w+)': r'properties.\1'},
             'required_data': [
                 contexts.NatsRelation,
                 contexts.RouterRelation
@@ -135,7 +135,7 @@ SERVICES = {
         'summary': 'NATS message bus for CF',
         'jobs': [{
             'job_name': 'nats',
-            'mapping': (('nats.(\w+)', r'properties.nats.\1'),),
+            'mapping': {'nats.(\w+)': r'properties.nats.\1'},
             'required_data': [contexts.NatsRelation.remote_view],
             'provided_data': [contexts.NatsRelation],
         }],
@@ -149,9 +149,9 @@ SERVICES = {
         'jobs': [{
             'job_name': 'gorouter',
             'ports': [80],
-            'mapping': [
-                ('router.(\w+)', r'properties.router.\1'),
-            ],
+            'mapping': {
+                'router.(\w+)': r'properties.router.\1',
+            },
             'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LogRouterRelation,

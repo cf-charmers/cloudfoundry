@@ -1,5 +1,3 @@
-import re
-
 
 class NestedDict(dict):
     def __setitem__(self, key, value):
@@ -28,17 +26,16 @@ def flatten(data):
     return result
 
 
-def property_mapper(property_expressions, data):
-    data = flatten(data)
+def property_mapper(mapping, data_source):
     result = NestedDict()
-    for k, v in data.items():
-        for input_re, dest_path in property_expressions:
-            if re.match(input_re, k):
-                if isinstance(dest_path, basestring):
-                    target = re.sub(input_re, dest_path, k)
-                    result[target] = v
-                elif callable(dest_path):
-                    new_data = dest_path(k, v)
-                    result.update(new_data)
-                break
+    if getattr(data_source, 'name', None) in mapping:
+        result.update(mapping[data_source.name](data_source[data_source.name]))
+    elif hasattr(data_source, 'erb_mapping'):
+        result.update(data_source.erb_mapping())
+    else:
+        for key, value in data_source.iteritems():
+            if key in mapping:
+                result.update(mapping[key](value))
+            else:
+                result[key] = value
     return result

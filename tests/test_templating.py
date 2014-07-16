@@ -5,6 +5,8 @@ from cloudfoundry import templating
 
 
 class TestTemplating(unittest.TestCase):
+    maxDiff = None
+
     @mock.patch.object(templating.hookenv, 'charm_dir')
     @mock.patch.object(templating.host, 'write_file')
     @mock.patch.object(templating.host, 'mkdir')
@@ -47,22 +49,23 @@ class TestTemplating(unittest.TestCase):
     @mock.patch.object(templating.hookenv, 'unit_get')
     def test_ruby_template_callback_collect_data(self, unit_get):
         unit_get.return_value = 'private-addr'
+        relation_mock1 = mock.MagicMock()
+        relation_mock1.name = 'foo'
+        relation_mock2 = mock.MagicMock()
+        relation_mock2.erb_mapping.return_value = {'job2.prop2': 'val2'}
         manager = mock.Mock()
         manager.get_service.return_value = {
             'required_data': [
-                {'foo': [
-                    {'prop1': 'val1'},
-                    {'prop1': 'val2'},
-                ]},
-                {'bar': [{'prop3': 'val3'}]},
+                relation_mock1,
+                relation_mock2,
                 {'qux': {'prop4': 'val4'}},
             ],
         }
-        mapping = [
-            (r'foo', lambda k, v: {'properties.job1.prop1': [e['prop1'] for e in v]}),
-            (r'bar', lambda k, v: {'properties.job2.prop3': [e['prop3'] for e in v]}),
-            (r'qux.(\w+)', r'properties.job2.\1'),
-        ]
+        mapping = {
+            'foo': lambda v: {'job1.prop1': ['val1.1', 'val1.2']},
+            'bar': lambda v: {'job2.prop3': 'val3'},
+            'qux': lambda v: {'job2': v},
+        }
         spec = {
             'foo': 'unused',
             'properties': {
@@ -82,8 +85,8 @@ class TestTemplating(unittest.TestCase):
             'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
                 'networks': {'apps': 'default'},
-                'job1': {'prop1': ['val1', 'val2'], 'prop5': 'default5'},
-                'job2': {'prop3': ['val3'], 'prop4': 'val4'},
+                'job1': {'prop1': ['val1.1', 'val1.2'], 'prop5': 'default5'},
+                'job2': {'prop2': 'val2', 'prop4': 'val4'},
             },
         })
         manager.get_service.assert_called_once_with('service_name')
