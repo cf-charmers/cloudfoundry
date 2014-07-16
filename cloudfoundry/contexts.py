@@ -169,6 +169,11 @@ class OrchestratorRelation(RelationContext):
             'domain': self.get_domain(),
         }
 
+    def erb_mapping(self):
+        return {
+            'router.domain': self[self.name][0]['domain'],
+        }
+
 
 class JujuAPICredentials(dict):
     def __init__(self):
