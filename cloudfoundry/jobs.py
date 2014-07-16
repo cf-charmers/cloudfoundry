@@ -14,7 +14,7 @@ def job_manager(service_name):
 
 
 def manage_install(service_name):
-    tasks.install_bosh_template_renderer()
+    tasks.install_base_dependencies()
 
 
 def manage_services(service_name, service_data=SERVICES):

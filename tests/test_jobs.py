@@ -26,10 +26,10 @@ class TestJobManager(unittest.TestCase):
             mock.call('service3'),
         ])
 
-    @mock.patch.object(jobs.tasks, 'install_bosh_template_renderer')
-    def test_manage_install(self, install_btr):
+    @mock.patch.object(jobs.tasks, 'install_base_dependencies')
+    def test_manage_install(self, install_base):
         jobs.manage_install('service')
-        install_btr.assert_called_once_with()
+        install_base.assert_called_once_with()
 
     @mock.patch('charmhelpers.core.hookenv.log', mock.Mock())
     @mock.patch('charmhelpers.core.hookenv.relation_ids')

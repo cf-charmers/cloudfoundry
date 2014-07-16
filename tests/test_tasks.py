@@ -20,12 +20,12 @@ class TestTasks(unittest.TestCase):
     @mock.patch('subprocess.check_call')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
-    def test_install_bosh_template_renderer(self, apt_install,
-                                            filter_installed_packages,
-                                            check_call):
+    def test_install_base_dependencies(self, apt_install,
+                                       filter_installed_packages,
+                                       check_call):
         filter_installed_packages.side_effect = lambda a: a
-        tasks.install_bosh_template_renderer()
-        apt_install.assert_called_once_with(packages=['ruby'])
+        tasks.install_base_dependencies()
+        apt_install.assert_called_once_with(packages=['ruby', 'monit'])
         check_call.assert_called_once_with(['gem', 'install',
                                             'charm_dir/files/' +
                                             'bosh-template-1.2611.0.pre.gem'])
