@@ -238,7 +238,7 @@ class TestTasks(unittest.TestCase):
         load_spec.assert_called_once_with('job_name')
         self.assertEqual(unlink.call_args_list, [
             mock.call('/var/vcap/jobs/job_name'),
-            mock.call('/etc/monit.d/job_name.cfg'),
+            mock.call('/etc/monit/monit.d/job_name.cfg'),
         ])
         self.assertEqual(symlink.call_args_list, [
             mock.call('/var/vcap/jobs/version/job_name', '/var/vcap/jobs/job_name'),
