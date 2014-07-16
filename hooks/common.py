@@ -75,7 +75,9 @@ def deploy(s):
     build_dir = os.path.join(charm_dir, 'build', str(version))
     with open(os.path.join(build_dir, 'bundles.yaml')) as fp:
         bundle = yaml.load(fp)
-    options = setup_parser().parse_args(['--series', 'trusty', '--local-mods'])
+    options = setup_parser().parse_args(['--series', 'trusty',
+                                         '--local-mods',
+                                         '--retry', '3'])
     creds = JujuAPICredentials()
     env = APIEnvironment(creds['api_address'], creds['api_password'])
     deployment = JujuLoggingDeployment(
@@ -95,6 +97,8 @@ def deploy(s):
         # the orchestrator is not defined in the bundle
         orchestrator = hookenv.service_name()
         for service_name, service_data in bundle['cloudfoundry']['services'].items():
+            # XXX: explicitly check if service has orchestrator interface or
+            # not
             if not service_data['charm'].startswith('cs:'):
                 try:
                     env.add_relation(orchestrator, service_name)
