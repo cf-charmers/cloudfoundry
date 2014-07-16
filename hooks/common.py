@@ -3,6 +3,7 @@
 import os
 import yaml
 import shutil
+import logging
 
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
@@ -141,4 +142,5 @@ def manage():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     manage()
