@@ -157,6 +157,11 @@ def build_service_block(charm_name, services=SERVICES):
                 install_job_packages,
                 job_templates(job.get('mapping', {})),
             ],
+            # TODO: Add start/stop callbacks for monit, however...
+            # XXX: $ sudo monit start nats
+            # XXX: monit: Cannot connect to the monit daemon. Did you start it with http support?
+            # XXX: $ sudo service monit status
+            # XXX:  * monit is running
         }
         result.append(job_def)
     return result

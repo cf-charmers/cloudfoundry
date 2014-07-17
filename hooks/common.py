@@ -57,6 +57,15 @@ class APIEnvironment(GUIEnvironment):
             name, charm_url, config=config, constraints=constraints,
             num_units=num_units, machine_spec=force_machine)
 
+    def _get_units_in_error(self, status=None):
+        """
+        Ignore this unit when watching for errors, lest we are never
+        able to get out of an error state with `resolved --retry`.
+        """
+        units = super(APIEnvironment, self)._get_units_in_error(status)
+        local_unit = hookenv.local_unit()
+        return [unit for unit in units if unit != local_unit]
+
 
 def generate(s):
     version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
