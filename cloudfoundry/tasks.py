@@ -4,6 +4,7 @@ import urllib
 import tarfile
 import shutil
 import hashlib
+import time
 import yaml
 
 from charmhelpers.core import host
@@ -39,11 +40,15 @@ def fetch_job_artifacts(job_name):
     for i in range(3):
         try:
             _, resp = urllib.urlretrieve(artifact_url, job_archive)
-        except urllib.ContentTooShortError as e:
+        except (IOError, urllib.ContentTooShortError) as e:
+            if os.path.exists(job_archive):
+                os.remove(job_archive)
             if i < 2:
                 hookenv.log(
                     'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
                     hookenv.INFO)
+                time.sleep(i*10+1)
+                continue
             else:
                 hookenv.log('Unable to download artifact: {}'.format(str(e)), hookenv.ERROR)
                 raise
@@ -64,7 +69,8 @@ def fetch_job_artifacts(job_name):
             tgz.extractall(job_path)
     except Exception as e:
         hookenv.log(str(e), hookenv.ERROR)
-        os.remove(job_archive)
+        if os.path.exists(job_archive):
+            os.remove(job_archive)
         raise
 
 
