@@ -103,35 +103,6 @@ class DEARelation(RelationContext):
     required_keys = []
 
 
-class RouterRelation(RelationContext):
-    name = 'router'
-    interface = 'router'
-    required_keys = ['domain']
-
-    def provide_data(self):
-        return {'domain': self.get_domain()}
-
-    def get_domain(self):
-        domain = hookenv.config()['domain']
-        if domain == 'xip.io':
-            public_address = hookenv.unit_get('public-address')
-            domain = "%s.xip.io" % self.to_ip(public_address)
-        return domain
-
-    def to_ip(self, address):
-        ip_pat = re.compile('^(\d{1,3}\.){3}\d{1,3}$')
-        if ip_pat.match(address):
-            return address  # already an IP
-        else:
-            result = subprocess.check_output(
-                ['dig', '+short', '@8.8.8.8', address])
-            for candidate in result.split('\n'):
-                candidate = candidate.strip()
-                if ip_pat.match(candidate):
-                    return candidate
-            return None
-
-
 class LTCRelation(RelationContext):
     name = 'ltc'
     interface = 'loggregator_trafficcontroller'

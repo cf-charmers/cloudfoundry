@@ -54,7 +54,6 @@ SERVICES = {
              'mapping': {},
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
-                               contexts.RouterRelation,
                                contexts.MysqlRelation,
                                contexts.LTCRelation,
                                contexts.UAARelation,
@@ -77,7 +76,6 @@ SERVICES = {
             'required_data': [
                 contexts.NatsRelation,
                 contexts.LTCRelation,
-                contexts.RouterRelation
             ],
         }]
 
@@ -125,7 +123,7 @@ SERVICES = {
             'job_name': 'gorouter',
             'ports': [80],
             'mapping': {},
-            'provided_data': [contexts.RouterRelation],
+            'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
                               contexts.LoggregatorRelation],
@@ -209,8 +207,7 @@ SERVICES = {
             'job_name': 'haproxy',
             'mapping': {},
             'provided_data': [],
-            'required_data':[contexts.RouterRelation]
-
+            'required_data': [],
             }]
         }
 }
