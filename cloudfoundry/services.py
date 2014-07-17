@@ -52,17 +52,17 @@ SERVICES = {
         'jobs': [
             {'job_name': 'cloud_controller_worker',
              'mapping': {},
-            'provided_data': [],
-            'required_data': [contexts.NatsRelation,
-                              contexts.RouterRelation,
-                              contexts.MysqlRelation,
-                              contexts.LTCRelation,
-                              contexts.UAARelation,
-                              contexts.DEARelation,
-                              contexts.LoginRelation,
-                              # diego is coming
-                              # contexts.BundleConfig,
-                              ],
+             'provided_data': [],
+             'required_data': [contexts.NatsRelation,
+                               contexts.RouterRelation,
+                               contexts.MysqlRelation,
+                               contexts.LTCRelation,
+                               contexts.UAARelation,
+                               contexts.DEARelation,
+                               contexts.LoginRelation,
+                               # diego is coming
+                               # contexts.BundleConfig,
+                               ],
 
              }
             ]
@@ -113,8 +113,8 @@ SERVICES = {
         'jobs': [{
             'job_name': 'nats_stream_forwarder',
             'mapping': {},
-            'provided_data':[],
-            'required_data':[contexts.NatsRelation]
+            'provided_data': [],
+            'required_data': [contexts.NatsRelation]
             }]
     },
 
