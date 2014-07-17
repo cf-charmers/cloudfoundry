@@ -136,7 +136,7 @@ class JobTemplates(services.ManagerCallback):
         if os.path.exists(dst_dir):
             os.unlink(dst_dir)
         os.symlink(versioned_dst_dir, dst_dir)
-        monit_dst = '/etc/monit/monit.d/{}.cfg'.format(job_name)
+        monit_dst = '/etc/monit/monitrc.d/{}.cfg'.format(job_name)
         if os.path.exists(monit_dst):
             os.unlink(monit_dst)
         os.symlink(versioned_monit_dst, monit_dst)
