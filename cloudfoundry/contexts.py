@@ -91,15 +91,6 @@ class UAARelation(RelationContext):
     required_keys = []
 
 
-class SyslogAggregatorRelation(RelationContext):
-    name = 'syslog_aggregator'
-    interface = 'syslog_aggregator'
-    required_keys = ['address', 'port', 'transport', 'all']
-
-    def provide_data(self):
-        return {}
-
-
 class LoginRelation(RelationContext):
     name = 'login'
     interface = 'http'
