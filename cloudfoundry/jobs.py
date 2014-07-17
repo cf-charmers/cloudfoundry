@@ -3,9 +3,11 @@ from charmhelpers.core import services
 
 from cloudfoundry import tasks
 from cloudfoundry.services import SERVICES
+import logging
 
 
 def job_manager(service_name):
+    logging.basicConfig(level=logging.DEBUG)
     hook_name = hookenv.hook_name()
     if hook_name in ('install', 'upgrade-charm'):
         manage_install(service_name)
