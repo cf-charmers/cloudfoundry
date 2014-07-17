@@ -50,7 +50,7 @@ def fetch_job_artifacts(job_name):
                 time.sleep(i*10+1)
                 continue
             else:
-                hookenv.log('Unable to download artifact: {}'.format(str(e)), hookenv.ERROR)
+                hookenv.log('Unable to download artifact: {}; (attempt {} of 3)'.format(str(e), i+1), hookenv.ERROR)
                 raise
         else:
             break
