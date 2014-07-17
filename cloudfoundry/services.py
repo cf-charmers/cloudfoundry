@@ -17,7 +17,6 @@ SERVICES = {
                               contexts.CloudControllerRelation,
                               contexts.LoginRelation,
                               contexts.UAARelation,
-                              contexts.SyslogAggregatorRelation
                               # diego is coming
                               ]
             }],
