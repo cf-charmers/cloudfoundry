@@ -41,6 +41,9 @@ class CharmGenerator(object):
                 return r
         raise KeyError(version)
 
+    def _is_relation(self, context):
+        return inspect.isclass(context) and issubclass(context, contexts.RelationContext)
+
     def build_metadata(self, service_key):
         # service usage within the topo can include the service name
         # allowing this to be a tuple
@@ -59,10 +62,10 @@ class CharmGenerator(object):
         provides = {}
         for job in service.get('jobs', []):
             for relation in job.get('provided_data', []):
-                if inspect.isclass(relation) and issubclass(relation, contexts.RelationContext):
+                if self._is_relation(relation):
                     provides[relation.name] = dict(interface=relation.interface)
             for relation in job.get('required_data', []):
-                if inspect.isclass(relation) and issubclass(relation, contexts.RelationContext):
+                if self._is_relation(relation):
                     result['requires'][relation.name] = dict(
                         interface=relation.interface)
         if provides:
@@ -138,6 +141,40 @@ class CharmGenerator(object):
         else:
             return rel
 
+    def _get_managed_charms(self):
+        charms = []
+        for service in self.release['topology']['services']:
+            charm_id, charm_name, service_name = self._parse_charm_ref(service)
+            if charm_id.startswith('cs:'):
+                continue
+            if charm_name not in self.service_registry:
+                raise KeyError(
+                    'Missing service_registry definition for charm: {}'.format(
+                        charm_name))
+            charms.append((charm_id, charm_name, service_name))
+        return charms
+
+    def _get_relations(self):
+        relations = self.release['topology'].get('relations', [])
+        services = {service_name: self.service_registry[charm_name]
+                    for _, charm_name, service_name in self._get_managed_charms()}
+        provided = {provider.name: service_name
+                    for service_name, service_def in services.iteritems()
+                    for job in service_def.get('jobs', [])
+                    for provider in job.get('provided_data', [])}
+        for service_name, service_def in services.iteritems():
+            for job in service_def.get('jobs', []):
+                for required in job.get('required_data', []):
+                    if not self._is_relation(required):
+                        continue
+                    if not required.name in provided:
+                        continue
+                    provider_name = provided[required.name]
+                    lhs = (service_name, required.name)
+                    rhs = (provider_name, required.name)
+                    relations.append((lhs, rhs))
+        return relations
+
     def build_deployment(self):
         services = {}
         relations = []
@@ -153,7 +190,7 @@ class CharmGenerator(object):
             charm_id, _, service_name = self._parse_charm_ref(service_id)
             services[service_name] = self._build_charm_ref(charm_id)
 
-        for rel in self.release['topology']['relations']:
+        for rel in self._get_relations():
             lhs = self._normalize_relation(rel[0])
             rhs = self._normalize_relation(rel[1])
             rel_data.setdefault(lhs, []).append(rhs)
@@ -178,19 +215,12 @@ class CharmGenerator(object):
             os.makedirs(repo)
         self.generate_deployment(target_dir)
 
-        for service in self.release['topology']['services']:
-            charm_id, charm_name, _ = self._parse_charm_ref(service)
-            if charm_id.startswith('cs:'):
-                continue
-            if charm_name not in self.service_registry:
-                raise KeyError(
-                    'Missing service_registry definition for charm: {}'.format(
-                        charm_name))
+        for _, charm_name, _ in self._get_managed_charms():
             charm_path = os.path.join(repo, charm_name)
             if not os.path.exists(charm_path):
                 os.makedirs(charm_path)
 
-            self.generate_charm(service, charm_path)
+            self.generate_charm(charm_name, charm_path)
             shutil.copytree(pkg_resources.resource_filename(
                 __name__, '../cloudfoundry'),
                 os.path.join(charm_path, 'hooks', 'cloudfoundry'))
