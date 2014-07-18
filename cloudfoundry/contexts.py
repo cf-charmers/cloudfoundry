@@ -233,7 +233,7 @@ class OrchestratorRelation(RelationContext):
 
     def erb_mapping(self):
         return {
-            'router.domain': self[self.name][0]['domain'],
+            'domain': self[self.name][0]['domain'],
         }
 
 
