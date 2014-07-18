@@ -127,8 +127,8 @@ class LTCRelation(RelationContext):
     def erb_mapping(self):
         data = self[self.name]
         return {
-            'loggregator_endpoint.host': data[0]['address'],
-            'loggregator_endpoint.port': data[0]['incoming_port'],
+            'loggregator_endpoint.host': data[0]['host'],
+            'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
         }
 
@@ -159,7 +159,7 @@ class LoggregatorRelation(RelationContext):
 
 class EtcdRelation(RelationContext):
     name = 'etcd'
-    interface = 'etcd'
+    interface = 'http'
     required_keys = ['hostname', 'port']
 
     def erb_mapping(self):

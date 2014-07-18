@@ -37,7 +37,7 @@ class TestMapper(unittest.TestCase):
         mapping = mock.Mock(return_value={'FOO.bar': 'qux'})
         result = property_mapper({'foo': mapping}, data_source)
         self.assertEqual(result, {'FOO': {'bar': 'qux'}})
-        mapping.assert_called_once_with({'bar': 'FOO'})
+        mapping.assert_called_once_with({'foo': {'bar': 'FOO'}})
 
     def test_property_mapper_erb_mapping(self):
         erb_mapping = mock.Mock(return_value={'FOO': 'bar'})

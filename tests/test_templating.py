@@ -1,3 +1,4 @@
+import subprocess
 import unittest
 import mock
 
@@ -21,7 +22,7 @@ class TestTemplating(unittest.TestCase):
         templating.render_erb('fake_cc.erb', 'target', context)
         check_output.assert_called_once_with([
             'bosh-template', 'charm_dir/templates/fake_cc.erb',
-            '-C', '{"data": ["port", 80]}'])
+            '-C', '{"data": ["port", 80]}'], stderr=subprocess.STDOUT)
         write_file.assert_called_once_with('target', 'test-data', 'root', 'root', 0444)
 
     @mock.patch.object(templating.RubyTemplateCallback, 'collect_data')
