@@ -159,7 +159,7 @@ class LoggregatorRelation(RelationContext):
 
 class EtcdRelation(RelationContext):
     name = 'etcd'
-    interface = 'etcd'
+    interface = 'http'
     required_keys = ['hostname', 'port']
 
     def erb_mapping(self):

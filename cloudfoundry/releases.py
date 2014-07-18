@@ -32,7 +32,7 @@ COMMON_RELATIONS = [
     ('mysql:db', 'cc-clock:db'),
     ('mysql:db', 'cc-worker:db'),
     ('mysql:db', 'uaa:db'),
-    ('etcd:client', 'hm:client'),
+    ('etcd:client', 'hm:etcd'),
 ]
 
 COMMON_UPGRADES = []
