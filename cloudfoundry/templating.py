@@ -2,11 +2,14 @@ import os
 import json
 import copy
 import subprocess
+import logging
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
 from cloudfoundry.mapper import NestedDict, property_mapper
+
+logger = logging.getLogger(__name__)
 
 
 def render_erb(source, target, context, owner='root', group='root', perms=0444, templates_dir=None):
@@ -30,8 +33,18 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
         templates_dir = os.path.join(hookenv.charm_dir(), 'templates')
     if not os.path.isabs(source):
         source = os.path.join(templates_dir, source)
-    content = subprocess.check_output([
-        'bosh-template', source, '-C', json.dumps(context)])
+
+    try:
+        cmd = ['bosh-template', source, '-C', json.dumps(context)]
+        content = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        logger.error('Failed template rendering:%s\n%s\n%s',
+                     source,
+                     json.dumps(context, indent=2),
+                     e.output)
+        cmd[-1] = '<json>'
+        raise RuntimeError("Rendering failed:\n%s" % ' '.join(cmd))
+
     host.mkdir(os.path.dirname(target))
     host.write_file(target, content, owner, group, perms)
 

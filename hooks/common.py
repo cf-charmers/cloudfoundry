@@ -3,7 +3,6 @@
 import os
 import yaml
 import shutil
-import logging
 
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
@@ -21,6 +20,7 @@ from deployer.utils import get_qualified_charm_url
 from deployer.utils import parse_constraints
 from deployer.action.importer import Importer
 from deployer.deployment import Deployment
+from deployer.utils import setup_logging
 from jujuclient import EnvError
 
 
@@ -151,5 +151,6 @@ def manage():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    setup_logging(verbose=True, debug=True)
+
     manage()

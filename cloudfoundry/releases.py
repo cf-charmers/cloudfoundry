@@ -28,7 +28,6 @@ COMMON_SERVICES = [
 # the services lists; these are mainly for specifying relations for
 # unmanaged (charm store) charms.
 COMMON_RELATIONS = [
-    ('mysql:db', 'cc:db'),
     ('mysql:db', 'cc-clock:db'),
     ('mysql:db', 'cc-worker:db'),
     ('mysql:db', 'uaa:db'),
