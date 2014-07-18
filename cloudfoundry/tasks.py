@@ -22,7 +22,7 @@ def install_base_dependencies():
     fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
-    subprocess.check_call(['gem', 'install', gem_file])
+    subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
 
 
 def fetch_job_artifacts(job_name):
