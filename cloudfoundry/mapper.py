@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class NestedDict(dict):
     def __setitem__(self, key, value):
@@ -39,3 +43,20 @@ def property_mapper(mapping, data_source):
             else:
                 result[key] = value
     return result
+
+
+def uaadb(data):
+    #@@ HA may change this case
+    db = data[0]
+
+    dbinfo = dict(tag='uaa',
+                  db_scheme='mysql2',
+                  address=db['host'],
+                  port=db['port'],
+                  dbname=db['database'])
+
+    creds=dict(tag='admin', user=db['user'],
+               password=db['password'])
+
+    return dict(uaadb=dict(databases=[dbinfo],
+                           roles=[creds]))

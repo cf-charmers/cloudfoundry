@@ -1,4 +1,5 @@
 import contexts
+import mapper
 
 __all__ = ['SERVICES']
 
@@ -137,10 +138,10 @@ SERVICES = {
         'jobs': [
             {'job_name': 'uaa',
              'ports': [8080],
-             'mapping':{},
+             'mapping':{'db': mapper.uaadb},
              'provided_data': [contexts.UAARelation],
-             'required_data':[contexts.MysqlRelation,
-                              contexts.NatsRelation]
+             'required_data': [contexts.MysqlRelation,
+                               contexts.NatsRelation]
              }
         ]
     },
