@@ -46,17 +46,22 @@ def property_mapper(mapping, data_source):
 
 
 def uaadb(data):
+    """
+    Remaps uaa's connection to mysql
+
     #@@ HA may change this case
+    """
     db = data[0]
 
-    dbinfo = dict(tag='uaa',
-                  db_scheme='mysql2',
-                  address=db['host'],
-                  port=db['port'],
-                  dbname=db['database'])
+    uaa_db = dict(tag='uaa',
+                  name=db['database'])
 
-    creds=dict(tag='admin', user=db['user'],
+    creds=dict(tag='admin',
+               name=db['user'],
                password=db['password'])
 
-    return dict(uaadb=dict(databases=[dbinfo],
+    return dict(uaadb=dict(db_scheme='mysql2',
+                           address=db['host'],
+                           port=db['port'],
+                           databases=[uaa_db],
                            roles=[creds]))
