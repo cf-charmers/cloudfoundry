@@ -106,7 +106,7 @@ class DEARelation(RelationContext):
 class LTCRelation(RelationContext):
     name = 'ltc'
     interface = 'loggregator_trafficcontroller'
-    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port'],
+    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port']
     outgoing_port = 8083
     port = 8882
 
@@ -130,6 +130,7 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.host': data[0]['host'],
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
+            'traffic_controller.zone': 'z1',  # XXX: Really unsure what this should be set to
         }
 
 
