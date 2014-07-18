@@ -29,7 +29,7 @@ def flatten(data):
 def property_mapper(mapping, data_source):
     result = NestedDict()
     if getattr(data_source, 'name', None) in mapping:
-        result.update(mapping[data_source.name](data_source[data_source.name]))
+        result.update(mapping[data_source.name](data_source))
     elif hasattr(data_source, 'erb_mapping'):
         result.update(data_source.erb_mapping())
     else:
