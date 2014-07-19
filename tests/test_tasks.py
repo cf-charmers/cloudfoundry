@@ -27,6 +27,7 @@ class TestTasks(unittest.TestCase):
         tasks.install_base_dependencies()
         apt_install.assert_called_once_with(packages=['ruby', 'monit'])
         check_call.assert_called_once_with(['gem', 'install',
+                                            '--no-ri', '--no-rdoc',
                                             'charm_dir/files/' +
                                             'bosh-template-1.2611.0.pre.gem'])
 
@@ -166,7 +167,8 @@ class TestTasks(unittest.TestCase):
         get_job_path.return_value = 'job_path'
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         exists.side_effect = [False, True]
-        tasks.install_job_packages('job_name')
+        with mock.patch('cloudfoundry.path.path'):
+            tasks.install_job_packages('job_name')
         self.assertEqual(exists.call_args_list, [
             mock.call('/var/vcap/packages/version/job_name'),
             mock.call('/var/vcap/packages/job_name'),
@@ -251,11 +253,11 @@ class TestTasks(unittest.TestCase):
         load_spec.assert_called_once_with('job_name')
         self.assertEqual(unlink.call_args_list, [
             mock.call('/var/vcap/jobs/job_name'),
-            mock.call('/etc/monit/monitrc.d/job_name.cfg'),
+            mock.call('/etc/monit/conf.d/job_name'),
         ])
         self.assertEqual(symlink.call_args_list, [
             mock.call('/var/vcap/jobs/version/job_name', '/var/vcap/jobs/job_name'),
-            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/monitrc.d/job_name.cfg'),
+            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/conf.d/job_name'),
         ])
 
     @mock.patch('charmhelpers.core.hookenv.config')

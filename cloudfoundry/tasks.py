@@ -6,6 +6,8 @@ import shutil
 import hashlib
 import time
 import yaml
+import stat
+import textwrap
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
@@ -16,13 +18,34 @@ from cloudfoundry import PACKAGES_BASE_DIR
 from cloudfoundry import contexts
 from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
-
+from .path import path
 
 def install_base_dependencies():
     fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
     subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
+
+
+def enable_monit_http_interface():
+    addtext = textwrap.dedent("""
+    set httpd port 2812 and
+       use address localhost
+       allow localhost
+       """)
+    with open('/etc/monit/monitrc') as fp:
+        monitrc = fp.read()
+
+    monitrc = '\n'.join((monitrc, addtext))
+
+    with open('/etc/monit/monitrc', 'w') as fp:
+        fp.write(monitrc)
+
+    subprocess.check_call('service monit restart')
+
+
+def make_executables():
+    pass
 
 
 def fetch_job_artifacts(job_name):
@@ -84,6 +107,11 @@ def install_job_packages(job_name):
     shutil.copytree(package_path, versioned_path)
     if os.path.exists(dst_path):
         os.unlink(dst_path)
+    binpath = path(versioned_path) / 'bin'
+    for script in binpath.files():
+        curr_mode = script.stat().st_mode
+        script.chmod(curr_mode | stat.S_IEXEC)
+
     os.symlink(versioned_path, dst_path)
 
 
@@ -136,11 +164,19 @@ class JobTemplates(services.ManagerCallback):
         if os.path.exists(dst_dir):
             os.unlink(dst_dir)
         os.symlink(versioned_dst_dir, dst_dir)
-        monit_dst = '/etc/monit/monitrc.d/{}.cfg'.format(job_name)
+        monit_dst = '/etc/monit/conf.d/{}'.format(job_name)
         if os.path.exists(monit_dst):
             os.unlink(monit_dst)
         os.symlink(versioned_monit_dst, monit_dst)
+
 job_templates = JobTemplates
+
+def start_monit(jobname):
+    subprocess.check_call(['monit', 'start', jobname])
+
+
+def stop_monit(jobname):
+    subprocess.check_call(['monit', 'stop', jobname])
 
 
 def build_service_block(charm_name, services=SERVICES):
@@ -157,11 +193,8 @@ def build_service_block(charm_name, services=SERVICES):
                 install_job_packages,
                 job_templates(job.get('mapping', {})),
             ],
-            # TODO: Add start/stop callbacks for monit, however...
-            # XXX: $ sudo monit start nats
-            # XXX: monit: Cannot connect to the monit daemon. Did you start it with http support?
-            # XXX: $ sudo service monit status
-            # XXX:  * monit is running
+            'start': start_monit,
+            'stop': stop_monit
         }
         result.append(job_def)
     return result
