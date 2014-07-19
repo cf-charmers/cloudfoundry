@@ -168,7 +168,9 @@ SERVICES = {
             'job_name': 'loggregator',
             'mapping': {},
             'provided_data': [contexts.LoggregatorRelation],
-            'required_data': [contexts.NatsRelation]
+            'required_data': [contexts.NatsRelation,
+                              contexts.EtcdRelation,
+                              contexts.LTCRelation]
             }]
         },
 
@@ -179,10 +181,11 @@ SERVICES = {
         'jobs': [{
             'job_name': 'loggregator_trafficcontroller',
             'mapping': {},
-            'provided_data': [],
+            'provided_data': [contexts.LTCRelation],
             'required_data': [contexts.LoggregatorRelation,
                               contexts.LTCRelation.remote_view,
-                              contexts.NatsRelation]
+                              contexts.NatsRelation,
+                              contexts.CloudControllerRelation]
             }]
         },
 

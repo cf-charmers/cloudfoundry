@@ -106,7 +106,7 @@ class DEARelation(RelationContext):
 class LTCRelation(RelationContext):
     name = 'ltc'
     interface = 'loggregator_trafficcontroller'
-    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port'],
+    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port']
     outgoing_port = 8083
     port = 8882
 
@@ -130,6 +130,7 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.host': data[0]['host'],
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
+            'traffic_controller.zone': 'z1',  # XXX: Really unsure what this should be set to
         }
 
 
@@ -188,7 +189,7 @@ class CloudControllerRelation(RelationContext):
     def erb_mapping(self):
         data = self[self.name]
         return {
-            'cc.srv_api_url': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
+            'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
             'cc.srv_api_user': data[0]['user'],
             'cc.srv_api_password': data[0]['password'],
         }

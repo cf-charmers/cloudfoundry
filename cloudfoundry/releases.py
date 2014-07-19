@@ -28,13 +28,12 @@ COMMON_SERVICES = [
 # the services lists; these are mainly for specifying relations for
 # unmanaged (charm store) charms.
 COMMON_RELATIONS = [
-    ('nats:nats', 'router:nats'),
-    ('mysql:db', 'uaa:db'),
-    ('nats:nats', 'uaa:nats'),
     ('mysql:db', 'cc:db'),
     ('mysql:db', 'cc-clock:db'),
     ('mysql:db', 'cc-worker:db'),
-    ('etcd:client', 'hm:client'),
+    ('mysql:db', 'uaa:db'),
+    ('etcd:client', 'hm:etcd'),
+    ('etcd:client', 'loggregator:etcd'),
 ]
 
 COMMON_UPGRADES = []
