@@ -30,7 +30,7 @@ COMMON_SERVICES = [
 COMMON_RELATIONS = [
     ('nats:nats', 'router:nats'),
     ('mysql:db', 'uaa:db'),
-    ('nats:nats', 'uaa:nats')
+    ('nats:nats', 'uaa:nats'),
     ('mysql:db', 'cc:db'),
     ('mysql:db', 'cc-clock:db'),
     ('mysql:db', 'cc-worker:db'),
