@@ -34,19 +34,18 @@ def install_base_dependencies():
 
 
 def enable_monit_http_interface():
-    addtext = textwrap.dedent("""
-    set httpd port 2812 and
-       use address localhost
-       allow localhost
-       """)
-    sentinel = addtext.split('\n')[0]
-    monitrc = path('/etc/monit/monitrc')
-    iswritten = len([x for x in monitrc.lines() if x.startswith(sentinel)])
-    if iswritten:
+    enable_http = path('/etc/monit/conf.d/enable_http')
+
+    if enable_http.exists():
         logger.warn("monit http already enabled")
         return
 
-    monitrc.write_text(addtext, append=True)
+    enable_http.write_text(textwrap.dedent("""
+        set httpd port 2812 and
+           use address localhost
+           allow localhost
+        """))
+
     subprocess.check_call(['service','monit','restart'])
 
 
@@ -185,7 +184,7 @@ def stop_monit(jobname):
     cmd = ['monit', 'stop', jobname]
     try:
         subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProccessError as e:
+    except subprocess.CalledProcessError as e:
         logger.error('%s: %s', ' '.join(cmd), e.output)
 
 
