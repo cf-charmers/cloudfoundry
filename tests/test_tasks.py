@@ -27,6 +27,7 @@ class TestTasks(unittest.TestCase):
         tasks.install_base_dependencies()
         apt_install.assert_called_once_with(packages=['ruby', 'monit'])
         check_call.assert_called_once_with(['gem', 'install',
+                                            '--no-ri', '--no-rdoc',
                                             'charm_dir/files/' +
                                             'bosh-template-1.2611.0.pre.gem'])
 
