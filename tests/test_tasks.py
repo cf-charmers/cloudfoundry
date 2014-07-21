@@ -41,6 +41,11 @@ class TestTasks(unittest.TestCase):
                                         'charm_dir/files/' +
                                         'bosh-template-1.2611.0.pre.gem'])])
 
+    def test_monit_http_enable_idem(self):
+        with mock.patch('cloudfoundry.tasks.path', spec=path) as monitrc:
+            monitrc().lines.return_value = ['set httpd port and']
+            tasks.enable_monit_http_interface()
+            assert not monitrc().write_text.called
 
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
