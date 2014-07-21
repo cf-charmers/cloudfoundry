@@ -177,30 +177,32 @@ class TestTasks(unittest.TestCase):
 
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
-    @mock.patch('shutil.copytree')
     @mock.patch('os.path.exists')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_install_job_packages(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
+    def test_install_job_packages(self, OrchRelation, get_job_path, exists, unlink, symlink):
         get_job_path.return_value = 'job_path'
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        exists.side_effect = [False, True]
+        exists.side_effect = [False, True, True]
         script = mock.Mock(name='script', spec=path)
         script.stat().st_mode = 33204
 
-        with mock.patch('cloudfoundry.path.path.files', return_value=[script]) as fm:
+        with mock.patch('cloudfoundry.path.path.files', return_value=[script]) as fm,\
+                mock.patch('cloudfoundry.path.path.makedirs') as md,\
+                mock.patch('tarfile.open') as to:
             tasks.install_job_packages('job_name')
+            assert md.called
             assert fm.called
+            assert to.called
+            assert to.return_value.__enter__().extractall.called
             assert script.chmod.called
             assert script.chmod.call_args == mock.call(33268)
 
-
         self.assertEqual(exists.call_args_list, [
             mock.call('/var/vcap/packages/version/job_name'),
+            mock.call('/var/vcap/packages/version/job_name/bin'),
             mock.call('/var/vcap/packages/job_name'),
         ])
-        copytree.assert_called_once_with(
-            'job_path/packages', '/var/vcap/packages/version/job_name')
         unlink.assert_called_once_with('/var/vcap/packages/job_name')
         symlink.assert_called_once_with('/var/vcap/packages/version/job_name', '/var/vcap/packages/job_name')
 

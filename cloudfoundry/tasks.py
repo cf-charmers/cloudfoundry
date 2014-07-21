@@ -2,7 +2,6 @@ import os
 import subprocess
 import urllib
 import tarfile
-import shutil
 import hashlib
 import time
 import yaml
@@ -46,7 +45,7 @@ def enable_monit_http_interface():
            allow localhost
         """))
 
-    subprocess.check_call(['service','monit','restart'])
+    subprocess.check_call(['service', 'monit', 'restart'])
 
 
 def fetch_job_artifacts(job_name):
@@ -106,15 +105,19 @@ def install_job_packages(job_name):
     if versioned_path.exists():
         return
 
-    shutil.copytree(package_path, versioned_path)
-    if os.path.exists(dst_path):
-        os.unlink(dst_path)
+    versioned_path.makedirs()
+    for package in package_path.files('*.tgz'):
+        with tarfile.open(package) as tgz:
+            tgz.extractall(versioned_path)
 
     binpath = versioned_path / 'bin'
-    for script in binpath.files():
-        curr_mode = script.stat().st_mode
-        script.chmod(curr_mode | stat.S_IEXEC)
+    if binpath.exists():
+        for script in binpath.files():
+            curr_mode = script.stat().st_mode
+            script.chmod(curr_mode | stat.S_IEXEC)
 
+    if os.path.exists(dst_path):
+        os.unlink(dst_path)
     os.symlink(versioned_path, dst_path)
 
 
