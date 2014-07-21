@@ -73,7 +73,9 @@ class RubyTemplateCallback(services.TemplateCallback):
         self.templates_dir = templates_dir
         self.mapping = mapping
         self.defaults = NestedDict()
-        self.defaults.update({k: v.get('default') for k, v in spec['properties'].iteritems()})
+        self.defaults.update({k: v.get('default')
+                              for k, v in spec['properties'].iteritems()
+                              if isinstance(v, dict)})
         self.defaults.setdefault('networks', {})['apps'] = 'default'
 
     def collect_data(self, manager, service_name):
