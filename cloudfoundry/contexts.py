@@ -90,6 +90,19 @@ class UAARelation(RelationContext):
     interface = 'http'
     required_keys = []
 
+    def get_shared_secrets(self):
+        secret_context = StoredContext(
+            os.path.join(hookenv.charm_dir(), '.uaa-secrets.yml'),
+            {
+                'uaa.login.client_secret': host.pwgen(20),
+                'uaa.admin.client_secret': host.pwgen(20),
+                'uaa.cc.client_secret': host.pwgen(20),
+            })
+        return secret_context
+
+    def erb_mapping(self):
+        return self.get_shared_secrets()
+
 
 class LoginRelation(RelationContext):
     name = 'login'
