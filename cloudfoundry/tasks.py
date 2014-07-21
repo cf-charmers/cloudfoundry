@@ -39,8 +39,13 @@ def enable_monit_http_interface():
        use address localhost
        allow localhost
        """)
-
+    sentinel = addtext.split('\n')[0]
     monitrc = path('/etc/monit/monitrc')
+    iswritten = len([x for x in monitrc.lines() if x.startswith(sentinel)])
+    if iswritten:
+        logger.warn("monit http already enabled")
+        return
+
     monitrc.write_text(addtext, append=True)
     subprocess.check_call(['service','monit','restart'])
 
