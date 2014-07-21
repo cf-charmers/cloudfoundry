@@ -17,18 +17,23 @@ COMMON_SERVICES = [
     ('loggregator-v1', 'loggregator'),
     ('loggregator-trafficcontroller-v1', 'loggregator-trafficcontrol'),
     ('hm9000-v1', 'hm'),
-    ('syslog-aggregator-v1', 'syslog-aggregator'),
     ('haproxy-v1', 'haproxy'),
 
     ('cs:trusty/mysql', 'mysql'),
     ('cs:~hazmat/trusty/etcd', 'etcd'),
 ]
 
-# These map service name:interface pairs
-# to become deployment relations for a given topo.
+# These map service name:interface pairs to become deployment relations
+# for a given topo.  These are supplemented by relations generated from
+# the services lists; these are mainly for specifying relations for
+# unmanaged (charm store) charms.
 COMMON_RELATIONS = [
-    ('nats:nats', 'router:nats'),
-    ('uaa:db', 'mysql:db')
+    ('mysql:db', 'cc:db'),
+    ('mysql:db', 'cc-clock:db'),
+    ('mysql:db', 'cc-worker:db'),
+    ('mysql:db', 'uaa:db'),
+    ('etcd:client', 'hm:etcd'),
+    ('etcd:client', 'loggregator:etcd'),
 ]
 
 COMMON_UPGRADES = []
@@ -40,7 +45,7 @@ RELEASES = [
         "topology": {
             "services": COMMON_SERVICES,
             "expose": ['router_v1'],
-            "relations": COMMON_RELATIONS
+            "relations": COMMON_RELATIONS,
         },
         "upgrades": COMMON_UPGRADES
     }

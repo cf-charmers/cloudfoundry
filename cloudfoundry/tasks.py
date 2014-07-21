@@ -4,6 +4,7 @@ import urllib
 import tarfile
 import shutil
 import hashlib
+import time
 import yaml
 
 from charmhelpers.core import host
@@ -17,11 +18,11 @@ from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
 
 
-def install_bosh_template_renderer():
-    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby']))
+def install_base_dependencies():
+    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
-    subprocess.check_call(['gem', 'install', gem_file])
+    subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
 
 
 def fetch_job_artifacts(job_name):
@@ -39,13 +40,17 @@ def fetch_job_artifacts(job_name):
     for i in range(3):
         try:
             _, resp = urllib.urlretrieve(artifact_url, job_archive)
-        except urllib.ContentTooShortError as e:
+        except (IOError, urllib.ContentTooShortError) as e:
+            if os.path.exists(job_archive):
+                os.remove(job_archive)
             if i < 2:
                 hookenv.log(
                     'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
                     hookenv.INFO)
+                time.sleep(i*10+1)
+                continue
             else:
-                hookenv.log('Unable to download artifact: {}'.format(str(e)), hookenv.ERROR)
+                hookenv.log('Unable to download artifact: {}; (attempt {} of 3)'.format(str(e), i+1), hookenv.ERROR)
                 raise
         else:
             break
@@ -64,7 +69,8 @@ def fetch_job_artifacts(job_name):
             tgz.extractall(job_path)
     except Exception as e:
         hookenv.log(str(e), hookenv.ERROR)
-        os.remove(job_archive)
+        if os.path.exists(job_archive):
+            os.remove(job_archive)
         raise
 
 
@@ -130,7 +136,7 @@ class JobTemplates(services.ManagerCallback):
         if os.path.exists(dst_dir):
             os.unlink(dst_dir)
         os.symlink(versioned_dst_dir, dst_dir)
-        monit_dst = '/etc/monit.d/{}.cfg'.format(job_name)
+        monit_dst = '/etc/monit/monitrc.d/{}.cfg'.format(job_name)
         if os.path.exists(monit_dst):
             os.unlink(monit_dst)
         os.symlink(versioned_monit_dst, monit_dst)
@@ -149,8 +155,13 @@ def build_service_block(charm_name, services=SERVICES):
             'data_ready': [
                 fetch_job_artifacts,
                 install_job_packages,
-                job_templates(job['mapping']),
+                job_templates(job.get('mapping', {})),
             ],
+            # TODO: Add start/stop callbacks for monit, however...
+            # XXX: $ sudo monit start nats
+            # XXX: monit: Cannot connect to the monit daemon. Did you start it with http support?
+            # XXX: $ sudo service monit status
+            # XXX:  * monit is running
         }
         result.append(job_def)
     return result

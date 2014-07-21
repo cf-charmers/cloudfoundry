@@ -96,69 +96,8 @@ class TestMysqlRelation(unittest.TestCase):
         })
 
 
-class TestRouterRelation(unittest.TestCase):
-
-    @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_router_relation_empty(self, mid):
-        mid.return_value = None
-        n = contexts.RouterRelation()
-        self.assertEqual(n, {})
-
-    @mock.patch('charmhelpers.core.hookenv.related_units')
-    @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    @mock.patch('charmhelpers.core.hookenv.relation_get')
-    def test_router_relation_populated(self, mrel, mid, mrelated):
-        mid.return_value = ['router']
-        mrel.return_value = {'domain': 'example.com'}
-        mrelated.return_value = ['router/0']
-        n = contexts.RouterRelation()
-        expected = {'router': [{'domain': 'example.com'}]}
-        self.assertTrue(bool(n))
-        self.assertEqual(n, expected)
-        self.assertEqual(n['router'][0]['domain'], 'example.com')
-
-    @mock.patch(CONTEXT + 'RouterRelation.get_data')
-    @mock.patch('subprocess.check_output')
-    def test_to_ip_already_ip(self, mcheck_output, mget_data):
-        self.assertEqual(contexts.RouterRelation().to_ip('127.0.0.1'),
-                         '127.0.0.1')
-
-    @mock.patch(CONTEXT + 'RouterRelation.get_data')
-    @mock.patch('subprocess.check_output')
-    def test_to_ip(self, mcheck_output, mget_data):
-        mcheck_output.return_value = ' foo.maas\n 0.0.0.0\n'
-        self.assertEqual(contexts.RouterRelation().to_ip('foo'), '0.0.0.0')
-
-    @mock.patch(CONTEXT + 'RouterRelation.get_data')
-    @mock.patch('subprocess.check_output')
-    def test_to_ip_none(self, mcheck_output, mget_data):
-        mcheck_output.return_value = ' foo.maas\n bar\n'
-        self.assertEqual(contexts.RouterRelation().to_ip('foo'), None)
-
-    @mock.patch(CONTEXT + 'RouterRelation.get_data')
-    @mock.patch(CONTEXT + 'RouterRelation.to_ip')
-    @mock.patch('charmhelpers.core.hookenv.unit_get')
-    @mock.patch('charmhelpers.core.hookenv.config')
-    def test_get_domain(self, mconfig, munit_get, mto_ip, mget_data):
-        mconfig.return_value = {'domain': 'foo'}
-        self.assertEqual(contexts.RouterRelation().get_domain(), 'foo')
-        mconfig.return_value = {'domain': 'xip.io'}
-        munit_get.return_value = 'my-domain.org'
-        mto_ip.return_value = '0.0.0.0'
-        self.assertEqual(contexts.RouterRelation().get_domain(),
-                         '0.0.0.0.xip.io')
-        mto_ip.assert_called_once_with('my-domain.org')
-
-    @mock.patch(CONTEXT + 'RouterRelation.get_data')
-    @mock.patch(CONTEXT + 'RouterRelation.get_domain')
-    def test_provide_data(self, mget_domain, mget_data):
-        mget_domain.return_value = 'my-domain.org'
-        self.assertEqual(contexts.RouterRelation().provide_data(), {
-            'domain': 'my-domain.org'})
-
-
-class TestLogRouterRelation(unittest.TestCase):
-    @mock.patch(CONTEXT + 'LogRouterRelation.get_data')
+class TestLTCRelation(unittest.TestCase):
+    @mock.patch(CONTEXT + 'LTCRelation.get_data')
     @mock.patch('charmhelpers.core.hookenv.charm_dir')
     @mock.patch('charmhelpers.core.host.pwgen')
     @mock.patch(CONTEXT + 'StoredContext')
@@ -166,19 +105,19 @@ class TestLogRouterRelation(unittest.TestCase):
                                mcharm_dir, mget_data):
         mStoredContext.side_effect = lambda f, d: d
         mpwgen.return_value = 'secret'
-        self.assertEqual(contexts.LogRouterRelation().get_shared_secret(),
+        self.assertEqual(contexts.LTCRelation().get_shared_secret(),
                          'secret')
 
-    @mock.patch(CONTEXT + 'LogRouterRelation.get_data')
-    @mock.patch(CONTEXT + 'LogRouterRelation.get_shared_secret')
+    @mock.patch(CONTEXT + 'LTCRelation.get_data')
+    @mock.patch(CONTEXT + 'LTCRelation.get_shared_secret')
     @mock.patch('charmhelpers.core.hookenv.unit_get')
     def test_provide_data(self, munit_get, mget_shared_secret, mget_data):
         munit_get.return_value = 'address'
         mget_shared_secret.return_value = 'secret'
-        self.assertEqual(contexts.LogRouterRelation().provide_data(), {
-            'address': 'address',
-            'incoming_port': contexts.LogRouterRelation.incoming_port,
-            'outgoing_port': contexts.LogRouterRelation.outgoing_port,
+        self.assertEqual(contexts.LTCRelation().provide_data(), {
+            'host': 'address',
+            'port': contexts.LTCRelation.port,
+            'outgoing_port': contexts.LTCRelation.outgoing_port,
             'shared_secret': 'secret',
         })
 
@@ -275,6 +214,38 @@ class TestOrchestratorRelation(unittest.TestCase):
             'cf_version': 173,
             'domain': 'domain',
         })
+
+    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')
+    @mock.patch('subprocess.check_output')
+    def test_to_ip_already_ip(self, mcheck_output, mget_data):
+        self.assertEqual(contexts.OrchestratorRelation().to_ip('127.0.0.1'),
+                         '127.0.0.1')
+
+    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')
+    @mock.patch('subprocess.check_output')
+    def test_to_ip(self, mcheck_output, mget_data):
+        mcheck_output.return_value = ' foo.maas\n 0.0.0.0\n'
+        self.assertEqual(contexts.OrchestratorRelation().to_ip('foo'), '0.0.0.0')
+
+    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')
+    @mock.patch('subprocess.check_output')
+    def test_to_ip_none(self, mcheck_output, mget_data):
+        mcheck_output.return_value = ' foo.maas\n bar\n'
+        self.assertEqual(contexts.OrchestratorRelation().to_ip('foo'), None)
+
+    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')
+    @mock.patch(CONTEXT + 'OrchestratorRelation.to_ip')
+    @mock.patch('charmhelpers.core.hookenv.unit_get')
+    @mock.patch('charmhelpers.core.hookenv.config')
+    def test_get_domain(self, mconfig, munit_get, mto_ip, mget_data):
+        mconfig.return_value = {'domain': 'foo'}
+        self.assertEqual(contexts.OrchestratorRelation().get_domain(), 'foo')
+        mconfig.return_value = {'domain': 'xip.io'}
+        munit_get.return_value = 'my-domain.org'
+        mto_ip.return_value = '0.0.0.0'
+        self.assertEqual(contexts.OrchestratorRelation().get_domain(),
+                         '0.0.0.0.xip.io')
+        mto_ip.assert_called_once_with('my-domain.org')
 
 
 class TestJujuAPICredentials(unittest.TestCase):

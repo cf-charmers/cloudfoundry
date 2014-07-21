@@ -306,6 +306,15 @@ class RelationContext(dict):
         """
         return {}
 
+    @classmethod
+    def remote_view(cls):
+        """
+        Return the provided relation data as it would be seen by a remote unit.
+        """
+        inst = cls()
+        inst[inst.name] = [inst.provide_data()]
+        return inst
+
 
 class ManagerCallback(object):
     """

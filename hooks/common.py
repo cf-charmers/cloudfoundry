@@ -20,6 +20,7 @@ from deployer.utils import get_qualified_charm_url
 from deployer.utils import parse_constraints
 from deployer.action.importer import Importer
 from deployer.deployment import Deployment
+from deployer.utils import setup_logging
 from jujuclient import EnvError
 
 
@@ -56,12 +57,21 @@ class APIEnvironment(GUIEnvironment):
             name, charm_url, config=config, constraints=constraints,
             num_units=num_units, machine_spec=force_machine)
 
+    def _get_units_in_error(self, status=None):
+        """
+        Ignore this unit when watching for errors, lest we are never
+        able to get out of an error state with `resolved --retry`.
+        """
+        units = super(APIEnvironment, self)._get_units_in_error(status)
+        local_unit = hookenv.local_unit()
+        return [unit for unit in units if unit != local_unit]
+
 
 def generate(s):
     version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
     if os.path.exists(build_dir):
-        return  # TODO: Handle re-run using upgrade-charm
+        shutil.rmtree(build_dir)
     generator = CharmGenerator(RELEASES, SERVICES)
     generator.select_release(version)
     generator.generate(build_dir)
@@ -97,8 +107,7 @@ def deploy(s):
         # the orchestrator is not defined in the bundle
         orchestrator = hookenv.service_name()
         for service_name, service_data in bundle['cloudfoundry']['services'].items():
-            # XXX: explicitly check if service has orchestrator interface or
-            # not
+            # XXX: explicitly check if service has orchestrator interface
             if not service_data['charm'].startswith('cs:'):
                 try:
                     env.add_relation(orchestrator, service_name)
@@ -106,7 +115,7 @@ def deploy(s):
                     if e.message.endswith('relation already exists'):
                         continue  # existing relations are ok, just skip
                     else:
-                        raise
+                        hookenv.log('Error adding orchestrator relation: {}'.format(str(e)), hookenv.ERROR)
     finally:
         env.close()
 
@@ -142,4 +151,6 @@ def manage():
 
 
 if __name__ == '__main__':
+    setup_logging(verbose=True, debug=True)
+
     manage()

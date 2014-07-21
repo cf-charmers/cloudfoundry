@@ -58,8 +58,8 @@ class TestGenerator(unittest.TestCase):
             'interface'], contexts.CloudControllerRelation.interface)
         self.assertEqual(requires[contexts.NatsRelation.name]['interface'],
                          contexts.NatsRelation.interface)
-        self.assertEqual(requires[contexts.RouterRelation.name]['interface'],
-                         contexts.RouterRelation.interface)
+        self.assertEqual(requires[contexts.OrchestratorRelation.name]['interface'],
+                         contexts.OrchestratorRelation.interface)
         # This interface is added implicitly by our model, generated
         # charms have a relation to their Orchestrator.
         self.assertEqual(requires[OrchestratorRelation.name][
@@ -102,6 +102,30 @@ class TestGenerator(unittest.TestCase):
             self.assertTrue(os.access(
                 os.path.join(tmpdir, 'build', 'hooks', 'entry.py'),
                 os.R_OK | os.X_OK))
+
+    def test_get_relations(self):
+        releases = [{
+            'releases': (1,),
+            'topology': {
+                'services': [('service1', 's1'), ('service2', 's2'), 'cs:trusty/service3'],
+                'relations': [('s2:etcd', 'etcd:client')],
+            },
+        }]
+        services = {
+            'service1': {'jobs': [{
+                'required_data': [contexts.NatsRelation, contexts.MysqlRelation],
+            }]},
+            'service2': {'jobs': [{
+                'provided_data': [contexts.NatsRelation],
+                'required_data': [contexts.LTCRelation, contexts.EtcdRelation],
+            }]},
+        }
+        g = CharmGenerator(releases, services)
+        g.select_release(1)
+        self.assertEqual(g._get_relations(), [
+            ('s2:etcd', 'etcd:client'),
+            (('s1', 'nats'), ('s2', 'nats')),
+        ])
 
     def test_build_charm_ref(self):
         g = CharmGenerator(RELEASES, SERVICES)

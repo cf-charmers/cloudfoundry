@@ -20,12 +20,12 @@ class TestTasks(unittest.TestCase):
     @mock.patch('subprocess.check_call')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
-    def test_install_bosh_template_renderer(self, apt_install,
-                                            filter_installed_packages,
-                                            check_call):
+    def test_install_base_dependencies(self, apt_install,
+                                       filter_installed_packages,
+                                       check_call):
         filter_installed_packages.side_effect = lambda a: a
-        tasks.install_bosh_template_renderer()
-        apt_install.assert_called_once_with(packages=['ruby'])
+        tasks.install_base_dependencies()
+        apt_install.assert_called_once_with(packages=['ruby', 'monit'])
         check_call.assert_called_once_with(['gem', 'install',
                                             'charm_dir/files/' +
                                             'bosh-template-1.2611.0.pre.gem'])
@@ -56,6 +56,7 @@ class TestTasks(unittest.TestCase):
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
 
+    @mock.patch('os.path.exists')
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('hashlib.md5')
@@ -67,17 +68,19 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_fetch_job_artifacts_missing_checksum(
             self, OrchRelation, get_job_path, urlretrieve,
-            taropen, mkdir, mopen, md5, log, remove):
+            taropen, mkdir, mopen, md5, log, remove, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
         urlretrieve.return_value = (None, {})
         mopen.return_value.__enter__().read.return_value = 'read'
         md5.return_value.hexdigest.return_value = 'deadbeef'
+        exists.side_effect = [False, True]
         self.assertRaises(AssertionError, tasks.fetch_job_artifacts, 'job_name')
         assert not taropen.called
         remove.assert_called_once_with('job_path/job_name.tgz')
 
+    @mock.patch('os.path.exists')
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('hashlib.md5')
@@ -89,13 +92,14 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_fetch_job_artifacts_checksum_mismatch(
             self, OrchRelation, get_job_path, urlretrieve,
-            taropen, mkdir, mopen, md5, log, remove):
+            taropen, mkdir, mopen, md5, log, remove, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
         urlretrieve.return_value = (None, {'ETag': '"ca11ab1e"'})
         mopen.return_value.__enter__().read.return_value = 'read'
         md5.return_value.hexdigest.return_value = 'deadbeef'
+        exists.side_effect = [False, True]
         self.assertRaises(AssertionError, tasks.fetch_job_artifacts, 'job_name')
         assert not taropen.called
         remove.assert_called_once_with('job_path/job_name.tgz')
@@ -114,6 +118,8 @@ class TestTasks(unittest.TestCase):
         assert not urlretrieve.called
         assert not taropen.called
 
+    @mock.patch('time.sleep')
+    @mock.patch('os.path.exists')
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('hashlib.md5')
@@ -124,24 +130,31 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_fetch_job_artifacts_retry(self, OrchRelation, get_job_path, urlretrieve,
-                                       taropen, mkdir, mopen, md5, log, remove):
+                                       taropen, mkdir, mopen, md5, log, remove, exists, sleep):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
         urlretrieve.side_effect = [
             urllib.ContentTooShortError('too short', {}),
-            (None, {'ETag': '"deadbeef"'})]
+            IOError('connection refused'),
+            IOError('bad time')]
         mopen.return_value.__enter__().read.return_value = 'read'
         md5.return_value.hexdigest.return_value = 'deadbeef'
         tgz = taropen.return_value.__enter__.return_value
-        tasks.fetch_job_artifacts('job_name')
+        exists.side_effect = [False, True, False, False]
+        self.assertRaises(IOError, tasks.fetch_job_artifacts, 'job_name')
         self.assertEqual(urlretrieve.call_args_list, [mock.call(
             'http://url/cf-version/amd64/job_name',
-            'job_path/job_name.tgz')]*2)
-        md5.assert_called_once_with('read')
-        taropen.assert_called_once_with('job_path/job_name.tgz')
-        tgz.extractall.assert_called_once_with('job_path')
-        log.assert_called_with('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO')
+            'job_path/job_name.tgz')]*3)
+        assert not md5.called
+        assert not taropen.called
+        assert not tgz.extractall.called
+        self.assertEqual(log.call_args_list, [
+            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: bad time; (attempt 3 of 3)', 'ERROR'),
+        ])
+        remove.assert_called_once_with('job_path/job_name.tgz')
 
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
@@ -238,19 +251,19 @@ class TestTasks(unittest.TestCase):
         load_spec.assert_called_once_with('job_name')
         self.assertEqual(unlink.call_args_list, [
             mock.call('/var/vcap/jobs/job_name'),
-            mock.call('/etc/monit.d/job_name.cfg'),
+            mock.call('/etc/monit/monitrc.d/job_name.cfg'),
         ])
         self.assertEqual(symlink.call_args_list, [
             mock.call('/var/vcap/jobs/version/job_name', '/var/vcap/jobs/job_name'),
-            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit.d/job_name.cfg'),
+            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/monitrc.d/job_name.cfg'),
         ])
 
+    @mock.patch('charmhelpers.core.hookenv.config')
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids):
+    def test_build_service_block(self, relation_ids, mconfig):
         relation_ids.return_value = []
         services = tasks.build_service_block('router-v1')
-        self.assertIsInstance(services[0]['provided_data'][0],
-                              contexts.RouterRelation)
+        self.assertEqual(services[0]['provided_data'], [])
         self.assertIsInstance(services[0]['required_data'][0],
                               contexts.OrchestratorRelation)
         self.assertIsInstance(services[0]['required_data'][1],

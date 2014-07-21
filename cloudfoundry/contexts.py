@@ -54,6 +54,15 @@ class NatsRelation(RelationContext):
                     address=hookenv.unit_get(
                         'private-address').encode('utf-8'))
 
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'nats.machines': [u['address'] for u in data],
+            'nats.port': data[0]['port'],
+            'nats.user': data[0]['user'],
+            'nats.password': data[0]['password'],
+        }
+
 
 class MysqlRelation(RelationContext):
     name = 'db'
@@ -82,12 +91,6 @@ class UAARelation(RelationContext):
     required_keys = []
 
 
-class SyslogAggregatorRelation(RelationContext):
-    name = 'syslog_aggregator'
-    interface = 'syslog'
-    required_keys = []
-
-
 class LoginRelation(RelationContext):
     name = 'login'
     interface = 'http'
@@ -100,13 +103,102 @@ class DEARelation(RelationContext):
     required_keys = []
 
 
-class RouterRelation(RelationContext):
-    name = 'router'
-    interface = 'router'
-    required_keys = ['domain']
+class LTCRelation(RelationContext):
+    name = 'ltc'
+    interface = 'loggregator_trafficcontroller'
+    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port']
+    outgoing_port = 8083
+    port = 8882
+
+    def get_shared_secret(self):
+        secret_context = StoredContext(
+            os.path.join(hookenv.charm_dir(), '.ltc-secret.yml'),
+            {'shared_secret': host.pwgen(20)})
+        return secret_context['shared_secret']
 
     def provide_data(self):
-        return {'domain': self.get_domain()}
+        return {
+            'host': hookenv.unit_get('private-address').encode('utf-8'),
+            'port': self.port,
+            'outgoing_port': self.outgoing_port,
+            'shared_secret': self.get_shared_secret(),
+        }
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'loggregator_endpoint.host': data[0]['host'],
+            'loggregator_endpoint.port': data[0]['port'],
+            'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
+            'traffic_controller.zone': 'z1',  # XXX: Really unsure what this should be set to
+        }
+
+
+class LoggregatorRelation(RelationContext):
+    name = 'loggregator'
+    interface = 'loggregator'
+    required_keys = ['address', 'incoming_port', 'outgoing_port']
+    incoming_port = 3457
+    outgoing_port = 8082
+    varz_port = 8883
+
+    def provide_data(self):
+        return {
+            'address': hookenv.unit_get('private-address').encode('utf-8'),
+            'incoming_port': self.incoming_port,
+            'outgoing_port': self.outgoing_port,
+        }
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'loggregator.servers': [d['address'] for d in data],
+            'loggregator.incoming_port': data[0]['incoming_port'],
+            'loggregator.outgoing_port': data[0]['outgoing_port'],
+        }
+
+
+class EtcdRelation(RelationContext):
+    name = 'etcd'
+    interface = 'http'
+    required_keys = ['hostname', 'port']
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'etcd.machines': [d['hostname'] for d in data],
+        }
+
+
+class CloudControllerRelation(RelationContext):
+    name = 'cc'
+    interface = 'controller'
+    required_keys = ['hostname', 'port', 'user', 'password']
+
+    def get_credentials(self):
+        return StoredContext('api_credentials.yml', {
+            'user': host.pwgen(7),
+            'password': host.pwgen(7),
+        })
+
+    def provide_data(self):
+        return dict(self.get_credentials(),
+                    hostname=hookenv.unit_get('private-address').encode('utf-8'),
+                    port=9022)
+
+    def erb_mapping(self):
+        data = self[self.name]
+        return {
+            'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
+            'cc.srv_api_user': data[0]['user'],
+            'cc.srv_api_password': data[0]['password'],
+        }
+
+
+class OrchestratorRelation(RelationContext):
+    name = "orchestrator"
+    interface = "orchestrator"
+    required_keys = ['artifacts_url', 'cf_version', 'domain']
 
     def get_domain(self):
         domain = hookenv.config()['domain']
@@ -128,74 +220,6 @@ class RouterRelation(RelationContext):
                     return candidate
             return None
 
-
-class LogRouterRelation(RelationContext):
-    name = 'logrouter'
-    interface = 'logrouter'
-    required_keys = ['shared_secret', 'address', 'incoming_port', 'outgoing_port']
-    incoming_port = 3456
-    outgoing_port = 8083
-    varz_port = 8882
-
-    def get_shared_secret(self):
-        secret_context = StoredContext(
-            os.path.join(hookenv.charm_dir(), '.logrouter-secret.yml'),
-            {'shared_secret': host.pwgen(20)})
-        return secret_context['shared_secret']
-
-    def provide_data(self):
-        return {
-            'address': hookenv.unit_get('private-address').encode('utf-8'),
-            'incoming_port': self.incoming_port,
-            'outgoing_port': self.outgoing_port,
-            'shared_secret': self.get_shared_secret(),
-        }
-
-
-class LoggregatorRelation(RelationContext):
-    name = 'loggregator'
-    interface = 'loggregator'
-    required_keys = ['address', 'incoming_port', 'outgoing_port']
-    incoming_port = 3457
-    outgoing_port = 8082
-    varz_port = 8883
-
-    def provide_data(self):
-        return {
-            'address': hookenv.unit_get('private-address').encode('utf-8'),
-            'incoming_port': self.incoming_port,
-            'outgoing_port': self.outgoing_port,
-        }
-
-
-class EtcdRelation(RelationContext):
-    name = 'etcd'
-    interface = 'etcd'
-    required_keys = ['hostname', 'port']
-
-
-class CloudControllerRelation(RelationContext):
-    name = 'cc'
-    interface = 'controller'
-    required_keys = ['hostname', 'port', 'user', 'password']
-
-    def get_credentials(self):
-        return StoredContext('api_credentials.yml', {
-            'user': host.pwgen(7),
-            'password': host.pwgen(7),
-        })
-
-    def provide_data(self):
-        return dict(self.get_credentials(),
-                    hostname=hookenv.unit_get('private-address').encode('utf-8'),
-                    port=9022)
-
-
-class OrchestratorRelation(RelationContext):
-    name = "orchestrator"
-    interface = "orchestrator"
-    required_keys = ['artifacts_url', 'cf_version', 'domain']
-
     def provide_data(self):
         config = hookenv.config()
         private_addr = hookenv.unit_private_ip()
@@ -205,7 +229,12 @@ class OrchestratorRelation(RelationContext):
         return {
             'artifacts_url': 'http://{}:8019'.format(private_addr),  # FIXME: this should use SSL
             'cf_version': version,
-            'domain': config['domain'],
+            'domain': self.get_domain(),
+        }
+
+    def erb_mapping(self):
+        return {
+            'domain': self[self.name][0]['domain'],
         }
 
 

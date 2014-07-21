@@ -2,11 +2,14 @@ import os
 import json
 import copy
 import subprocess
+import logging
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
 from cloudfoundry.mapper import NestedDict, property_mapper
+
+logger = logging.getLogger(__name__)
 
 
 def render_erb(source, target, context, owner='root', group='root', perms=0444, templates_dir=None):
@@ -30,20 +33,35 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
         templates_dir = os.path.join(hookenv.charm_dir(), 'templates')
     if not os.path.isabs(source):
         source = os.path.join(templates_dir, source)
-    content = subprocess.check_output([
-        'bosh-template', source, '-C', json.dumps(context)])
+
+    try:
+        cmd = ['bosh-template', source, '-C', json.dumps(context)]
+        content = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        logger.error('Failed template rendering:%s\n%s\n%s',
+                     source,
+                     json.dumps(context, indent=2),
+                     e.output)
+        cmd[-1] = '<json>'
+        raise RuntimeError("Rendering failed:\n%s" % ' '.join(cmd))
+
     host.mkdir(os.path.dirname(target))
     host.write_file(target, content, owner, group, perms)
 
 
 def deepmerge(dest, src):
-    result = copy.deepcopy(dest)
+    """
+    Deep merge of two dicts.
+
+    This is destructive (`dest` is modified), but values
+    from `src` are passed through `copy.deepcopy`.
+    """
     for k, v in src.iteritems():
         if k in dest and isinstance(v, dict):
-            result[k] = deepmerge(dest[k], v)
+            deepmerge(dest[k], v)
         else:
-            result[k] = copy.deepcopy(v)
-    return result
+            dest[k] = copy.deepcopy(v)
+    return dest
 
 
 class RubyTemplateCallback(services.TemplateCallback):
@@ -60,15 +78,12 @@ class RubyTemplateCallback(services.TemplateCallback):
 
     def collect_data(self, manager, service_name):
         service = manager.get_service(service_name)
-        data = {}
-        for data_source in service.get('required_data', []):
-            data = deepmerge(data, data_source)
-        defaults = {
+        data = {
             'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
-            'properties': NestedDict(self.defaults),
+            'properties': copy.deepcopy(self.defaults),
         }
-        data = property_mapper(self.mapping, data)
-        data = deepmerge(defaults, data)
+        for data_source in service.get('required_data', []):
+            deepmerge(data['properties'], property_mapper(self.mapping, data_source))
         return data
 
     def __call__(self, manager, service_name, event_name):
