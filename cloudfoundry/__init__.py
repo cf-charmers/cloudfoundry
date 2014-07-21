@@ -1,2 +1,3 @@
-TEMPLATES_BASE_DIR = '/var/vcap/jobs'
-PACKAGES_BASE_DIR = '/var/vcap/packages'
+from .path import path as _path
+TEMPLATES_BASE_DIR = _path('/var/vcap/jobs')
+PACKAGES_BASE_DIR = _path('/var/vcap/packages')
