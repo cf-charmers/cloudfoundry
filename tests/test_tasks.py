@@ -4,8 +4,8 @@ import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
-from cloudfoundry import tasks
 from cloudfoundry.path import path
+from cloudfoundry import tasks
 
 
 class TestTasks(unittest.TestCase):
@@ -25,12 +25,21 @@ class TestTasks(unittest.TestCase):
                                        filter_installed_packages,
                                        check_call):
         filter_installed_packages.side_effect = lambda a: a
-        tasks.install_base_dependencies()
+        with mock.patch('cloudfoundry.tasks.path', spec=path) as monitrc:
+            tasks.install_base_dependencies()
+
         apt_install.assert_called_once_with(packages=['ruby', 'monit'])
-        check_call.assert_called_once_with(['gem', 'install',
-                                            '--no-ri', '--no-rdoc',
-                                            'charm_dir/files/' +
-                                            'bosh-template-1.2611.0.pre.gem'])
+        assert monitrc.called
+        assert monitrc.call_args == mock.call('/etc/monit/monitrc')
+        newtext = '\nset httpd port 2812 and\n'\
+          '   use address localhost\n'\
+          '   allow localhost\n'
+        assert monitrc().write_text.call_args == mock.call(newtext, append=True)
+        check_call.assert_has_calls([mock.call(['service','monit','restart']),
+                                    mock.call(['gem', 'install',
+                                        '--no-ri', '--no-rdoc',
+                                        'charm_dir/files/' +
+                                        'bosh-template-1.2611.0.pre.gem'])])
 
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
@@ -170,6 +179,7 @@ class TestTasks(unittest.TestCase):
         exists.side_effect = [False, True]
         script = mock.Mock(name='script', spec=path)
         script.stat().st_mode = 33204
+
         with mock.patch('cloudfoundry.path.path.files', return_value=[script]) as fm:
             tasks.install_job_packages('job_name')
             assert fm.called
