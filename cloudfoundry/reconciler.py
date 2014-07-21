@@ -4,13 +4,33 @@
 Run deployer in a loop, then remove any services not
 in the expected state.
 
+To experiment with this::
+
+    #activate virtualenv
+    . .tox/py27/bin/activate
+    python cloudfoundry/reconciler.py \
+        --logging=debug --repo=build --port=8888
+
+    # then in another window you can do the follow to play
+    # with the REST API
+    cd tests
+    ./test-server.sh
+
+    This should push a bundle of expected state, HUP the
+    server to force a run and then status the system.
+    Debug output should show whats happening and
+
 
 ISSUES:
     local charm version in charm url
         need to probe server still
-    reconcile loop adding same tactics more than once
+    reconcile loop:
         should only trigger builds after push/reality change
         execute should happen by queueing the callback
+        should listen directly on the websocket and schedule
+            rebuilds on change
+    no support for unit state currently (auto-retry/replace, etc)
+    relation removal still needs work
 """
 import datetime
 import json
