@@ -101,7 +101,14 @@ def deploy(s):
     if not os.path.exists(juju_home):
         os.mkdir(juju_home)
     try:
-        importer.run()
+        try:
+            importer.run()
+        except Exception as e:
+            hook_name = hookenv.hook_name()
+            if hook_name.startswith('orchestrator-relation-'):
+                hookenv.log('Error adding orchestrator relation: {}'.format(str(e)), hookenv.ERROR)
+            else:
+                raise
         # manually add the implicit relation between the orchestrator and
         # the generated charms; this can't be done in the bundle because
         # the orchestrator is not defined in the bundle
