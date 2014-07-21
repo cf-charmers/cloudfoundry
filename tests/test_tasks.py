@@ -5,6 +5,7 @@ import urllib
 from charmhelpers.core import services
 from cloudfoundry import contexts
 from cloudfoundry import tasks
+from cloudfoundry.path import path
 
 
 class TestTasks(unittest.TestCase):
@@ -167,8 +168,15 @@ class TestTasks(unittest.TestCase):
         get_job_path.return_value = 'job_path'
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         exists.side_effect = [False, True]
-        with mock.patch('cloudfoundry.path.path'):
+        script = mock.Mock(name='script', spec=path)
+        script.stat().st_mode = 33204
+        with mock.patch('cloudfoundry.path.path.files', return_value=[script]) as fm:
             tasks.install_job_packages('job_name')
+            assert fm.called
+            assert script.chmod.called
+            assert script.chmod.call_args == mock.call(33268)
+
+
         self.assertEqual(exists.call_args_list, [
             mock.call('/var/vcap/packages/version/job_name'),
             mock.call('/var/vcap/packages/job_name'),
