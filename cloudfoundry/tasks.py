@@ -168,14 +168,20 @@ class JobTemplates(services.ManagerCallback):
             os.unlink(monit_dst)
         os.symlink(versioned_monit_dst, monit_dst)
 
+
 job_templates = JobTemplates
+
 
 def start_monit(jobname):
     subprocess.check_call(['monit', 'start', jobname])
 
 
 def stop_monit(jobname):
-    subprocess.check_call(['monit', 'stop', jobname])
+    cmd = ['monit', 'stop', jobname]
+    try:
+        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProccessError as e:
+        logger.error('%s: %s', ' '.join(cmd), e.output)
 
 
 def build_service_block(charm_name, services=SERVICES):
