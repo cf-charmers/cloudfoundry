@@ -41,6 +41,7 @@ class TestTasks(unittest.TestCase):
                                         'charm_dir/files/' +
                                         'bosh-template-1.2611.0.pre.gem'])])
 
+
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('hashlib.md5')
