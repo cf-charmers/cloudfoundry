@@ -8,6 +8,7 @@ import time
 import yaml
 import stat
 import textwrap
+import logging
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
@@ -20,10 +21,15 @@ from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
 from .path import path
 
+
+logger = logging.getLogger(__name__)
+
+
 def install_base_dependencies():
     fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
+    enable_monit_http_interface()
     subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
 
 
@@ -33,19 +39,10 @@ def enable_monit_http_interface():
        use address localhost
        allow localhost
        """)
-    with open('/etc/monit/monitrc') as fp:
-        monitrc = fp.read()
 
-    monitrc = '\n'.join((monitrc, addtext))
-
-    with open('/etc/monit/monitrc', 'w') as fp:
-        fp.write(monitrc)
-
-    subprocess.check_call('service monit restart')
-
-
-def make_executables():
-    pass
+    monitrc = path('/etc/monit/monitrc')
+    monitrc.write_text(addtext, append=True)
+    subprocess.check_call(['service','monit','restart'])
 
 
 def fetch_job_artifacts(job_name):
@@ -98,16 +95,18 @@ def fetch_job_artifacts(job_name):
 
 
 def install_job_packages(job_name):
-    package_path = os.path.join(get_job_path(job_name), 'packages')
+    package_path = path(get_job_path(job_name)) / 'packages'
     version = contexts.OrchestratorRelation()['orchestrator'][0]['cf_version']
-    dst_path = os.path.join(PACKAGES_BASE_DIR, job_name)
-    versioned_path = os.path.join(PACKAGES_BASE_DIR, version, job_name)
-    if os.path.exists(versioned_path):
+    dst_path = PACKAGES_BASE_DIR / job_name
+    versioned_path = PACKAGES_BASE_DIR / version / job_name
+    if versioned_path.exists():
         return
+
     shutil.copytree(package_path, versioned_path)
     if os.path.exists(dst_path):
         os.unlink(dst_path)
-    binpath = path(versioned_path) / 'bin'
+
+    binpath = versioned_path / 'bin'
     for script in binpath.files():
         curr_mode = script.stat().st_mode
         script.chmod(curr_mode | stat.S_IEXEC)
