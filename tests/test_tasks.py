@@ -29,19 +29,18 @@ class TestTasks(unittest.TestCase):
             monitrc().exists.return_value = False
             tasks.install_base_dependencies()
 
-
         apt_install.assert_called_once_with(packages=['ruby', 'monit'])
         assert monitrc.called
         assert monitrc.call_args == mock.call('/etc/monit/conf.d/enable_http')
         newtext = '\nset httpd port 2812 and\n'\
-          '   use address localhost\n'\
-          '   allow localhost\n'
+            '   use address localhost\n'\
+            '   allow localhost\n'
         assert monitrc().write_text.call_args == mock.call(newtext)
-        check_call.assert_has_calls([mock.call(['service','monit','restart']),
+        check_call.assert_has_calls([mock.call(['service', 'monit', 'restart']),
                                     mock.call(['gem', 'install',
-                                        '--no-ri', '--no-rdoc',
-                                        'charm_dir/files/' +
-                                        'bosh-template-1.2611.0.pre.gem'])])
+                                              '--no-ri', '--no-rdoc',
+                                              'charm_dir/files/' +
+                                              'bosh-template-1.2611.0.pre.gem'])])
 
     def test_monit_http_enable_idem(self):
         with mock.patch('cloudfoundry.tasks.path', spec=path) as confd:
