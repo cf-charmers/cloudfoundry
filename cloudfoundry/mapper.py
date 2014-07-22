@@ -51,14 +51,14 @@ def uaadb(data):
 
     #@@ HA may change this case
     """
-    db = data[0]
+    db = data['uaa'][0]
 
     uaa_db = dict(tag='uaa',
                   name=db['database'])
 
-    creds=dict(tag='admin',
-               name=db['user'],
-               password=db['password'])
+    creds = dict(tag='admin',
+                 name=db['user'],
+                 password=db['password'])
 
     return dict(uaadb=dict(db_scheme='mysql2',
                            address=db['host'],
