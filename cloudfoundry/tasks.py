@@ -25,9 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 def install_base_dependencies():
-    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit']))
+    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
+    host.adduser('vcap')
     enable_monit_http_interface()
     subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
 
