@@ -204,8 +204,8 @@ class CloudControllerRelation(RelationContext):
         data = self[self.name]
         return {
             'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
-            'cc.srv_api_user': data[0]['user'],
-            'cc.srv_api_password': data[0]['password'],
+            'cc.bulk_api_user': data[0]['user'],
+            'cc.bulk_api_password': data[0]['password'],
         }
 
 
