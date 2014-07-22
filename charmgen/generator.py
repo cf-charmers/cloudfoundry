@@ -1,6 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse
 import os
+import sys
 import shutil
 from itertools import chain
 import inspect
@@ -8,7 +10,11 @@ import inspect
 import pkg_resources
 import yaml
 
-from cloudfoundry import contexts
+try:
+    from cloudfoundry import contexts
+except ImportError:
+    sys.path.append('.')
+    from cloudfoundry import contexts
 
 
 class CharmGenerator(object):
