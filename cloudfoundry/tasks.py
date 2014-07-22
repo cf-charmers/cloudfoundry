@@ -8,20 +8,20 @@ import yaml
 import stat
 import textwrap
 import logging
-
+from functools import partial
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
 from charmhelpers import fetch
-from cloudfoundry import TEMPLATES_BASE_DIR
-from cloudfoundry import PACKAGES_BASE_DIR
 from cloudfoundry import contexts
 from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
 from .path import path
 
-
 logger = logging.getLogger(__name__)
+
+TEMPLATES_BASE_DIR = path('/var/vcap/jobs')
+PACKAGES_BASE_DIR = path('/var/vcap/packages')
 
 
 def install_base_dependencies():
@@ -74,7 +74,8 @@ def fetch_job_artifacts(job_name):
                 time.sleep(i*10+1)
                 continue
             else:
-                hookenv.log('Unable to download artifact: {}; (attempt {} of 3)'.format(str(e), i+1), hookenv.ERROR)
+                hookenv.log('Unable to download artifact: {}; (attempt {} of 3)'.format(str(e), i+1),
+                            hookenv.ERROR)
                 raise
         else:
             break
@@ -98,19 +99,19 @@ def fetch_job_artifacts(job_name):
         raise
 
 
-def install_job_packages(job_name):
+def install_job_packages(pkg_base_dir, job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
     for package in package_path.files('*.tgz'):
         pkgname = package.basename().rsplit('-', 1)[0]
-        pkgpath = PACKAGES_BASE_DIR / pkgname
+        pkgpath = pkg_base_dir / pkgname
         if not pkgpath.exists():
             pkgpath.makedirs()
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
 
 
-def set_script_permissions(job_name):
-    jobbin = TEMPLATES_BASE_DIR / job_name / 'bin'
+def set_script_permissions(job_name, tmplt_base_dir=TEMPLATES_BASE_DIR):
+    jobbin = tmplt_base_dir / job_name / 'bin'
     for script in jobbin.files():
         curr_mode = script.stat().st_mode
         script.chmod(curr_mode | stat.S_IEXEC)
@@ -134,6 +135,8 @@ def load_spec(job_name):
 
 
 class JobTemplates(services.ManagerCallback):
+    template_base_dir = TEMPLATES_BASE_DIR
+
     def __init__(self, mapping):
         self.mapping = mapping
 
@@ -141,33 +144,42 @@ class JobTemplates(services.ManagerCallback):
         """
         Uses the job spec to render the job's templates.
         """
-        version = contexts.OrchestratorRelation()['orchestrator'][0]['cf_version']
-        versioned_src_dir = os.path.join(hookenv.charm_dir(), 'jobs', version, job_name)
-        dst_dir = os.path.join(TEMPLATES_BASE_DIR, job_name)
-        versioned_dst_dir = os.path.join(TEMPLATES_BASE_DIR, version, job_name)
-        templates_dir = os.path.join(versioned_src_dir, 'templates')
+        version = contexts.\
+            OrchestratorRelation()['orchestrator'][0]['cf_version']
+        charmdir = path(hookenv.charm_dir())
+        versioned_src_dir = charmdir / 'jobs' / version / job_name
+        dst_dir = self.template_base_dir / job_name
+        versioned_dst_dir = self.template_base_dir / version / job_name
+        templates_dir = versioned_src_dir / 'templates'
         spec = load_spec(job_name)
         callbacks = []
+
         for src, dst in spec.get('templates', {}).iteritems():
-            versioned_dst = os.path.join(versioned_dst_dir, dst)
+            versioned_dst = versioned_dst_dir / dst
             callbacks.append(templating.RubyTemplateCallback(
                 src, versioned_dst, self.mapping, spec,
                 templates_dir=templates_dir))
-        versioned_monit_dst = os.path.join(versioned_dst_dir, 'monit', job_name+'.cfg')
+
+        versioned_monit_dst = versioned_dst_dir / ('monit/%s.cfg' % job_name)
         callbacks.append(templating.RubyTemplateCallback(
             'monit', versioned_monit_dst, self.mapping, spec,
             templates_dir=versioned_src_dir))
+
         for callback in callbacks:
             if isinstance(callback, services.ManagerCallback):
                 callback(manager, job_name, event_name)
             else:
                 callback(job_name)
-        if os.path.exists(dst_dir):
-            os.unlink(dst_dir)
+
+        if dst_dir.exists():
+            dst_dir.unlink()
+
         os.symlink(versioned_dst_dir, dst_dir)
-        monit_dst = '/etc/monit/conf.d/{}'.format(job_name)
-        if os.path.exists(monit_dst):
-            os.unlink(monit_dst)
+        monit_dst = path('/etc/monit/conf.d/{}'.format(job_name))
+
+        if monit_dst.exists():
+            monit_dst.unlink()
+
         os.symlink(versioned_monit_dst, monit_dst)
 
 
@@ -219,7 +231,7 @@ def build_service_block(charm_name, services=SERVICES):
             'provided_data': [p() for p in job.get('provided_data', [])],
             'data_ready': [
                 fetch_job_artifacts,
-                install_job_packages,
+                partial(install_job_packages, PACKAGES_BASE_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
                 monit.svc_force_reload
