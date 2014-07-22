@@ -88,9 +88,8 @@ SERVICES = {
         'jobs': [{
             'job_name': 'dea_logging_agent',
             'mapping': {},
-            'required_data': [
-                contexts.NatsRelation,
-            ]
+            'required_data': [contexts.NatsRelation,
+                              contexts.LTCRelation]
         }]
     },
 
