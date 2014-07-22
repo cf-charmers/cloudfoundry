@@ -38,11 +38,12 @@ class TestTasks(unittest.TestCase):
             '   use address localhost\n'\
             '   allow localhost\n'
         assert monitrc().write_text.call_args == mock.call(newtext)
-        check_call.assert_has_calls([mock.call(['service', 'monit', 'force-reload'], -2),
-                                    mock.call(['gem', 'install',
-                                              '--no-ri', '--no-rdoc',
-                                              'charm_dir/files/' +
-                                              'bosh-template-1.2611.0.pre.gem'])])
+        check_call.assert_has_calls([
+            mock.call(['service', 'monit', 'force-reload'], -2),
+            mock.call(['gem', 'install',
+                       '--no-ri', '--no-rdoc',
+                       'charm_dir/files/' +
+                       'bosh-template-1.2611.0.pre.gem'])])
 
     def test_monit_http_enable_idem(self):
         with mock.patch('cloudfoundry.tasks.path', spec=path) as confd:
@@ -185,43 +186,26 @@ class TestTasks(unittest.TestCase):
         get_job_path.return_value = 'job_path'
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
         exists.side_effect = [False, True, True]
+        filename = 'package-123abc.tgz'
+
         script = mock.Mock(name='script', spec=path)
         script.stat().st_mode = 33204
+        script.basename.return_value = filename
 
-        with mock.patch('cloudfoundry.path.path.files', return_value=[script]) as fm,\
-                mock.patch('cloudfoundry.path.path.makedirs') as md,\
-                mock.patch('tarfile.open') as to:
-            tasks.install_job_packages('job_name')
-            assert md.called
-            assert fm.called
-            assert to.called
-            assert to.return_value.__enter__().extractall.called
-            assert script.chmod.called
-            assert script.chmod.call_args == mock.call(33268)
+        with mock.patch('subprocess.check_call') as cc,\
+          mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
+            pkgdir = pth('fakedir')
+            files = (pth() / 'packages').files
+            files.name = 'files'
+            files.return_value = [script]
 
-        self.assertEqual(exists.call_args_list, [
-            mock.call('/var/vcap/packages/version/job_name'),
-            mock.call('/var/vcap/packages/version/job_name/bin'),
-            mock.call('/var/vcap/packages/job_name'),
-        ])
-        unlink.assert_called_once_with('/var/vcap/packages/job_name')
-        symlink.assert_called_once_with('/var/vcap/packages/version/job_name', '/var/vcap/packages/job_name')
+            exists = (pkgdir / 'package').exists
+            exists.return_value = False
 
-    @mock.patch('os.symlink')
-    @mock.patch('os.unlink')
-    @mock.patch('shutil.copytree')
-    @mock.patch('os.path.exists')
-    @mock.patch('cloudfoundry.tasks.get_job_path')
-    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_install_job_packages_same_version(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
-        get_job_path.return_value = 'job_path'
-        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        exists.return_value = True
-        tasks.install_job_packages('job_name')
-        exists.assert_called_once_with('/var/vcap/packages/version/job_name')
-        assert not copytree.called
-        assert not unlink.called
-        assert not symlink.called
+            tasks.install_job_packages(pkgdir, 'job_name')
+
+            assert cc.called
+            cc.assert_called_once_with(['tar', '-xzf', script])
 
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_get_job_path(self, OrchRelation):
