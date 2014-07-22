@@ -47,9 +47,11 @@ class TestTemplating(unittest.TestCase):
         actual = templating.deepmerge(initial, additional)
         self.assertEqual(actual, expected)
 
+    @mock.patch.object(templating.hookenv, 'local_unit')
     @mock.patch.object(templating.hookenv, 'unit_get')
-    def test_ruby_template_callback_collect_data(self, unit_get):
+    def test_ruby_template_callback_collect_data(self, unit_get, local_unit):
         unit_get.return_value = 'private-addr'
+        local_unit.return_value = 'unit/0'
         relation_mock1 = mock.MagicMock()
         relation_mock1.name = 'foo'
         relation_mock2 = mock.MagicMock()
@@ -83,6 +85,7 @@ class TestTemplating(unittest.TestCase):
         callback = templating.RubyTemplateCallback('source', 'target', mapping, spec)
         context = callback.collect_data(manager, 'service_name')
         self.assertEqual(context, {
+            'index': 0,
             'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
                 'networks': {'apps': 'default'},

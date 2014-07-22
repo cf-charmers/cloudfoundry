@@ -248,7 +248,9 @@ class OrchestratorRelation(RelationContext):
 
     def erb_mapping(self):
         return {
-            'domain': self[self.name][0]['domain'],
+            'domain': 'api.' + self[self.name][0]['domain'],
+            'system_domain': self[self.name][0]['domain'],
+            'app_domains': [],  # TODO: wat?
         }
 
 
