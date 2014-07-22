@@ -51,7 +51,7 @@ def uaadb(data):
 
     #@@ HA may change this case
     """
-    db = data['uaa'][0]
+    db = data['db'][0]
 
     uaa_db = dict(tag='uaa',
                   name=db['database'])
