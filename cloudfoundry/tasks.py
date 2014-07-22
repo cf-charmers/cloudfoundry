@@ -103,7 +103,7 @@ def install_job_packages(job_name):
         pkgname = package.basename().rsplit('-', 1)[0]
         pkgpath = PACKAGES_BASE_DIR / pkgname
         if not pkgpath.exists():
-            pkgpath.mkdir()
+            pkgpath.makedirs()
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
 
@@ -175,6 +175,7 @@ job_templates = JobTemplates
 
 class Monit(object):
     svc_cmd = ['service', 'monit']
+
     def __init__(self):
         self.name = 'monit'
 
