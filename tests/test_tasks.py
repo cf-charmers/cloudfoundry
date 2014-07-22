@@ -18,25 +18,27 @@ class TestTasks(unittest.TestCase):
     def tearDown(self):
         self.charm_dir_patch.stop()
 
+    @mock.patch('charmhelpers.core.host.adduser')
     @mock.patch('subprocess.check_call')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
     def test_install_base_dependencies(self, apt_install,
                                        filter_installed_packages,
-                                       check_call):
+                                       check_call, adduser):
         filter_installed_packages.side_effect = lambda a: a
         with mock.patch('cloudfoundry.tasks.path', spec=path) as monitrc:
             monitrc().exists.return_value = False
             tasks.install_base_dependencies()
 
-        apt_install.assert_called_once_with(packages=['ruby', 'monit'])
+        apt_install.assert_called_once_with(packages=['ruby', 'monit', 'runit'])
+        adduser.assert_called_once_with('vcap')
         assert monitrc.called
         assert monitrc.call_args == mock.call('/etc/monit/conf.d/enable_http')
         newtext = '\nset httpd port 2812 and\n'\
             '   use address localhost\n'\
             '   allow localhost\n'
         assert monitrc().write_text.call_args == mock.call(newtext)
-        check_call.assert_has_calls([mock.call(['service', 'monit', 'restart']),
+        check_call.assert_has_calls([mock.call(['service', 'monit', 'force-reload'], -2),
                                     mock.call(['gem', 'install',
                                               '--no-ri', '--no-rdoc',
                                               'charm_dir/files/' +
@@ -287,12 +289,15 @@ class TestTasks(unittest.TestCase):
             mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/conf.d/job_name'),
         ])
 
+    @mock.patch('charmhelpers.core.hookenv.unit_get')
     @mock.patch('charmhelpers.core.hookenv.config')
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids, mconfig):
+    def test_build_service_block(self, relation_ids, mconfig, unit_get):
         relation_ids.return_value = []
+        unit_get.return_value = 'unit/0'
         services = tasks.build_service_block('router-v1')
-        self.assertEqual(services[0]['provided_data'], [])
+        self.assertIsInstance(services[0]['provided_data'][0],
+                              contexts.RouterRelation)
         self.assertIsInstance(services[0]['required_data'][0],
                               contexts.OrchestratorRelation)
         self.assertIsInstance(services[0]['required_data'][1],
