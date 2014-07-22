@@ -122,12 +122,13 @@ SERVICES = {
         'summary': 'CF Router',
         'jobs': [{
             'job_name': 'gorouter',
-            'ports': [80],
+            'ports': [contexts.RouterRelation.port],
             'mapping': {},
-            'provided_data': [],
+            'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
-                              contexts.LoggregatorRelation],
+                              contexts.LoggregatorRelation,
+                              contexts.RouterRelation.remote_view],
         }],
 
     },
@@ -211,7 +212,7 @@ SERVICES = {
             'job_name': 'haproxy',
             'mapping': {},
             'provided_data': [],
-            'required_data': [],
+            'required_data': [contexts.RouterRelation],
             }]
         }
 }
