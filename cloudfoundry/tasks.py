@@ -45,7 +45,7 @@ def enable_monit_http_interface():
            allow localhost
         """))
 
-    subprocess.check_call(['service', 'monit', 'restart'])
+    monit.svc_force_reload()
 
 
 def fetch_job_artifacts(job_name):
@@ -99,26 +99,20 @@ def fetch_job_artifacts(job_name):
 
 def install_job_packages(job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
-    version = contexts.OrchestratorRelation()['orchestrator'][0]['cf_version']
-    dst_path = PACKAGES_BASE_DIR / job_name
-    versioned_path = PACKAGES_BASE_DIR / version / job_name
-    if versioned_path.exists():
-        return
-
-    versioned_path.makedirs()
     for package in package_path.files('*.tgz'):
-        with tarfile.open(package) as tgz:
-            tgz.extractall(versioned_path)
+        pkgname = package.basename().rsplit('-', 1)[0]
+        pkgpath = PACKAGES_BASE_DIR / pkgname
+        if not pkgpath.exists():
+            pkgpath.mkdir()
+            with pkgpath:
+                subprocess.check_call(['tar', '-xzf', package])
 
-    binpath = versioned_path / 'bin'
-    if binpath.exists():
-        for script in binpath.files():
-            curr_mode = script.stat().st_mode
-            script.chmod(curr_mode | stat.S_IEXEC)
 
-    if os.path.exists(dst_path):
-        os.unlink(dst_path)
-    os.symlink(versioned_path, dst_path)
+def set_script_permissions(job_name):
+    jobbin = TEMPLATES_BASE_DIR / job_name / 'bin'
+    for script in jobbin.files():
+        curr_mode = script.stat().st_mode
+        script.chmod(curr_mode | stat.S_IEXEC)
 
 
 @hookenv.cached
@@ -179,16 +173,37 @@ class JobTemplates(services.ManagerCallback):
 job_templates = JobTemplates
 
 
-def start_monit(jobname):
-    subprocess.check_call(['monit', 'start', jobname])
+class Monit(object):
+    svc_cmd = ['service', 'monit']
+    def __init__(self):
+        self.name = 'monit'
+
+    def proc(self, cmd, raise_on_err=False):
+        try:
+            subprocess.check_call(cmd, subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logger.error('%s: %s', ' '.join(cmd), e.output)
+            if raise_on_err:
+                raise
+
+    def svc_restart(self, *args):
+        cmd = self.svc_cmd + ['start']
+        self.proc(cmd, raise_on_err=True)
+
+    def svc_force_reload(self, *args):
+        cmd = self.svc_cmd + ['force-reload']
+        self.proc(cmd, raise_on_err=True)
+
+    def start(self, jobname):
+        cmd = ['monit', 'start', jobname]
+        self.proc(cmd, raise_on_err=True)
+
+    def stop(self, jobname):
+        cmd = ['monit', 'stop', jobname]
+        self.proc(cmd)
 
 
-def stop_monit(jobname):
-    cmd = ['monit', 'stop', jobname]
-    try:
-        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        logger.error('%s: %s', ' '.join(cmd), e.output)
+monit = Monit()
 
 
 def build_service_block(charm_name, services=SERVICES):
@@ -204,9 +219,11 @@ def build_service_block(charm_name, services=SERVICES):
                 fetch_job_artifacts,
                 install_job_packages,
                 job_templates(job.get('mapping', {})),
+                set_script_permissions,
+                monit.svc_force_reload
             ],
-            'start': start_monit,
-            'stop': stop_monit
+            'start': monit.start,
+            'stop': monit.stop
         }
         result.append(job_def)
     return result
