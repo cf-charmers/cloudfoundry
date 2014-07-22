@@ -4,7 +4,7 @@
 import unittest
 import mock
 
-from cloudfoundry.mapper import property_mapper, flatten, NestedDict
+from cloudfoundry.mapper import property_mapper, flatten, NestedDict, jobdb
 
 
 class TestMapper(unittest.TestCase):
@@ -60,6 +60,35 @@ class TestMapper(unittest.TestCase):
         result = property_mapper({'bar': mapping}, data_source)
         self.assertEqual(result, {'foo': {'bar': 'FOO'}})
         assert not mapping.called
+
+    def test_jobdb(self):
+        data = {
+            'db': [
+                {
+                    'host': 'host',
+                    'port': 'port',
+                    'user': 'user',
+                    'password': 'password',
+                    'database': 'database',
+                },
+                {
+                    'host': 'nope',
+                    'port': 'nope',
+                    'user': 'nope',
+                    'password': 'nope',
+                    'database': 'nope',
+                },
+            ]
+        }
+        self.assertEqual(jobdb('job1')(data), {
+            'job1db': {
+                'db_scheme': 'mysql2',
+                'address': 'host',
+                'port': 'port',
+                'databases': [{'tag': 'job1', 'name': 'database'}],
+                'roles': [{'tag': 'admin', 'name': 'user', 'password': 'password'}],
+            },
+        })
 
 
 if __name__ == '__main__':
