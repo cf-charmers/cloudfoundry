@@ -104,8 +104,8 @@ def install_job_packages(job_name):
         pkgpath = PACKAGES_BASE_DIR / pkgname
         if not pkgpath.exists():
             pkgpath.mkdir()
-            with tarfile.open(package) as tgz:
-                tgz.extractall(pkgpath)
+            with pkgpath:
+                subprocess.check_call(['tar', '-xzf', package])
 
 
 def set_script_permissions(job_name):
@@ -174,7 +174,7 @@ job_templates = JobTemplates
 
 
 class Monit(object):
-    svc_cmd = ['service', 'monit'] 
+    svc_cmd = ['service', 'monit']
     def __init__(self):
         self.name = 'monit'
 
