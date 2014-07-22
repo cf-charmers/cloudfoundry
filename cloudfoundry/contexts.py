@@ -40,6 +40,7 @@ class NatsRelation(RelationContext):
     name = 'nats'
     interface = 'nats'
     required_keys = ['address', 'port', 'user', 'password']
+    port = 4222
 
     def get_credentials(self):
         return StoredContext(
@@ -49,10 +50,10 @@ class NatsRelation(RelationContext):
             })
 
     def provide_data(self):
-        return dict(self.get_credentials(),
-                    port=4222,
-                    address=hookenv.unit_get(
-                        'private-address').encode('utf-8'))
+        return dict(
+            self.get_credentials(),
+            port=self.port,
+            address=hookenv.unit_get('private-address').encode('utf-8'))
 
     def erb_mapping(self):
         data = self[self.name]
@@ -204,8 +205,28 @@ class CloudControllerRelation(RelationContext):
         data = self[self.name]
         return {
             'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
-            'cc.srv_api_user': data[0]['user'],
-            'cc.srv_api_password': data[0]['password'],
+            'cc.bulk_api_user': data[0]['user'],
+            'cc.bulk_api_password': data[0]['password'],
+        }
+
+
+class RouterRelation(RelationContext):
+    name = 'router'
+    interface = 'http'
+    required_keys = ['address']
+    port = 80
+
+    def provide_data(self):
+        return {
+            'address': hookenv.unit_get('private-address').encode('utf-8'),
+            'port': self.port,
+        }
+
+    def erb_mapping(self):
+        return {
+            'router.servers.z1': [u['address'] for u in self[self.name]],
+            'router.servers.z2': [],
+            'router.port': self.port,
         }
 
 
@@ -248,7 +269,9 @@ class OrchestratorRelation(RelationContext):
 
     def erb_mapping(self):
         return {
-            'domain': self[self.name][0]['domain'],
+            'domain': 'api.' + self[self.name][0]['domain'],
+            'system_domain': self[self.name][0]['domain'],
+            'app_domains': [],  # TODO: wat?
         }
 
 

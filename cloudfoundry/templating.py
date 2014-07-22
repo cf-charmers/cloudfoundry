@@ -80,7 +80,9 @@ class RubyTemplateCallback(services.TemplateCallback):
 
     def collect_data(self, manager, service_name):
         service = manager.get_service(service_name)
+        unit_num = int(hookenv.local_unit().split('/')[-1])
         data = {
+            'index': unit_num,
             'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
             'properties': copy.deepcopy(self.defaults),
         }
