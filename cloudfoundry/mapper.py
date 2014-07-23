@@ -53,3 +53,31 @@ def uaadb(data):
                            port=db['port'],
                            databases=[uaa_db],
                            roles=[creds]))
+
+def jobdb(job_id):
+    """
+    Factory that creates a mapper from a MysqlRelation
+    to a {cc,uaa}db block for use in the templates.
+
+    #@@ This may need to be adjusted to scale / HA the databases.
+    """
+    def _db(data):
+        db = data['db'][0]
+
+        job_db = dict(tag=job_id,
+                      name=db['database'])
+
+        creds = dict(tag='admin',
+                     name=db['user'],
+                     password=db['password'])
+
+        return {
+            '{}db'.format(job_id): {
+                'db_scheme': 'mysql2',
+                'address': db['host'],
+                'port': db['port'],
+                'databases': [job_db],
+                'roles': [creds],
+            },
+        }
+    return _db

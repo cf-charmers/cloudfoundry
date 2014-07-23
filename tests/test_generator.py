@@ -10,6 +10,7 @@ import yaml
 
 from charmgen.generator import CharmGenerator, main
 from cloudfoundry.contexts import OrchestratorRelation
+from cloudfoundry.path import path
 
 from cloudfoundry import contexts
 
@@ -217,11 +218,8 @@ class TestGenerator(unittest.TestCase):
     def test_main(self):
         with tempdir() as tmpdir:
             main(['-d', tmpdir, '173'])
-            self.assertTrue(os.path.exists(
-                os.path.join(tmpdir, 'bundles.yaml')))
-            self.assertTrue(os.path.exists(os.path.join(
-                tmpdir, 'trusty', 'cloud-controller-v1')))
-
+            self.assertTrue((path(tmpdir) / 'bundles.yaml').exists())
+            self.assertTrue((path(tmpdir) / 'trusty/nats-v1').exists())
 
 if __name__ == '__main__':
     unittest.main()

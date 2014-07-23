@@ -4,6 +4,7 @@ import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
+from cloudfoundry.path import path
 from cloudfoundry import tasks
 
 
@@ -17,19 +18,39 @@ class TestTasks(unittest.TestCase):
     def tearDown(self):
         self.charm_dir_patch.stop()
 
+    @mock.patch('charmhelpers.core.host.adduser')
     @mock.patch('subprocess.check_call')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
     def test_install_base_dependencies(self, apt_install,
                                        filter_installed_packages,
-                                       check_call):
+                                       check_call, adduser):
         filter_installed_packages.side_effect = lambda a: a
-        tasks.install_base_dependencies()
-        apt_install.assert_called_once_with(packages=['ruby', 'monit'])
-        check_call.assert_called_once_with(['gem', 'install',
-                                            '--no-ri', '--no-rdoc',
-                                            'charm_dir/files/' +
-                                            'bosh-template-1.2611.0.pre.gem'])
+        with mock.patch('cloudfoundry.tasks.path', spec=path) as monitrc:
+            monitrc().exists.return_value = False
+            tasks.install_base_dependencies()
+
+        apt_install.assert_called_once_with(packages=[
+            'ruby', 'monit', 'runit'])
+        adduser.assert_called_once_with('vcap')
+        assert monitrc.called
+        assert monitrc.call_args == mock.call('/etc/monit/conf.d/enable_http')
+        newtext = '\nset httpd port 2812 and\n'\
+            '   use address localhost\n'\
+            '   allow localhost\n'
+        assert monitrc().write_text.call_args == mock.call(newtext)
+        check_call.assert_has_calls([
+            mock.call(['service', 'monit', 'force-reload'], -2),
+            mock.call(['gem', 'install',
+                       '--no-ri', '--no-rdoc',
+                       'charm_dir/files/' +
+                       'bosh-template-1.2611.0.pre.gem'])])
+
+    def test_monit_http_enable_idem(self):
+        with mock.patch('cloudfoundry.tasks.path', spec=path) as confd:
+            confd().exists.return_value = True
+            tasks.enable_monit_http_interface()
+            assert not confd().write_text.called
 
     @mock.patch('os.remove')
     @mock.patch('charmhelpers.core.hookenv.log')
@@ -159,39 +180,33 @@ class TestTasks(unittest.TestCase):
 
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
-    @mock.patch('shutil.copytree')
     @mock.patch('os.path.exists')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_install_job_packages(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
+    def test_install_job_packages(self, OrchRelation, get_job_path, exists, unlink, symlink):
         get_job_path.return_value = 'job_path'
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        exists.side_effect = [False, True]
-        tasks.install_job_packages('job_name')
-        self.assertEqual(exists.call_args_list, [
-            mock.call('/var/vcap/packages/version/job_name'),
-            mock.call('/var/vcap/packages/job_name'),
-        ])
-        copytree.assert_called_once_with(
-            'job_path/packages', '/var/vcap/packages/version/job_name')
-        unlink.assert_called_once_with('/var/vcap/packages/job_name')
-        symlink.assert_called_once_with('/var/vcap/packages/version/job_name', '/var/vcap/packages/job_name')
+        exists.side_effect = [False, True, True]
+        filename = 'package-123abc.tgz'
 
-    @mock.patch('os.symlink')
-    @mock.patch('os.unlink')
-    @mock.patch('shutil.copytree')
-    @mock.patch('os.path.exists')
-    @mock.patch('cloudfoundry.tasks.get_job_path')
-    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_install_job_packages_same_version(self, OrchRelation, get_job_path, exists, copytree, unlink, symlink):
-        get_job_path.return_value = 'job_path'
-        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version'}]}
-        exists.return_value = True
-        tasks.install_job_packages('job_name')
-        exists.assert_called_once_with('/var/vcap/packages/version/job_name')
-        assert not copytree.called
-        assert not unlink.called
-        assert not symlink.called
+        script = mock.Mock(name='script', spec=path)
+        script.stat().st_mode = 33204
+        script.basename.return_value = filename
+
+        with mock.patch('subprocess.check_call') as cc,\
+          mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
+            pkgdir = pth('fakedir')
+            files = (pth() / 'packages').files
+            files.name = 'files'
+            files.return_value = [script]
+
+            exists = (pkgdir / 'package').exists
+            exists.return_value = False
+
+            tasks.install_job_packages(pkgdir, 'job_name')
+
+            assert cc.called
+            cc.assert_called_once_with(['tar', '-xzf', script])
 
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_get_job_path(self, OrchRelation):
@@ -252,19 +267,22 @@ class TestTasks(unittest.TestCase):
         load_spec.assert_called_once_with('job_name')
         self.assertEqual(unlink.call_args_list, [
             mock.call('/var/vcap/jobs/job_name'),
-            mock.call('/etc/monit/monitrc.d/job_name.cfg'),
+            mock.call('/etc/monit/conf.d/job_name'),
         ])
         self.assertEqual(symlink.call_args_list, [
             mock.call('/var/vcap/jobs/version/job_name', '/var/vcap/jobs/job_name'),
-            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/monitrc.d/job_name.cfg'),
+            mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/conf.d/job_name'),
         ])
 
+    @mock.patch('charmhelpers.core.hookenv.unit_get')
     @mock.patch('charmhelpers.core.hookenv.config')
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids, mconfig):
+    def test_build_service_block(self, relation_ids, mconfig, unit_get):
         relation_ids.return_value = []
+        unit_get.return_value = 'unit/0'
         services = tasks.build_service_block('router-v1')
-        self.assertEqual(services[0]['provided_data'], [])
+        self.assertIsInstance(services[0]['provided_data'][0],
+                              contexts.RouterRelation)
         self.assertIsInstance(services[0]['required_data'][0],
                               contexts.OrchestratorRelation)
         self.assertIsInstance(services[0]['required_data'][1],

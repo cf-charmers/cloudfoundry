@@ -23,22 +23,26 @@ class TestTemplating(unittest.TestCase):
         check_output.assert_called_once_with([
             'bosh-template', 'charm_dir/templates/fake_cc.erb',
             '-C', '{"data": ["port", 80]}'], stderr=subprocess.STDOUT)
-        write_file.assert_called_once_with('target', 'test-data', 'root', 'root', 0444)
+        write_file.assert_called_once_with(
+            'target', 'test-data', 'root', 'root', 0444)
 
     @mock.patch.object(templating.RubyTemplateCallback, 'collect_data')
     @mock.patch.object(templating, 'render_erb')
     def test_ruby_template_callback(self, render_erb, collect_data):
         collect_data.return_value = {}
         callback = templating.RubyTemplateCallback(
-            'source', 'target', 'map', {'properties': {}}, 'owner', 'group', 0555, 'templates_dir')
+            'source', 'target', 'map', {
+                'properties': {}}, 'owner', 'group', 0555, 'templates_dir')
         callback('manager', 'service_name', 'event_name')
         collect_data.assert_called_once_with('manager', 'service_name')
         render_erb.assert_called_once_with(
             'source', 'target', {}, 'owner', 'group', 0555, 'templates_dir')
 
+    @mock.patch.object(templating.hookenv, 'local_unit')
     @mock.patch.object(templating.hookenv, 'unit_get')
-    def test_ruby_template_callback_collect_data(self, unit_get):
+    def test_ruby_template_callback_collect_data(self, unit_get, local_unit):
         unit_get.return_value = 'private-addr'
+        local_unit.return_value = 'unit/0'
         relation_mock1 = mock.MagicMock()
         relation_mock1.name = 'foo'
         relation_mock2 = mock.MagicMock()
@@ -69,9 +73,11 @@ class TestTemplating(unittest.TestCase):
                 }
             },
         }
-        callback = templating.RubyTemplateCallback('source', 'target', mapping, spec)
+        callback = templating.RubyTemplateCallback(
+            'source', 'target', mapping, spec)
         context = callback.collect_data(manager, 'service_name')
         self.assertEqual(context, {
+            'index': 0,
             'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
                 'networks': {'apps': 'default'},

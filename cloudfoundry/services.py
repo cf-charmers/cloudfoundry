@@ -9,7 +9,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_clock',
-            'mapping': {},
+            'mapping': {'db': mapper.jobdb('cc')},
             'provided_data': [contexts.ClockRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
@@ -29,7 +29,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cf_cloudcontroller_ng',
-            'mapping': {},
+            'mapping': {'db': mapper.jobdb('cc')},
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
@@ -52,7 +52,7 @@ SERVICES = {
         'description': '',
         'jobs': [
             {'job_name': 'cloud_controller_worker',
-             'mapping': {},
+             'mapping': {'db': mapper.jobdb('cc')},
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
                                contexts.MysqlRelation,
@@ -88,9 +88,8 @@ SERVICES = {
         'jobs': [{
             'job_name': 'dea_logging_agent',
             'mapping': {},
-            'required_data': [
-                contexts.NatsRelation,
-            ]
+            'required_data': [contexts.NatsRelation,
+                              contexts.LTCRelation]
         }]
     },
 
@@ -122,12 +121,13 @@ SERVICES = {
         'summary': 'CF Router',
         'jobs': [{
             'job_name': 'gorouter',
-            'ports': [80],
+            'ports': [contexts.RouterRelation.port],
             'mapping': {},
-            'provided_data': [],
+            'provided_data': [contexts.RouterRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
-                              contexts.LoggregatorRelation],
+                              contexts.LoggregatorRelation,
+                              contexts.RouterRelation.remote_view],
         }],
 
     },
@@ -138,7 +138,7 @@ SERVICES = {
         'jobs': [
             {'job_name': 'uaa',
              'ports': [8080],
-             'mapping':{'db': mapper.uaadb},
+             'mapping':{'db': mapper.jobdb('uaa')},
              'provided_data': [contexts.UAARelation],
              'required_data': [contexts.MysqlRelation,
                                contexts.NatsRelation]
@@ -211,7 +211,7 @@ SERVICES = {
             'job_name': 'haproxy',
             'mapping': {},
             'provided_data': [],
-            'required_data': [],
+            'required_data': [contexts.RouterRelation],
             }]
         }
 }
