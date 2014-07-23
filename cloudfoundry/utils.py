@@ -76,7 +76,7 @@ def deepmerge(dest, src):
     from `src` are passed through `copy.deepcopy`.
     """
     for k, v in src.iteritems():
-        if k in dest and isinstance(v, dict):
+        if dest.get(k) and isinstance(v, dict):
             deepmerge(dest[k], v)
         else:
             dest[k] = copy.deepcopy(v)

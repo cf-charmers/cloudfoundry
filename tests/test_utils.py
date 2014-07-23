@@ -45,16 +45,16 @@ class TestUtils(unittest.TestCase):
         self.assertFalse(utils.rel_exists(data, 'nats', 'rabbitmq'))
 
     def test_deep_merge(self):
-        initial = {'properties': {'job': {'prop1': 'val1'}}}
-        additional = {'properties': {'job': {'prop2': 'val2'}}}
+        initial = {'properties': {'job1': {'prop1': 'val1'}, 'job2': None}}
+        additional = {'properties': {'job1': {'prop2': 'val2'}, 'job2': {'prop3': 'val3'}}}
         expected = {
             'properties': {
-                'job': {'prop1': 'val1', 'prop2': 'val2'},
+                'job1': {'prop1': 'val1', 'prop2': 'val2'},
+                'job2': {'prop3': 'val3'},
             },
         }
         actual = utils.deepmerge(initial, additional)
         self.assertEqual(actual, expected)
-
 
     def test_nested_dict(self):
         nd = utils.NestedDict()
