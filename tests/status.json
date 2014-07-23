@@ -1,0 +1,454 @@
+{
+  "Services": {
+    "haproxy": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/haproxy-v1-0",
+      "Units": {
+        "haproxy/0": {
+          "Machine": "1",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.201",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "nats-sf": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/nats-stream-forwarder-v1-0",
+      "Units": {
+        "nats-sf/0": {
+          "Machine": "2",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.233",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "router": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {
+        "nats": [
+          "nats"
+        ]
+      },
+      "Charm": "local:trusty/router-v1-0",
+      "Units": {
+        "router/0": {
+          "Machine": "13",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.5",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "nats": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {
+        "nats": [
+          "router"
+        ]
+      },
+      "Charm": "local:trusty/nats-v1-0",
+      "Units": {
+        "nats/0": {
+          "Machine": "6",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.234",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "cc": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/cloud-controller-v1-0",
+      "Units": {
+        "cc/0": {
+          "Machine": "16",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.209",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "loggregator-trafficcontrol": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/loggregator-trafficcontroller-v1-0",
+      "Units": {
+        "loggregator-trafficcontrol/0": {
+          "Machine": "15",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.222",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "cc-clock": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/cloud-controller-clock-v1-0",
+      "Units": {
+        "cc-clock/0": {
+          "Machine": "5",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.18",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "mysql": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "cs:trusty/mysql-1",
+      "Relations": {
+        "cluster": [
+          "mysql"
+        ]
+      },
+      "Charm": "cs:trusty/mysql-0",
+      "Units": {
+        "mysql/0": {
+          "Machine": "10",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.42",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "cc-worker": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/cloud-controller-worker-v1-0",
+      "Units": {
+        "cc-worker/0": {
+          "Machine": "3",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.202",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "loggregator": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/loggregator-v1-0",
+      "Units": {
+        "loggregator/0": {
+          "Machine": "7",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.153",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "dea-logging": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/dea-logging-agent-v1-0",
+      "Units": {
+        "dea-logging/0": {
+          "Machine": "8",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.33",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "etcd": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "cs:~hazmat/trusty/etcd-4",
+      "Relations": {
+        "cluster": [
+          "etcd"
+        ]
+      },
+      "Charm": "cs:~hazmat/trusty/etcd-0",
+      "Units": {
+        "etcd/0": {
+          "Machine": "9",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.25",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "hm": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/hm9000-v1-0",
+      "Units": {
+        "hm/0": {
+          "Machine": "14",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.103",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "dea": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/dea-v1-0",
+      "Units": {
+        "dea/0": {
+          "Machine": "20",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.217",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "login": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/login-v1-0",
+      "Units": {
+        "login/0": {
+          "Machine": "17",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.15",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    },
+    "syslog-aggregator": {
+      "Life": "",
+      "SubordinateTo": [],
+      "Err": null,
+      "Exposed": false,
+      "CanUpgradeTo": "",
+      "Relations": {},
+      "Charm": "local:trusty/syslog-aggregator-v1-0",
+      "Units": {
+        "syslog-aggregator/0": {
+          "Machine": "4",
+          "Life": "",
+          "Err": null,
+          "PublicAddress": "10.0.3.41",
+          "Subordinates": null,
+          "AgentState": "started",
+          "AgentStateInfo": "",
+          "OpenedPorts": null,
+          "Charm": "",
+          "AgentVersion": "1.18.1.1"
+        }
+      },
+      "Networks": {
+        "Disabled": [],
+        "Enabled": []
+      }
+    }
+  },
+  "EnvironmentName": "local"
+}
+

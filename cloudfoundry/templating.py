@@ -8,6 +8,7 @@ from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
 from cloudfoundry.mapper import NestedDict, property_mapper
+from cloudfoundry.utils import deepmerge
 
 logger = logging.getLogger(__name__)
 
@@ -47,21 +48,6 @@ def render_erb(source, target, context, owner='root', group='root', perms=0444, 
 
     host.mkdir(os.path.dirname(target))
     host.write_file(target, content, owner, group, perms)
-
-
-def deepmerge(dest, src):
-    """
-    Deep merge of two dicts.
-
-    This is destructive (`dest` is modified), but values
-    from `src` are passed through `copy.deepcopy`.
-    """
-    for k, v in src.iteritems():
-        if k in dest and isinstance(v, dict):
-            deepmerge(dest[k], v)
-        else:
-            dest[k] = copy.deepcopy(v)
-    return dest
 
 
 class RubyTemplateCallback(services.TemplateCallback):

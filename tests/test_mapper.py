@@ -4,21 +4,11 @@
 import unittest
 import mock
 
-from cloudfoundry.mapper import property_mapper, flatten, NestedDict, jobdb
+from cloudfoundry.mapper import property_mapper, flatten, jobdb
+from cloudfoundry.utils import NestedDict
 
 
 class TestMapper(unittest.TestCase):
-    def test_nested_dict(self):
-        nd = NestedDict()
-        nd['foo.bar.baz'] = 'qux'
-        nd['foo.moo'] = 'mux'
-        self.assertEqual(nd, {
-            'foo': {
-                'bar': {'baz': 'qux'},
-                'moo': 'mux',
-            }
-        })
-
     def test_flatten(self):
         result = flatten({
             'foo': {
