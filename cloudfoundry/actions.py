@@ -3,9 +3,6 @@ import logging
 import os
 import shutil
 
-
-from tornado.options import options
-
 from cloudfoundry.config import (
     PENDING, COMPLETE, RUNNING, FAILED, STATES
     )
@@ -51,9 +48,9 @@ class Tactic(object):
 class GenerateTactic(Tactic):
     name = "Generate charms"
 
-    def _run(self, env, **kwargs):
+    def _run(self, env,  **kwargs):
         version = kwargs.get('cf_release',  RELEASES[0]['releases'][1])
-        build_dir = os.path.join(options.repo, str(version))
+        build_dir = os.path.join(kwargs['repo'], str(version))
         if os.path.exists(build_dir):
             return
         generator = CharmGenerator(RELEASES, SERVICES)
@@ -71,7 +68,7 @@ class UpdateCharmTactic(Tactic):
             charm_name = charm_id.rsplit('-', 1)[0]
             charm_file = os.path.join('/tmp', charm_id)
             version = kwargs.get('cf_release',  RELEASES[0]['releases'][1])
-            charm_path = os.path.join(options.repo,
+            charm_path = os.path.join(kwargs['repo'],
                                       str(version), series, charm_name)
             shutil.make_archive(charm_file, 'zip', charm_path)
             archive = charm_file + '.zip'
@@ -88,7 +85,7 @@ class DeployTactic(Tactic):
         svc = Service(s['service_name'], s)
         version = kwargs.get('cf_release',  RELEASES[0]['releases'][1])
         charm = Charm.from_service(s['service_name'],
-                                   os.path.join(options.repo, str(version)),
+                                   os.path.join(kwargs['repo'], str(version)),
                                    'trusty', s)
         env.deploy(svc.name,
                    # XXX version hack, have to probe for actual version after
@@ -108,14 +105,14 @@ class RemoveServiceTactic(Tactic):
         env.destroy_service(kwargs['service_name'])
 
 
-class AddRelation(Tactic):
+class AddRelationTactic(Tactic):
     name = "Add Relation"
 
     def _run(self, env, **kwargs):
         env.add_relation(kwargs['endpoint_a'], kwargs['endpoint_b'])
 
 
-class RemoveRelation(Tactic):
+class RemoveRelationTactic(Tactic):
     name = "Add Relation"
 
     def _run(self, env, **kwargs):

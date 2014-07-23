@@ -1,19 +1,7 @@
 import logging
+from utils import NestedDict
 
 logger = logging.getLogger(__name__)
-
-
-class NestedDict(dict):
-    def __setitem__(self, key, value):
-        key = key.split('.')
-        o = self
-        for part in key[:-1]:
-            o = o.setdefault(part, {})
-        dict.__setitem__(o, key[-1], value)
-
-    def update(self, other):
-        for k, v in other.items():
-            self[k] = v
 
 
 def flatten(data):
@@ -56,9 +44,9 @@ def uaadb(data):
     uaa_db = dict(tag='uaa',
                   name=db['database'])
 
-    creds=dict(tag='admin',
-               name=db['user'],
-               password=db['password'])
+    creds = dict(tag='admin',
+                 name=db['user'],
+                 password=db['password'])
 
     return dict(uaadb=dict(db_scheme='mysql2',
                            address=db['host'],

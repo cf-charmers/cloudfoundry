@@ -36,17 +36,6 @@ class TestTemplating(unittest.TestCase):
         render_erb.assert_called_once_with(
             'source', 'target', {}, 'owner', 'group', 0555, 'templates_dir')
 
-    def test_deep_merge(self):
-        initial = {'properties': {'job': {'prop1': 'val1'}}}
-        additional = {'properties': {'job': {'prop2': 'val2'}}}
-        expected = {
-            'properties': {
-                'job': {'prop1': 'val1', 'prop2': 'val2'},
-            },
-        }
-        actual = templating.deepmerge(initial, additional)
-        self.assertEqual(actual, expected)
-
     @mock.patch.object(templating.hookenv, 'unit_get')
     def test_ruby_template_callback_collect_data(self, unit_get):
         unit_get.return_value = 'private-addr'

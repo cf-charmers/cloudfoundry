@@ -38,6 +38,7 @@ import os
 import signal
 import time
 
+import tornado.autoreload
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
@@ -58,12 +59,11 @@ def reconcile():
     # delta state real vs expected
     # build strategy
     # execute strategy inside lock
-    env = utils.get_env()
     if not db.strategy:
         reality = db.real
         db.build_strategy(reality)
     if db.strategy:
-        db.execute_strategy(env)
+        db.execute_strategy()
 
 
 def sig_reconcile(sig, frame):
@@ -117,32 +117,44 @@ class ResetHandler(tornado.web.RequestHandler):
 
 
 def main():
-    define("port", default=8888, help="run on the given port", type=int)
-    define("repo", default=os.getcwd(), help="local charm repo", type=str)
-    define("user", default="user-admin", help="connect to env as", type=str)
-    define("password", help="password to connect to env with", type=str)
+    define('config', default='/etc/juju-deployer/server.conf', type=str)
 
     tornado.options.parse_command_line()
+    config = utils.parse_config(options.config, {
+        'server.address': '127.0.0.1',
+        'server.port': 8888,
+        'credentials.user': 'user-admin',
+        'server.repository': 'build',
+        'juju.environment': utils.current_env()
+    })
+
     application = tornado.web.Application([
         (r"/api/v1/", StateHandler),
         (r"/api/v1/strategy", StrategyHandler),
         (r"/api/v1/reset", ResetHandler),
     ],
-        autoreload=True)
+        autoreload=True,
+        config=config,
+        **config['server']
+    )
 
     global server
     global db
 
-    if not os.path.exists(options.repo):
-        os.makedirs(options.repo)
+    if not os.path.exists(config['server.repository']):
+        os.makedirs(config['server.repository'])
 
-    db = model.StateDatabase()
+    db = model.StateDatabase(config)
     server = tornado.httpserver.HTTPServer(application)
-    server.listen(options.port)
+    server.listen(config['server.port'], config['server.address'])
 
     signal.signal(signal.SIGTERM, sig_restart)
     signal.signal(signal.SIGINT, sig_restart)
     signal.signal(signal.SIGHUP, sig_reconcile)
+
+    # config file change should reload the application
+    # its values are passed to Application init
+    tornado.autoreload.watch(options.config)
     utils.record_pid()
     loop = tornado.ioloop.IOLoop.instance()
     # tornado.ioloop.PeriodicCallback(reconcile, 500, io_loop=loop).start()
