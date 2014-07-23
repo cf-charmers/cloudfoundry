@@ -4,24 +4,9 @@ import json
 import os
 import subprocess
 
-from jujuclient import Environment
-
 
 def current_env():
     return subprocess.check_output(['juju', 'switch']).strip()
-
-
-def get_env(name=None, user=None, password=None):
-    # A hook env will have this set
-    api_addresses = os.environ.get('JUJU_API_ADDRESSES')
-    if not api_addresses:
-        # use the local option/connect which
-        # parses local jenv info
-        env = Environment.connect(name)
-    else:
-        env = Environment(api_addresses.split()[0])
-        env.login(user=user, password=password)
-    return env
 
 
 def record_pid():
