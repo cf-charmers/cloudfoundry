@@ -27,7 +27,7 @@ SERVICES = {
         'summary': 'CF Cloud Controller, the brains of the operation',
         'description': '',
         'jobs': [{
-            'job_name': 'cf_cloudcontroller_ng',
+            'job_name': 'cloud_controller_ng',
             'mapping': {'db': mapper.jobdb('cc')},
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
