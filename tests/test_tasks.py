@@ -58,22 +58,22 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.open', create=True)
     @mock.patch('charmhelpers.core.host.mkdir')
     @mock.patch('cloudfoundry.tasks.tarfile.open')
-    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('subprocess.check_call')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_job_artifacts(self, OrchRelation, get_job_path, urlretrieve,
+    def test_fetch_job_artifacts(self, OrchRelation, get_job_path, check_call,
                                  taropen, mkdir, mopen, md5, log, remove):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
-        urlretrieve.return_value = (None, {'ETag': '"deadbeef"'})
         mopen.return_value.__enter__().read.return_value = 'read'
-        md5.return_value.hexdigest.return_value = 'deadbeef'
+        #md5.return_value.hexdigest.return_value = 'deadbeef'
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
-        urlretrieve.assert_called_once_with(
+        check_call.assert_called_once_with([
+            'wget', '-nv',
             'http://url/cf-version/amd64/job_name',
-            'job_path/job_name.tgz')
+            '-O', 'job_path/job_name.tgz'])
         #md5.assert_called_once_with('read')
         taropen.assert_called_once_with('job_path/job_name.tgz')
         tgz.extractall.assert_called_once_with('job_path')
@@ -85,17 +85,17 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.open', create=True)
     @mock.patch('charmhelpers.core.host.mkdir')
     @mock.patch('cloudfoundry.tasks.tarfile.open')
-    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('subprocess.check_call')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     @unittest.skip('temporarily disabled')
     def test_fetch_job_artifacts_missing_checksum(
-            self, OrchRelation, get_job_path, urlretrieve,
+            self, OrchRelation, get_job_path, check_call,
             taropen, mkdir, mopen, md5, log, remove, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
-        urlretrieve.return_value = (None, {})
+        #urlretrieve.return_value = (None, {})
         mopen.return_value.__enter__().read.return_value = 'read'
         md5.return_value.hexdigest.return_value = 'deadbeef'
         exists.side_effect = [False, True]
@@ -110,17 +110,17 @@ class TestTasks(unittest.TestCase):
     @mock.patch('cloudfoundry.tasks.open', create=True)
     @mock.patch('charmhelpers.core.host.mkdir')
     @mock.patch('cloudfoundry.tasks.tarfile.open')
-    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('subprocess.check_call')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     @unittest.skip('temporarily disabled')
     def test_fetch_job_artifacts_checksum_mismatch(
-            self, OrchRelation, get_job_path, urlretrieve,
+            self, OrchRelation, get_job_path, check_call,
             taropen, mkdir, mopen, md5, log, remove, exists):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
-        urlretrieve.return_value = (None, {'ETag': '"ca11ab1e"'})
+        #urlretrieve.return_value = (None, {'ETag': '"ca11ab1e"'})
         mopen.return_value.__enter__().read.return_value = 'read'
         md5.return_value.hexdigest.return_value = 'deadbeef'
         exists.side_effect = [False, True]
@@ -129,59 +129,18 @@ class TestTasks(unittest.TestCase):
         remove.assert_called_once_with('job_path/job_name.tgz')
 
     @mock.patch('cloudfoundry.tasks.tarfile.open')
-    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
+    @mock.patch('subprocess.check_call')
     @mock.patch('os.path.exists')
     @mock.patch('cloudfoundry.tasks.get_job_path')
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_job_artifacts_same_version(self, OrchRelation, get_job_path, exists, urlretrieve, taropen):
+    def test_fetch_job_artifacts_same_version(self, OrchRelation, get_job_path, exists, check_call, taropen):
         OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
                                      'artifacts_url': 'http://url'}]}
         get_job_path.return_value = 'job_path'
         exists.return_value = True
         tasks.fetch_job_artifacts('job_name')
-        assert not urlretrieve.called
+        assert not check_call.called
         assert not taropen.called
-
-    @mock.patch('time.sleep')
-    @mock.patch('os.path.exists')
-    @mock.patch('os.remove')
-    @mock.patch('charmhelpers.core.hookenv.log')
-    @mock.patch('hashlib.md5')
-    @mock.patch('cloudfoundry.tasks.open', create=True)
-    @mock.patch('charmhelpers.core.host.mkdir')
-    @mock.patch('cloudfoundry.tasks.tarfile.open')
-    @mock.patch('cloudfoundry.tasks.urllib.urlretrieve')
-    @mock.patch('cloudfoundry.tasks.get_job_path')
-    @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
-    def test_fetch_job_artifacts_retry(self, OrchRelation, get_job_path, urlretrieve,
-                                       taropen, mkdir, mopen, md5, log, remove, exists, sleep):
-        OrchRelation.return_value = {'orchestrator': [{'cf_version': 'version',
-                                     'artifacts_url': 'http://url'}]}
-        get_job_path.return_value = 'job_path'
-        urlretrieve.side_effect = [
-            urllib.ContentTooShortError('too short', {}),
-            IOError('connection refused'),
-            IOError('bad time')]
-        mopen.return_value.__enter__().read.return_value = 'read'
-        md5.return_value.hexdigest.return_value = 'deadbeef'
-        tgz = taropen.return_value.__enter__.return_value
-        exists.side_effect = [False, True, False, False]
-        self.assertRaises(IOError, tasks.fetch_job_artifacts, 'job_name')
-        self.assertEqual(urlretrieve.call_args_list, [mock.call(
-            'http://url/cf-version/amd64/job_name',
-            'job_path/job_name.tgz')]*3)
-        assert not md5.called
-        assert not taropen.called
-        assert not tgz.extractall.called
-        self.assertEqual(log.call_args_list, [
-            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 1 of 3)', 'INFO'),
-            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'WARNING'),
-            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 2 of 3)', 'INFO'),
-            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'WARNING'),
-            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 3 of 3)', 'INFO'),
-            mock.call('Unable to download artifact: bad time; (attempt 3 of 3)', 'ERROR'),
-        ])
-        remove.assert_called_once_with('job_path/job_name.tgz')
 
     @mock.patch('os.symlink')
     @mock.patch('os.unlink')
