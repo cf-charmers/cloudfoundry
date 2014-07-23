@@ -54,6 +54,7 @@ SERVICES = {
                                contexts.MysqlRelation,
                                contexts.LTCRelation,
                                contexts.UAARelation,
+                               contexts.CloudControllerRelation,
                                # diego is coming
                                # contexts.BundleConfig,
                                ],
