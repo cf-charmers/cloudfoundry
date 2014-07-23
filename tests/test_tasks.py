@@ -171,8 +171,11 @@ class TestTasks(unittest.TestCase):
         assert not taropen.called
         assert not tgz.extractall.called
         self.assertEqual(log.call_args_list, [
-            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO'),
-            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'INFO'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 1 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'WARNING'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 2 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'WARNING'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 3 of 3)', 'INFO'),
             mock.call('Unable to download artifact: bad time; (attempt 3 of 3)', 'ERROR'),
         ])
         remove.assert_called_once_with('job_path/job_name.tgz')

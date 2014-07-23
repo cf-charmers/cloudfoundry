@@ -63,6 +63,8 @@ def fetch_job_artifacts(job_name):
     host.mkdir(job_path)
     for i in range(3):
         try:
+            hookenv.log('Downloading artifact from: {} (attempt {} of 3)'.format(
+                artifact_url, i+1), hookenv.INFO)
             _, resp = urllib.urlretrieve(artifact_url, job_archive)
         except (IOError, urllib.ContentTooShortError) as e:
             if os.path.exists(job_archive):
@@ -70,7 +72,7 @@ def fetch_job_artifacts(job_name):
             if i < 2:
                 hookenv.log(
                     'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
-                    hookenv.INFO)
+                    hookenv.WARNING)
                 time.sleep(i*10+1)
                 continue
             else:
@@ -78,6 +80,7 @@ def fetch_job_artifacts(job_name):
                             hookenv.ERROR)
                 raise
         else:
+            hookenv.log('Downloading complete', hookenv.INFO)
             break
 
     try:
