@@ -60,7 +60,7 @@ class NatsRelation(RelationContext):
         return {
             'nats.machines': [u['address'] for u in data],
             'nats.address': data[0]['address'],
-            'nats.port': data[0]['port'],
+            'nats.port': int(data[0]['port']),
             'nats.user': data[0]['user'],
             'nats.password': data[0]['password'],
         }
