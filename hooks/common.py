@@ -68,7 +68,10 @@ class APIEnvironment(GUIEnvironment):
 
 
 def generate(s):
-    version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
+    config = hookenv.config()
+    version = config.get('cf_version')
+    if not version or version == 'latest':
+        version = RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
@@ -78,7 +81,10 @@ def generate(s):
 
 
 def deploy(s):
-    version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
+    config = hookenv.config()
+    version = config.get('cf_version')
+    if not version or version == 'latest':
+        version = RELEASES[0]['releases'][1]
     generator = CharmGenerator(RELEASES, SERVICES)
     generator.select_release(version)
     charm_dir = hookenv.charm_dir()
