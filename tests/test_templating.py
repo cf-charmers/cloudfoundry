@@ -79,7 +79,7 @@ class TestTemplating(unittest.TestCase):
         context = callback.collect_data(manager, 'service_name')
         self.assertEqual(context, {
             'index': 0,
-            'name': 'test',
+            'job': {'name': 'test'},
             'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
                 'networks': {'apps': 'default'},

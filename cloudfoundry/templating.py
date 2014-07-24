@@ -70,7 +70,7 @@ class RubyTemplateCallback(services.TemplateCallback):
         unit_num = int(hookenv.local_unit().split('/')[-1])
         data = {
             'index': unit_num,
-            'name': self.name,
+            'job': {'name': self.name},
             'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
             'properties': copy.deepcopy(self.defaults),
         }
