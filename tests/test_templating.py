@@ -31,8 +31,8 @@ class TestTemplating(unittest.TestCase):
     def test_ruby_template_callback(self, render_erb, collect_data):
         collect_data.return_value = {}
         callback = templating.RubyTemplateCallback(
-            'source', 'target', 'map', {
-                'properties': {}}, 'owner', 'group', 0555, 'templates_dir')
+            'source', 'target', 'map', {'name': 'test', 'properties': {}},
+            'owner', 'group', 0555, 'templates_dir')
         callback('manager', 'service_name', 'event_name')
         collect_data.assert_called_once_with('manager', 'service_name')
         render_erb.assert_called_once_with(
@@ -62,6 +62,7 @@ class TestTemplating(unittest.TestCase):
         }
         spec = {
             'foo': 'unused',
+            'name': 'test',
             'properties': {
                 'job1.prop1': {
                     'description': 'prop1',
@@ -78,6 +79,7 @@ class TestTemplating(unittest.TestCase):
         context = callback.collect_data(manager, 'service_name')
         self.assertEqual(context, {
             'index': 0,
+            'name': 'test',
             'networks': {'default': {'ip': 'private-addr'}},
             'properties': {
                 'networks': {'apps': 'default'},

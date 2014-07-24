@@ -137,7 +137,8 @@ SERVICES = {
              'mapping':{'db': mapper.jobdb('uaa')},
              'provided_data': [contexts.UAARelation],
              'required_data': [contexts.MysqlRelation,
-                               contexts.NatsRelation]
+                               contexts.NatsRelation,
+                               contexts.UAARelation.remote_view]
              }
         ]
     },

@@ -250,7 +250,3 @@ def build_service_block(charm_name, services=SERVICES):
         }
         result.append(job_def)
     return result
-
-
-def db_migrate():
-    pass
