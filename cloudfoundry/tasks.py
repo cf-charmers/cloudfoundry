@@ -234,6 +234,7 @@ def build_service_block(charm_name, services=SERVICES):
     for job in service_def.get('jobs', []):
         job_def = {
             'service': job['job_name'],
+            'ports': job.get('ports', []),
             'required_data': [contexts.OrchestratorRelation()] +
                              [r() for r in job.get('required_data', [])],
             'provided_data': [p() for p in job.get('provided_data', [])],
