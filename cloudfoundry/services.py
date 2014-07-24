@@ -205,6 +205,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'haproxy',
+            'ports': [contexts.RouterRelation.port],
             'mapping': {},
             'provided_data': [],
             'required_data': [contexts.RouterRelation],
