@@ -9,7 +9,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_clock',
-            'mapping': {'db': mapper.jobdb('cc')},
+            'mapping': {'db': mapper.ccdb},
             'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
@@ -28,7 +28,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_ng',
-            'mapping': {'db': mapper.jobdb('cc')},
+            'mapping': {'db': mapper.ccdb},
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
@@ -49,7 +49,7 @@ SERVICES = {
         'description': '',
         'jobs': [
             {'job_name': 'cloud_controller_worker',
-             'mapping': {'db': mapper.jobdb('cc')},
+             'mapping': {'db': mapper.ccdb},
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
                                contexts.MysqlRelation,
@@ -134,7 +134,7 @@ SERVICES = {
         'jobs': [
             {'job_name': 'uaa',
              'ports': [8080],
-             'mapping':{'db': mapper.jobdb('uaa')},
+             'mapping':{'db': mapper.uaadb},
              'provided_data': [contexts.UAARelation],
              'required_data': [contexts.MysqlRelation,
                                contexts.NatsRelation,
