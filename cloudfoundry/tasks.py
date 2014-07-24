@@ -60,7 +60,19 @@ def fetch_job_artifacts(job_name):
     if os.path.exists(job_archive):
         return
     host.mkdir(job_path)
-    subprocess.check_call(['wget', '-nv', artifact_url, '-O', job_archive])
+    retry = True
+    while retry:
+        hookenv.log('Downloading {}.tgz from {}'.format(job_name, artifact_url))
+        try:
+            subprocess.check_call(['wget', '-t0', '-c', '-nv', artifact_url, '-O', job_archive])
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 4:  # always retry network errors
+                hookenv.log('Network error, retrying download', hookenv.WARNING)
+                retry = True
+            else:
+                raise
+        else:
+            retry = False
 
     try:
         #assert 'ETag' in resp, (

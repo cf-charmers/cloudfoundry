@@ -34,6 +34,7 @@ SERVICES = {
                               contexts.MysqlRelation,
                               contexts.LTCRelation,
                               contexts.UAARelation,
+                              contexts.CloudControllerRelation.remote_view,
 
                               # diego is coming
                               # contexts.BundleConfig,

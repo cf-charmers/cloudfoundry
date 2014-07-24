@@ -1,6 +1,5 @@
 import unittest
 import mock
-import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
@@ -71,7 +70,7 @@ class TestTasks(unittest.TestCase):
         tgz = taropen.return_value.__enter__.return_value
         tasks.fetch_job_artifacts('job_name')
         check_call.assert_called_once_with([
-            'wget', '-nv',
+            'wget', '-t0', '-c', '-nv',
             'http://url/cf-version/amd64/job_name',
             '-O', 'job_path/job_name.tgz'])
         #md5.assert_called_once_with('read')
@@ -158,7 +157,7 @@ class TestTasks(unittest.TestCase):
         script.basename.return_value = filename
 
         with mock.patch('subprocess.check_call') as cc,\
-          mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
+                mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
             pkgdir = pth('pkgdir')
             pkgdir.exists.return_value = False
 
