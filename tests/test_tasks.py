@@ -1,6 +1,5 @@
 import unittest
 import mock
-import urllib
 
 from charmhelpers.core import services
 from cloudfoundry import contexts
@@ -158,7 +157,7 @@ class TestTasks(unittest.TestCase):
         script.basename.return_value = filename
 
         with mock.patch('subprocess.check_call') as cc,\
-          mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
+                mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
             pkgdir = pth('pkgdir')
             pkgdir.exists.return_value = False
 
