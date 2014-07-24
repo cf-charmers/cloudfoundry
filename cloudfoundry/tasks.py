@@ -205,11 +205,11 @@ class Monit(object):
         self.proc(cmd, raise_on_err=True)
 
     def start(self, jobname):
-        cmd = ['monit', 'start', jobname]
+        cmd = ['monit', 'start', 'all']
         self.proc(cmd, raise_on_err=True)
 
     def stop(self, jobname):
-        cmd = ['monit', 'stop', jobname]
+        cmd = ['monit', 'stop', 'all']
         self.proc(cmd)
 
 
