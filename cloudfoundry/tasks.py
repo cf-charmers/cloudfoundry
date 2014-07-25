@@ -228,8 +228,8 @@ class Monit(object):
 monit = Monit()
 
 
-def build_service_block(charm_name, services=SERVICES):
-    service_def = services[charm_name]
+def build_service_block(charm_name, service_defs=SERVICES):
+    service_def = service_defs[charm_name]
     result = []
     for job in service_def.get('jobs', []):
         job_def = {
@@ -245,8 +245,8 @@ def build_service_block(charm_name, services=SERVICES):
                 set_script_permissions,
                 monit.svc_force_reload
             ],
-            'start': monit.start,
-            'stop': monit.stop
+            'start': [monit.start, services.open_ports],
+            'stop': [monit.stop, services.close_ports]
         }
         result.append(job_def)
     return result
