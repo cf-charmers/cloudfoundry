@@ -41,6 +41,12 @@ in various tagged versions of cf-release.
     get_revisions -d ../cf-release 153..173
     diff_revisions 153..173 | less
 
+You can also use the following command on the cc unit to monitor the routes
+registered with NATS, which can be very helpful for debugging:
+
+    cd /var/vcap/packages/cloud_controller_ng/cloud_controller_ng/vendor/bundle/ruby/1.9.1
+    /var/vcap/packages/ruby/bin/bundle exec bin/nats-sub -s nats://<nats-user>:<nats-pass>@<nats-internal-addr>:4222 ">"
+
 
 
 
