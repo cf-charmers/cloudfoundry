@@ -113,6 +113,11 @@ class UAARelation(RelationContext):
             'uaa.admin.client_secret': data['admin_client_secret'],
             'uaa.cc.client_secret': data['cc_client_secret'],
             'uaa.cc.token_secret': data['cc_token_secret'],
+            'uaa.require_https': False,  # FIXME: Add SSL as an option; requires cert
+            'uaa.no_ssl': True,
+            'uaa.scim.users': [
+                'admin|admin|scim.write,scim.read,openid,cloud_controller.admin',  # FIXME: Don't hard-code
+            ],
         }
 
 
