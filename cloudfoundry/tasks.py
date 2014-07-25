@@ -217,7 +217,7 @@ class Monit(object):
         self.proc(cmd, raise_on_err=True)
 
     def start(self, jobname):
-        cmd = ['monit', 'start', 'all']
+        cmd = ['monit', 'restart', 'all']
         self.proc(cmd, raise_on_err=True)
 
     def stop(self, jobname):
@@ -243,7 +243,6 @@ def build_service_block(charm_name, service_defs=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
-                monit.svc_force_reload
             ],
             'start': [monit.start, services.open_ports],
             'stop': [monit.stop, services.close_ports]
