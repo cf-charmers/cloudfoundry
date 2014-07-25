@@ -1,5 +1,4 @@
 import os
-import re
 from collections import Iterable
 from charmhelpers.core import templating
 from charmhelpers.core import host
@@ -115,13 +114,12 @@ class ServiceManager(object):
             self.reconfigure_services()
 
     def provide_data(self):
-        hook_name = hookenv.hook_name()
         for service in self.services.values():
             for provider in service.get('provided_data', []):
-                if re.match(r'{}-relation-(joined|changed)'.format(provider.name), hook_name):
-                    data = provider.provide_data()
-                    if provider._is_ready(data):
-                        hookenv.relation_set(None, data)
+                data = provider.provide_data()
+                if provider._is_ready(data):
+                    for relation_id in hookenv.relation_ids(provider.name):
+                        hookenv.relation_set(relation_id, data)
 
     def reconfigure_services(self, *service_names):
         """
