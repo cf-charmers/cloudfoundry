@@ -243,6 +243,17 @@ class CloudControllerRelation(RelationContext):
         }
 
 
+class CloudControllerReadyRelation(RelationContext):
+    name = 'cc-ready'
+    interface = 'controller-ready'
+    required_keys = ['ready']
+
+    @classmethod
+    def send_ready(cls):
+        for rid in hookenv.relation_ids(cls.name):
+            hookenv.relation_set(rid, {'ready': True})
+
+
 class RouterRelation(RelationContext):
     name = 'router'
     interface = 'http'

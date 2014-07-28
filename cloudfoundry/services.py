@@ -3,6 +3,7 @@ import mapper
 
 __all__ = ['SERVICES']
 
+
 SERVICES = {
     'cloud-controller-clock-v1': {
         'summary': "A shared clock",
@@ -29,18 +30,21 @@ SERVICES = {
         'jobs': [{
             'job_name': 'cloud_controller_ng',
             'mapping': {'db': mapper.ccdb},
-            'provided_data': [contexts.CloudControllerRelation],
+            'provided_data': [contexts.CloudControllerRelation,
+                              contexts.CloudControllerReadyRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
                               contexts.LTCRelation,
                               contexts.UAARelation,
                               contexts.CloudControllerRelation.remote_view,
-
                               # diego is coming
                               # contexts.BundleConfig,
                               # All job context keys
                               # get processed by a name mapper
                               ],
+            'data_ready': [
+                contexts.CloudControllerReadyRelation.send_ready,
+            ],
         }]
     },
 
@@ -56,6 +60,7 @@ SERVICES = {
                                contexts.LTCRelation,
                                contexts.UAARelation,
                                contexts.CloudControllerRelation,
+                               contexts.CloudControllerReadyRelation,
                                # diego is coming
                                # contexts.BundleConfig,
                                ],

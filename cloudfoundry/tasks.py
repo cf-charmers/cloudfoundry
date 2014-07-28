@@ -243,7 +243,7 @@ def build_service_block(charm_name, service_defs=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
-            ],
+            ] + job.get('data_ready', []),
             'start': [monit.start, services.open_ports],
             'stop': [monit.stop, services.close_ports]
         }

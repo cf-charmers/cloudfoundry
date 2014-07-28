@@ -244,10 +244,11 @@ class TestTasks(unittest.TestCase):
             mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/conf.d/job_name'),
         ])
 
+    @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('charmhelpers.core.hookenv.unit_get')
     @mock.patch('charmhelpers.core.hookenv.config')
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids, mconfig, unit_get):
+    def test_build_service_block(self, relation_ids, mconfig, unit_get, log):
         relation_ids.return_value = []
         unit_get.return_value = 'unit/0'
         services = tasks.build_service_block('router-v1')
@@ -260,3 +261,9 @@ class TestTasks(unittest.TestCase):
         # Show that we converted to rubytemplatecallbacks
         self.assertIsInstance(services[0]['data_ready'][2],
                               tasks.JobTemplates)
+        services = tasks.build_service_block('cloud-controller-v1')
+        # Show that we include both default and additional handlers
+        self.assertIsInstance(services[0]['data_ready'][2],
+                              tasks.JobTemplates)
+        self.assertEqual(services[0]['data_ready'][-1],
+                         contexts.CloudControllerReadyRelation.send_ready)
