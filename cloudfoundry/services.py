@@ -10,13 +10,12 @@ SERVICES = {
         'jobs': [{
             'job_name': 'cloud_controller_clock',
             'mapping': {'db': mapper.jobdb('cc')},
-            'provided_data': [contexts.ClockRelation],
+            'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
                               contexts.LoggregatorRelation,
                               contexts.MysqlRelation,
                               contexts.CloudControllerRelation,
-                              contexts.LoginRelation,
                               contexts.UAARelation,
                               # diego is coming
                               ]
@@ -28,16 +27,13 @@ SERVICES = {
         'summary': 'CF Cloud Controller, the brains of the operation',
         'description': '',
         'jobs': [{
-            'job_name': 'cf_cloudcontroller_ng',
+            'job_name': 'cloud_controller_ng',
             'mapping': {'db': mapper.jobdb('cc')},
             'provided_data': [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
                               contexts.LTCRelation,
-                              contexts.ClockRelation,
                               contexts.UAARelation,
-                              contexts.DEARelation,
-                              contexts.LoginRelation,
 
                               # diego is coming
                               # contexts.BundleConfig,
@@ -58,8 +54,6 @@ SERVICES = {
                                contexts.MysqlRelation,
                                contexts.LTCRelation,
                                contexts.UAARelation,
-                               contexts.DEARelation,
-                               contexts.LoginRelation,
                                # diego is coming
                                # contexts.BundleConfig,
                                ],
@@ -154,7 +148,7 @@ SERVICES = {
             'job_name': 'login',
             'ports': [8080],
             'mapping': {},
-            'provided_data': [contexts.LoginRelation],
+            'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.UAARelation]
             }]

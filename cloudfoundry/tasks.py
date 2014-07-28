@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 TEMPLATES_BASE_DIR = path('/var/vcap/jobs')
 PACKAGES_BASE_DIR = path('/var/vcap/packages')
+RELEASES_DIR = path('/var/vcap/releases')
 
 
 def install_base_dependencies():
@@ -63,6 +64,8 @@ def fetch_job_artifacts(job_name):
     host.mkdir(job_path)
     for i in range(3):
         try:
+            hookenv.log('Downloading artifact from: {} (attempt {} of 3)'.format(
+                artifact_url, i+1), hookenv.INFO)
             _, resp = urllib.urlretrieve(artifact_url, job_archive)
         except (IOError, urllib.ContentTooShortError) as e:
             if os.path.exists(job_archive):
@@ -70,7 +73,7 @@ def fetch_job_artifacts(job_name):
             if i < 2:
                 hookenv.log(
                     'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
-                    hookenv.INFO)
+                    hookenv.WARNING)
                 time.sleep(i*10+1)
                 continue
             else:
@@ -78,6 +81,7 @@ def fetch_job_artifacts(job_name):
                             hookenv.ERROR)
                 raise
         else:
+            hookenv.log('Downloading complete', hookenv.INFO)
             break
 
     try:
@@ -99,15 +103,23 @@ def fetch_job_artifacts(job_name):
         raise
 
 
-def install_job_packages(pkg_base_dir, job_name):
+def install_job_packages(pkg_base_dir, releases_dir, job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
+    version = release_version()
+    if not pkg_base_dir.exists():
+        pkg_base_dir.makedirs_p()
+
     for package in package_path.files('*.tgz'):
         pkgname = package.basename().rsplit('-', 1)[0]
-        pkgpath = pkg_base_dir / pkgname
+        pkgpath = releases_dir / version / 'packages' / pkgname
         if not pkgpath.exists():
             pkgpath.makedirs()
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
+
+        pkgdest = pkg_base_dir / pkgname
+        if not pkgdest.exists():
+            pkgpath.symlink(pkgdest)
 
 
 def set_script_permissions(job_name, tmplt_base_dir=TEMPLATES_BASE_DIR):
@@ -119,9 +131,8 @@ def set_script_permissions(job_name, tmplt_base_dir=TEMPLATES_BASE_DIR):
 
 @hookenv.cached
 def get_job_path(job_name):
-    orchestrator_data = contexts.OrchestratorRelation()
-    version = orchestrator_data['orchestrator'][0]['cf_version']
-    return os.path.join(hookenv.charm_dir(), 'jobs', version, job_name)
+    version = release_version()
+    return path(hookenv.charm_dir()) / 'jobs' / version / job_name
 
 
 @hookenv.cached
@@ -132,6 +143,13 @@ def load_spec(job_name):
     job_path = get_job_path(job_name)
     with open(os.path.join(job_path, 'spec')) as fp:
         return yaml.safe_load(fp)
+
+
+@hookenv.cached
+def release_version(contexts=contexts):
+    units = contexts.OrchestratorRelation()['orchestrator']
+    unit = units[0]
+    return unit['cf_version']
 
 
 class JobTemplates(services.ManagerCallback):
@@ -231,7 +249,7 @@ def build_service_block(charm_name, services=SERVICES):
             'provided_data': [p() for p in job.get('provided_data', [])],
             'data_ready': [
                 fetch_job_artifacts,
-                partial(install_job_packages, PACKAGES_BASE_DIR),
+                partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
                 monit.svc_force_reload

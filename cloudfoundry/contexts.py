@@ -207,6 +207,15 @@ class CloudControllerRelation(RelationContext):
             'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
             'cc.bulk_api_user': data[0]['user'],
             'cc.bulk_api_password': data[0]['password'],
+            'cc.quota_definitions': {
+                'default': {
+                    'memory_limit': 10240,
+                    'non_basic_services_allowed': True,
+                    'total_routes': 1000,
+                    'total_services': 100,
+                    'trial_db_allowed': True,
+                },
+            },
         }
 
 

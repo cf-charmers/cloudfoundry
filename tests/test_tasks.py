@@ -172,8 +172,11 @@ class TestTasks(unittest.TestCase):
         assert not taropen.called
         assert not tgz.extractall.called
         self.assertEqual(log.call_args_list, [
-            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'INFO'),
-            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'INFO'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 1 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: too short; retrying (attempt 1 of 3)', 'WARNING'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 2 of 3)', 'INFO'),
+            mock.call('Unable to download artifact: connection refused; retrying (attempt 2 of 3)', 'WARNING'),
+            mock.call('Downloading artifact from: http://url/cf-version/amd64/job_name (attempt 3 of 3)', 'INFO'),
             mock.call('Unable to download artifact: bad time; (attempt 3 of 3)', 'ERROR'),
         ])
         remove.assert_called_once_with('job_path/job_name.tgz')
@@ -195,18 +198,25 @@ class TestTasks(unittest.TestCase):
 
         with mock.patch('subprocess.check_call') as cc,\
           mock.patch('cloudfoundry.tasks.path', spec=path) as pth:
-            pkgdir = pth('fakedir')
+            pkgdir = pth('pkgdir')
+            pkgdir.exists.return_value = False
+
+            reldir = pth('reldir')
             files = (pth() / 'packages').files
             files.name = 'files'
             files.return_value = [script]
+            pkgpath = reldir.__div__().__div__().__div__()
+            pkgpath.exists.return_value = False
+            pkgdest = pkgdir.__div__()
 
-            exists = (pkgdir / 'package').exists
-            exists.return_value = False
-
-            tasks.install_job_packages(pkgdir, 'job_name')
+            pkgdest.exists.return_value = False
+            tasks.install_job_packages(pkgdir, reldir,  'job_name')
 
             assert cc.called
             cc.assert_called_once_with(['tar', '-xzf', script])
+
+            assert reldir.makedirs_p.called
+            pkgpath.symlink.assert_called_once_with(pkgdir / 'package')
 
     @mock.patch('cloudfoundry.contexts.OrchestratorRelation')
     def test_get_job_path(self, OrchRelation):

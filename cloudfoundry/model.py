@@ -1,5 +1,6 @@
 import logging
 import threading
+import os
 
 import tornado.ioloop
 from tornado import gen
@@ -7,6 +8,8 @@ from tornado import gen
 from cloudfoundry import actions
 from config import (PENDING, COMPLETE, FAILED, RUNNING)
 from cloudfoundry import utils
+
+from jujuclient import Environment
 
 
 class StateDatabase(object):
@@ -37,7 +40,7 @@ class StateDatabase(object):
         if self._env:
             return self._env
         c = self.config
-        self._env = utils.get_env(
+        self._env = self.get_env(
             c['juju.environment'],
             user=c['credentials.user'],
             password=c['credentials.password'])
@@ -142,6 +145,19 @@ class StateDatabase(object):
         finally:
             self.exec_lock.release()
 
+    @classmethod
+    def get_env(cls, name=None, user=None, password=None):
+        # A hook env will have this set
+        api_addresses = os.environ.get('JUJU_API_ADDRESSES')
+        if not api_addresses:
+            # use the local option/connect which
+            # parses local jenv info
+            env = Environment.connect(name)
+        else:
+            env = Environment(api_addresses.split()[0])
+            env.login(user=user, password=password)
+        return env
+
 
 class Strategy(list):
     def __init__(self, env):
@@ -152,23 +168,15 @@ class Strategy(list):
         if not self:
             return None
         for tactic in self:
+            if tactic.state == FAILED:
+                return None
             if tactic.state == PENDING:
                 return tactic
         return None
 
     @property
     def runnable(self):
-        if not self:
-            return False
-        found = False
-        for tactic in self:
-            if tactic.state == COMPLETE:
-                continue
-            if tactic.state != PENDING:
-                return False
-            else:
-                found = True
-        return found
+        return bool(self.find_next_tactic())
 
     @gen.coroutine
     def __call__(self, env=None):
