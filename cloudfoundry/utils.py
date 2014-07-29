@@ -154,7 +154,7 @@ def wait_for(timeout, interval, *callbacks):
 
 def process_stopped(pid):
     try:
-        os.kill(0, pid)
+        os.kill(pid, 0)
         return False
     except OSError as e:
         if e.errno == 3:

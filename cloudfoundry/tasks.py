@@ -209,12 +209,19 @@ class Monit(object):
             if raise_on_err:
                 raise
 
+    def get_pid(self):
+        try:
+            output = subprocess.check_output(['monit'])
+            return int(output.split(' ')[-2])
+        except (IndexError, ValueError, subprocess.CalledProcessError) as e:
+            raise ValueError('Unable to parse monit pid: {}'.format(str(e)))
+
     def svc_restart(self, *args):
         cmd = self.svc_cmd + ['start']
         self.proc(cmd, raise_on_err=True)
 
     def svc_force_reload(self, *args):
-        pid = subprocess.check_output(['monit']).split(' ')[-2]
+        pid = self.get_pid()
         cmd = self.svc_cmd + ['force-reload']
         self.proc(cmd, raise_on_err=True)
         utils.wait_for(10, 1,
