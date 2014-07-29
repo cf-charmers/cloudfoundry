@@ -1,9 +1,7 @@
 import os
 import subprocess
-import urllib
 import tarfile
-import hashlib
-import time
+#import hashlib
 import yaml
 import stat
 import textwrap
@@ -62,38 +60,30 @@ def fetch_job_artifacts(job_name):
     if os.path.exists(job_archive):
         return
     host.mkdir(job_path)
-    for i in range(3):
+    retry = True
+    while retry:
+        hookenv.log('Downloading {}.tgz from {}'.format(job_name, artifact_url))
         try:
-            hookenv.log('Downloading artifact from: {} (attempt {} of 3)'.format(
-                artifact_url, i+1), hookenv.INFO)
-            _, resp = urllib.urlretrieve(artifact_url, job_archive)
-        except (IOError, urllib.ContentTooShortError) as e:
-            if os.path.exists(job_archive):
-                os.remove(job_archive)
-            if i < 2:
-                hookenv.log(
-                    'Unable to download artifact: {}; retrying (attempt {} of 3)'.format(str(e), i+1),
-                    hookenv.WARNING)
-                time.sleep(i*10+1)
-                continue
+            subprocess.check_call(['wget', '-t0', '-c', '-nv', artifact_url, '-O', job_archive])
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 4:  # always retry network errors
+                hookenv.log('Network error, retrying download', hookenv.WARNING)
+                retry = True
             else:
-                hookenv.log('Unable to download artifact: {}; (attempt {} of 3)'.format(str(e), i+1),
-                            hookenv.ERROR)
                 raise
         else:
-            hookenv.log('Downloading complete', hookenv.INFO)
-            break
+            retry = False
 
     try:
-        assert 'ETag' in resp, (
-            'Error downloading artifacts from {}; '
-            'missing ETag (md5) checksum (invalid job?)'.format(artifact_url))
-        expected_md5 = resp['ETag'].strip('"')
-        with open(job_archive) as fp:
-            actual_md5 = hashlib.md5(fp.read()).hexdigest()
-        assert actual_md5 == expected_md5, (
-            'Error downloading artifacts from {}; '
-            'ETag (md5) checksum mismatch'.format(artifact_url))
+        #assert 'ETag' in resp, (
+        #    'Error downloading artifacts from {}; '
+        #    'missing ETag (md5) checksum (invalid job?)'.format(artifact_url))
+        #expected_md5 = resp['ETag'].strip('"')
+        #with open(job_archive) as fp:
+        #    actual_md5 = hashlib.md5(fp.read()).hexdigest()
+        #assert actual_md5 == expected_md5, (
+        #    'Error downloading artifacts from {}; '
+        #    'ETag (md5) checksum mismatch'.format(artifact_url))
         with tarfile.open(job_archive) as tgz:
             tgz.extractall(job_path)
     except Exception as e:
@@ -107,13 +97,13 @@ def install_job_packages(pkg_base_dir, releases_dir, job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
     version = release_version()
     if not pkg_base_dir.exists():
-        pkg_base_dir.makedirs_p()
+        pkg_base_dir.makedirs_p(mode=755)
 
     for package in package_path.files('*.tgz'):
         pkgname = package.basename().rsplit('-', 1)[0]
         pkgpath = releases_dir / version / 'packages' / pkgname
         if not pkgpath.exists():
-            pkgpath.makedirs()
+            pkgpath.makedirs(mode=755)
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
 
@@ -227,23 +217,24 @@ class Monit(object):
         self.proc(cmd, raise_on_err=True)
 
     def start(self, jobname):
-        cmd = ['monit', 'start', jobname]
+        cmd = ['monit', 'restart', 'all']
         self.proc(cmd, raise_on_err=True)
 
     def stop(self, jobname):
-        cmd = ['monit', 'stop', jobname]
+        cmd = ['monit', 'stop', 'all']
         self.proc(cmd)
 
 
 monit = Monit()
 
 
-def build_service_block(charm_name, services=SERVICES):
-    service_def = services[charm_name]
+def build_service_block(charm_name, service_defs=SERVICES):
+    service_def = service_defs[charm_name]
     result = []
     for job in service_def.get('jobs', []):
         job_def = {
             'service': job['job_name'],
+            'ports': job.get('ports', []),
             'required_data': [contexts.OrchestratorRelation()] +
                              [r() for r in job.get('required_data', [])],
             'provided_data': [p() for p in job.get('provided_data', [])],
@@ -252,14 +243,9 @@ def build_service_block(charm_name, services=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
-                monit.svc_force_reload
-            ],
-            'start': monit.start,
-            'stop': monit.stop
+            ] + job.get('data_ready', []),
+            'start': [monit.start, services.open_ports],
+            'stop': [monit.stop, services.close_ports]
         }
         result.append(job_def)
     return result
-
-
-def db_migrate():
-    pass

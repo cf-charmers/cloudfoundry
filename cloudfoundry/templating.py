@@ -59,9 +59,10 @@ class RubyTemplateCallback(services.TemplateCallback):
         self.templates_dir = templates_dir
         self.mapping = mapping
         self.defaults = NestedDict()
-        self.defaults.update({k: v.get('default')
+        self.name = spec['name']
+        self.defaults.update({k: v['default']
                               for k, v in spec['properties'].iteritems()
-                              if isinstance(v, dict)})
+                              if isinstance(v, dict) and 'default' in v})
         self.defaults.setdefault('networks', {})['apps'] = 'default'
 
     def collect_data(self, manager, service_name):
@@ -69,6 +70,7 @@ class RubyTemplateCallback(services.TemplateCallback):
         unit_num = int(hookenv.local_unit().split('/')[-1])
         data = {
             'index': unit_num,
+            'job': {'name': self.name},
             'networks': {'default': {'ip': hookenv.unit_get('private-address')}},
             'properties': copy.deepcopy(self.defaults),
         }

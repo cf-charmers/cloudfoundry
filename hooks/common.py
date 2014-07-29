@@ -3,6 +3,7 @@
 import os
 import yaml
 import shutil
+import subprocess
 
 from charmhelpers.core import hookenv
 from charmhelpers.core import services
@@ -67,8 +68,30 @@ class APIEnvironment(GUIEnvironment):
         return [unit for unit in units if unit != local_unit]
 
 
+def precache_job_artifacts(s):
+    config = hookenv.config()
+    version = config.get('cf_version')
+    if not version or version == 'latest':
+        version = RELEASES[0]['releases'][1]
+    prefix = os.path.join('cf-{}'.format(version), 'amd64')
+    base_url = os.path.join(config['artifacts_url'], prefix)
+    base_path = os.path.join(hookenv.charm_dir(), 'artifacts', prefix)
+    if not os.path.exists(base_path):
+        os.makedirs(base_path)
+    for service in SERVICES.values():
+        for job in service['jobs']:
+            job_name = job['job_name']
+            url = os.path.join(base_url, job_name)
+            artifact = os.path.join(base_path, job_name)
+            if not os.path.exists(artifact):
+                subprocess.check_call(['wget', '-nv', url, '-O', artifact])
+
+
 def generate(s):
-    version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
+    config = hookenv.config()
+    version = config.get('cf_version')
+    if not version or version == 'latest':
+        version = RELEASES[0]['releases'][1]
     build_dir = os.path.join(hookenv.charm_dir(), 'build', str(version))
     if os.path.exists(build_dir):
         shutil.rmtree(build_dir)
@@ -78,7 +101,10 @@ def generate(s):
 
 
 def deploy(s):
-    version = hookenv.config('cf_release') or RELEASES[0]['releases'][1]
+    config = hookenv.config()
+    version = config.get('cf_version')
+    if not version or version == 'latest':
+        version = RELEASES[0]['releases'][1]
     generator = CharmGenerator(RELEASES, SERVICES)
     generator.select_release(version)
     charm_dir = hookenv.charm_dir()
@@ -136,6 +162,7 @@ def manage():
                 ArtifactsCache(),
             ],
             'data_ready': [
+                precache_job_artifacts,
                 generate,
                 deploy,
             ],

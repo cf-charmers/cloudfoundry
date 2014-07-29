@@ -60,7 +60,7 @@ class NatsRelation(RelationContext):
         return {
             'nats.machines': [u['address'] for u in data],
             'nats.address': data[0]['address'],
-            'nats.port': data[0]['port'],
+            'nats.port': int(data[0]['port']),
             'nats.user': data[0]['user'],
             'nats.password': data[0]['password'],
         }
@@ -90,20 +90,35 @@ class ClockRelation(RelationContext):
 class UAARelation(RelationContext):
     name = 'uaa'
     interface = 'http'
-    required_keys = []
+    required_keys = ['login_client_secret', 'admin_client_secret', 'cc_client_secret', 'cc_token_secret']
 
     def get_shared_secrets(self):
         secret_context = StoredContext(
             os.path.join(hookenv.charm_dir(), '.uaa-secrets.yml'),
             {
-                'uaa.login.client_secret': host.pwgen(20),
-                'uaa.admin.client_secret': host.pwgen(20),
-                'uaa.cc.client_secret': host.pwgen(20),
+                'login_client_secret': host.pwgen(20),
+                'admin_client_secret': host.pwgen(20),
+                'cc_client_secret': host.pwgen(20),
+                'cc_token_secret': host.pwgen(20),
             })
         return secret_context
 
-    def erb_mapping(self):
+    def provide_data(self):
         return self.get_shared_secrets()
+
+    def erb_mapping(self):
+        data = self[self.name][0]
+        return {
+            'uaa.login.client_secret': data['login_client_secret'],
+            'uaa.admin.client_secret': data['admin_client_secret'],
+            'uaa.cc.client_secret': data['cc_client_secret'],
+            'uaa.cc.token_secret': data['cc_token_secret'],
+            'uaa.require_https': False,  # FIXME: Add SSL as an option; requires cert
+            'uaa.no_ssl': True,
+            'uaa.scim.users': [
+                'admin|admin|scim.write,scim.read,openid,cloud_controller.admin',  # FIXME: Don't hard-code
+            ],
+        }
 
 
 class LoginRelation(RelationContext):
@@ -194,19 +209,28 @@ class CloudControllerRelation(RelationContext):
         return StoredContext('api_credentials.yml', {
             'user': host.pwgen(7),
             'password': host.pwgen(7),
+            'db_encryption_key': host.pwgen(7),
         })
 
     def provide_data(self):
-        return dict(self.get_credentials(),
-                    hostname=hookenv.unit_get('private-address').encode('utf-8'),
-                    port=9022)
+        creds = self.get_credentials()
+        return {
+            'user': creds['user'],
+            'password': creds['password'],
+            'hostname': hookenv.unit_get('private-address').encode('utf-8'),
+            'port': 9022,
+        }
 
     def erb_mapping(self):
+        creds = self.get_credentials()
         data = self[self.name]
         return {
             'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
             'cc.bulk_api_user': data[0]['user'],
             'cc.bulk_api_password': data[0]['password'],
+            'cc.staging_upload_user': 'ignored',  # FIXME: We need a staging cache set up
+            'cc.staging_upload_password': 'ignored',
+            'cc.db_encryption_key': creds['db_encryption_key'],
             'cc.quota_definitions': {
                 'default': {
                     'memory_limit': 10240,
@@ -217,6 +241,17 @@ class CloudControllerRelation(RelationContext):
                 },
             },
         }
+
+
+class CloudControllerReadyRelation(RelationContext):
+    name = 'cc-ready'
+    interface = 'controller-ready'
+    required_keys = ['ready']
+
+    @classmethod
+    def send_ready(cls):
+        for rid in hookenv.relation_ids(cls.name):
+            hookenv.relation_set(rid, {'ready': True})
 
 
 class RouterRelation(RelationContext):
@@ -277,10 +312,12 @@ class OrchestratorRelation(RelationContext):
         }
 
     def erb_mapping(self):
+        domain = self[self.name][0]['domain']
         return {
-            'domain': 'api.' + self[self.name][0]['domain'],
-            'system_domain': self[self.name][0]['domain'],
-            'app_domains': [],  # TODO: wat?
+            'domain': domain,
+            'app_domains': [d['domain'] for d in self[self.name]],
+            'system_domain': domain,  # TODO: These should probably be config options
+            'system_domain_organization': 'juju-org',
         }
 
 

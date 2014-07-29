@@ -140,10 +140,11 @@ class TestCloudControllerRelation(unittest.TestCase):
     @mock.patch(CONTEXT + 'StoredContext')
     def test_get_credentials(self, mStoredContext, mpwgen, mget_data):
         mStoredContext.side_effect = lambda f, d: d
-        mpwgen.side_effect = ['user', 'password']
+        mpwgen.side_effect = ['user', 'password', 'db-key']
         self.assertEqual(contexts.CloudControllerRelation().get_credentials(),
                          {'user': 'user',
                           'password': 'password',
+                          'db_encryption_key': 'db-key',
                           })
 
     @mock.patch(CONTEXT + 'CloudControllerRelation.get_data')

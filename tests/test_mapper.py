@@ -4,11 +4,13 @@
 import unittest
 import mock
 
-from cloudfoundry.mapper import property_mapper, flatten, jobdb
+from cloudfoundry.mapper import property_mapper, flatten, ccdb, uaadb
 from cloudfoundry.utils import NestedDict
 
 
 class TestMapper(unittest.TestCase):
+    maxDiff = None
+
     def test_flatten(self):
         result = flatten({
             'foo': {
@@ -51,7 +53,7 @@ class TestMapper(unittest.TestCase):
         self.assertEqual(result, {'foo': {'bar': 'FOO'}})
         assert not mapping.called
 
-    def test_jobdb(self):
+    def test_ccdb(self):
         data = {
             'db': [
                 {
@@ -70,12 +72,41 @@ class TestMapper(unittest.TestCase):
                 },
             ]
         }
-        self.assertEqual(jobdb('job1')(data), {
-            'job1db': {
+        self.assertEqual(ccdb(data), {
+            'ccdb': {
                 'db_scheme': 'mysql2',
                 'address': 'host',
                 'port': 'port',
-                'databases': [{'tag': 'job1', 'name': 'database'}],
+                'databases': [{'tag': 'cc', 'name': 'database'}],
+                'roles': [{'tag': 'admin', 'name': 'user', 'password': 'password'}],
+            },
+        })
+
+    def test_uaadb(self):
+        data = {
+            'db': [
+                {
+                    'host': 'host',
+                    'port': 'port',
+                    'user': 'user',
+                    'password': 'password',
+                    'database': 'database',
+                },
+                {
+                    'host': 'nope',
+                    'port': 'nope',
+                    'user': 'nope',
+                    'password': 'nope',
+                    'database': 'nope',
+                },
+            ]
+        }
+        self.assertEqual(uaadb(data), {
+            'uaadb': {
+                'db_scheme': 'mysql',
+                'address': 'host',
+                'port': 'port',
+                'databases': [{'tag': 'uaa', 'name': 'database'}],
                 'roles': [{'tag': 'admin', 'name': 'user', 'password': 'password'}],
             },
         })

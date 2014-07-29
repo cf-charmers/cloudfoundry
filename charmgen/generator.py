@@ -115,7 +115,7 @@ class CharmGenerator(object):
             target.write(self.build_entry(service_key))
 
         for hook in self.build_hooks(service_key):
-            os.symlink(entry, os.path.join(hook_dir, hook))
+            os.symlink('entry.py', os.path.join(hook_dir, hook))
 
     def _build_charm_ref(self, charm_id):
         if charm_id.startswith('cs:'):

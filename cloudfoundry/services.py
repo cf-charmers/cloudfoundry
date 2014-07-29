@@ -3,13 +3,14 @@ import mapper
 
 __all__ = ['SERVICES']
 
+
 SERVICES = {
     'cloud-controller-clock-v1': {
         'summary': "A shared clock",
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_clock',
-            'mapping': {'db': mapper.jobdb('cc')},
+            'mapping': {'db': mapper.ccdb},
             'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
@@ -28,18 +29,22 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_ng',
-            'mapping': {'db': mapper.jobdb('cc')},
-            'provided_data': [contexts.CloudControllerRelation],
+            'mapping': {'db': mapper.ccdb},
+            'provided_data': [contexts.CloudControllerRelation,
+                              contexts.CloudControllerReadyRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
                               contexts.LTCRelation,
                               contexts.UAARelation,
-
+                              contexts.CloudControllerRelation.remote_view,
                               # diego is coming
                               # contexts.BundleConfig,
                               # All job context keys
                               # get processed by a name mapper
                               ],
+            'data_ready': [
+                contexts.CloudControllerReadyRelation.send_ready,
+            ],
         }]
     },
 
@@ -48,12 +53,14 @@ SERVICES = {
         'description': '',
         'jobs': [
             {'job_name': 'cloud_controller_worker',
-             'mapping': {'db': mapper.jobdb('cc')},
+             'mapping': {'db': mapper.ccdb},
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
                                contexts.MysqlRelation,
                                contexts.LTCRelation,
                                contexts.UAARelation,
+                               contexts.CloudControllerRelation,
+                               contexts.CloudControllerReadyRelation,
                                # diego is coming
                                # contexts.BundleConfig,
                                ],
@@ -132,10 +139,11 @@ SERVICES = {
         'jobs': [
             {'job_name': 'uaa',
              'ports': [8080],
-             'mapping':{'db': mapper.jobdb('uaa')},
+             'mapping':{'db': mapper.uaadb},
              'provided_data': [contexts.UAARelation],
              'required_data': [contexts.MysqlRelation,
-                               contexts.NatsRelation]
+                               contexts.NatsRelation,
+                               contexts.UAARelation.remote_view]
              }
         ]
     },
@@ -203,6 +211,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'haproxy',
+            'ports': [contexts.RouterRelation.port],
             'mapping': {},
             'provided_data': [],
             'required_data': [contexts.RouterRelation],
