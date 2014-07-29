@@ -249,7 +249,7 @@ class CloudControllerReadyRelation(RelationContext):
     required_keys = ['ready']
 
     @classmethod
-    def send_ready(cls):
+    def send_ready(cls, job_name):
         for rid in hookenv.relation_ids(cls.name):
             hookenv.relation_set(rid, {'ready': True})
 
