@@ -3,6 +3,8 @@ import collections
 import json
 import os
 import subprocess
+import time
+import requests
 
 
 def current_env():
@@ -122,3 +124,45 @@ def parse_config(conf_fn, defaults=None):
             conf.update(defaults)
         conf.update(json.load(fp))
         return conf
+
+
+def wait_for(timeout, interval, *callbacks):
+    """
+    Repeatedly try callbacks until all return True
+
+    This will wait interval seconds between attempts and will error out
+    after timeout has been exceeded.
+
+    Callbacks will be called with the container as their argument.
+    """
+    start = time.time()
+    while True:
+        passes = True
+        for callback in callbacks:
+            result = callback()
+            passes = passes & result
+            if passes is False:
+                break
+        if passes is True:
+            break
+        current = time.time()
+        if current - start >= timeout or \
+                (current - start) + interval > timeout:
+            raise OSError("Timeout exceeded in wait_for")
+        time.sleep(interval)
+
+
+def process_stopped(pid):
+    try:
+        os.kill(0, pid)
+        return False
+    except OSError as e:
+        if e.errno == 3:
+            return True
+        else:
+            raise
+
+
+def monit_available(url='http://localhost:2812'):
+    r = requests.get(url)
+    return r.ok

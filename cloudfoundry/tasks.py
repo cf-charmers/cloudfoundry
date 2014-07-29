@@ -14,6 +14,7 @@ from charmhelpers import fetch
 from cloudfoundry import contexts
 from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
+from cloudfoundry import utils
 from .path import path
 
 logger = logging.getLogger(__name__)
@@ -213,8 +214,12 @@ class Monit(object):
         self.proc(cmd, raise_on_err=True)
 
     def svc_force_reload(self, *args):
+        pid = subprocess.check_output(['monit']).split(' ')[-2]
         cmd = self.svc_cmd + ['force-reload']
         self.proc(cmd, raise_on_err=True)
+        utils.wait_for(10, 1,
+                       partial(utils.process_stopped, pid),
+                       utils.monit_available)
 
     def reload(self, jobname):
         cmd = ['monit', 'reload']
@@ -247,7 +252,7 @@ def build_service_block(charm_name, service_defs=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
-                monit.reload,
+                monit.svc_force_reload,
             ] + job.get('data_ready', []),
             'start': [monit.start, services.open_ports],
             'stop': [monit.stop, services.close_ports]
