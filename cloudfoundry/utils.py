@@ -164,5 +164,8 @@ def process_stopped(pid):
 
 
 def monit_available(url='http://localhost:2812'):
-    r = requests.get(url)
-    return r.ok
+    try:
+        r = requests.get(url)
+        return r.ok
+    except requests.exceptions.ConnectionError:
+        return False
