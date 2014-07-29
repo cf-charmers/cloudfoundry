@@ -14,6 +14,7 @@ from cloudfoundry.services import SERVICES
 from cloudfoundry.contexts import JujuAPICredentials
 from cloudfoundry.contexts import ArtifactsCache
 from cloudfoundry.contexts import OrchestratorRelation
+from cloudfoundry.path import path
 
 from deployer.cli import setup_parser
 from deployer.env.gui import GUIEnvironment
@@ -73,11 +74,10 @@ def precache_job_artifacts(s):
     version = config.get('cf_version')
     if not version or version == 'latest':
         version = RELEASES[0]['releases'][1]
-    prefix = os.path.join('cf-{}'.format(version), 'amd64')
-    base_url = os.path.join(config['artifacts_url'], prefix)
-    base_path = os.path.join('/var/www', prefix)
-    if not os.path.exists(base_path):
-        os.makedirs(base_path)
+    prefix = path('cf-{}'.format(version)) / 'amd64'
+    base_url = path(config['artifacts_url']) / prefix
+    base_path = path('/var/www') / prefix
+    base_path.makedirs_p(mode=0755)
     for service in SERVICES.values():
         for job in service['jobs']:
             job_name = job['job_name']
