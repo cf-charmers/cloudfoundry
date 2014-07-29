@@ -97,13 +97,13 @@ def install_job_packages(pkg_base_dir, releases_dir, job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
     version = release_version()
     if not pkg_base_dir.exists():
-        pkg_base_dir.makedirs_p(mode=755)
+        pkg_base_dir.makedirs_p(mode=0755)
 
     for package in package_path.files('*.tgz'):
         pkgname = package.basename().rsplit('-', 1)[0]
         pkgpath = releases_dir / version / 'packages' / pkgname
         if not pkgpath.exists():
-            pkgpath.makedirs(mode=755)
+            pkgpath.makedirs(mode=0755)
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
 
