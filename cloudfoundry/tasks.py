@@ -97,13 +97,13 @@ def install_job_packages(pkg_base_dir, releases_dir, job_name):
     package_path = path(get_job_path(job_name)) / 'packages'
     version = release_version()
     if not pkg_base_dir.exists():
-        pkg_base_dir.makedirs_p(mode=755)
+        pkg_base_dir.makedirs_p(mode=0755)
 
     for package in package_path.files('*.tgz'):
         pkgname = package.basename().rsplit('-', 1)[0]
         pkgpath = releases_dir / version / 'packages' / pkgname
         if not pkgpath.exists():
-            pkgpath.makedirs(mode=755)
+            pkgpath.makedirs(mode=0755)
             with pkgpath:
                 subprocess.check_call(['tar', '-xzf', package])
 
@@ -216,6 +216,10 @@ class Monit(object):
         cmd = self.svc_cmd + ['force-reload']
         self.proc(cmd, raise_on_err=True)
 
+    def reload(self, jobname):
+        cmd = ['monit', 'reload']
+        self.proc(cmd)
+
     def start(self, jobname):
         cmd = ['monit', 'restart', 'all']
         self.proc(cmd, raise_on_err=True)
@@ -243,6 +247,7 @@ def build_service_block(charm_name, service_defs=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
+                monit.reload,
             ] + job.get('data_ready', []),
             'start': [monit.start, services.open_ports],
             'stop': [monit.stop, services.close_ports]
