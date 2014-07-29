@@ -216,7 +216,7 @@ class Monit(object):
         cmd = self.svc_cmd + ['force-reload']
         self.proc(cmd, raise_on_err=True)
 
-    def reload(self):
+    def reload(self, jobname):
         cmd = ['monit', 'reload']
         self.proc(cmd)
 
