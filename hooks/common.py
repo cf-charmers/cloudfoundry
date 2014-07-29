@@ -75,7 +75,7 @@ def precache_job_artifacts(s):
         version = RELEASES[0]['releases'][1]
     prefix = os.path.join('cf-{}'.format(version), 'amd64')
     base_url = os.path.join(config['artifacts_url'], prefix)
-    base_path = os.path.join(hookenv.charm_dir(), 'artifacts', prefix)
+    base_path = os.path.join('/var/www', prefix)
     if not os.path.exists(base_path):
         os.makedirs(base_path)
     for service in SERVICES.values():
