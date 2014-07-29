@@ -32,7 +32,7 @@ class TestTasks(unittest.TestCase):
             tasks.install_base_dependencies()
 
         apt_install.assert_called_once_with(packages=[
-            'ruby', 'monit', 'runit'])
+            'ruby', 'monit', 'runit', 'zip', 'unzip'])
         adduser.assert_called_once_with('vcap')
         assert monitrc.called
         assert monitrc.call_args == mock.call('/etc/monit/conf.d/enable_http')

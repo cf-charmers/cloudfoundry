@@ -25,7 +25,7 @@ RELEASES_DIR = path('/var/vcap/releases')
 
 
 def install_base_dependencies():
-    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit']))
+    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit', 'zip', 'unzip']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
     host.adduser('vcap')
