@@ -117,7 +117,7 @@ def manage():
                 ArtifactsCache(),
             ],
             'data_ready': [
-                #precache_job_artifacts,
+                precache_job_artifacts,
                 generate,
                 deploy,
             ],
