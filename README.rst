@@ -45,7 +45,7 @@ You can also use the following command on the cc unit to monitor the routes
 registered with NATS, which can be very helpful for debugging:
 
     cd /var/vcap/packages/cloud_controller_ng/cloud_controller_ng/vendor/bundle/ruby/1.9.1
-    /var/vcap/packages/ruby/bin/bundle exec bin/nats-sub -s nats://<nats-user>:<nats-pass>@<nats-internal-addr>:4222 ">"
+    /var/vcap/packages/ruby/bin/bundle exec bin/nats-sub -s `grep -o 'nats://.*' /var/vcap/jobs/cloud_controller_ng/config/cloud_controller_ng.yml` ">"
 
 
 
