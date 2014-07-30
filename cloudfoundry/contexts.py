@@ -182,7 +182,7 @@ class LoggregatorRelation(RelationContext):
     def erb_mapping(self):
         data = self[self.name]
         return {
-            'loggregator.servers': [d['address'] for d in data],
+            'loggregator.servers': {'z1': [d['address'] for d in data]},
             'loggregator.incoming_port': data[0]['incoming_port'],
             'loggregator.outgoing_port': data[0]['outgoing_port'],
         }
