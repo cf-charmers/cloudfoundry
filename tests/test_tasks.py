@@ -17,20 +17,22 @@ class TestTasks(unittest.TestCase):
     def tearDown(self):
         self.charm_dir_patch.stop()
 
+    @mock.patch('cloudfoundry.utils.wait_for', mock.Mock())
     @mock.patch('charmhelpers.core.host.adduser')
+    @mock.patch('subprocess.check_output')
     @mock.patch('subprocess.check_call')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
     @mock.patch('charmhelpers.fetch.apt_install')
     def test_install_base_dependencies(self, apt_install,
                                        filter_installed_packages,
-                                       check_call, adduser):
+                                       check_call, check_output, adduser):
         filter_installed_packages.side_effect = lambda a: a
         with mock.patch('cloudfoundry.tasks.path', spec=path) as monitrc:
             monitrc().exists.return_value = False
             tasks.install_base_dependencies()
 
         apt_install.assert_called_once_with(packages=[
-            'ruby', 'monit', 'runit'])
+            'ruby', 'monit', 'runit', 'zip', 'unzip'])
         adduser.assert_called_once_with('vcap')
         assert monitrc.called
         assert monitrc.call_args == mock.call('/etc/monit/conf.d/enable_http')

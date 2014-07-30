@@ -14,6 +14,7 @@ from charmhelpers import fetch
 from cloudfoundry import contexts
 from cloudfoundry import templating
 from cloudfoundry.services import SERVICES
+from cloudfoundry import utils
 from .path import path
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ RELEASES_DIR = path('/var/vcap/releases')
 
 
 def install_base_dependencies():
-    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit']))
+    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit', 'zip', 'unzip']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
     host.adduser('vcap')
@@ -208,13 +209,24 @@ class Monit(object):
             if raise_on_err:
                 raise
 
+    def get_pid(self):
+        try:
+            output = subprocess.check_output(['monit'])
+            return int(output.split(' ')[-2])
+        except (IndexError, ValueError, subprocess.CalledProcessError) as e:
+            raise ValueError('Unable to parse monit pid: {}'.format(str(e)))
+
     def svc_restart(self, *args):
         cmd = self.svc_cmd + ['start']
         self.proc(cmd, raise_on_err=True)
 
     def svc_force_reload(self, *args):
+        pid = self.get_pid()
         cmd = self.svc_cmd + ['force-reload']
         self.proc(cmd, raise_on_err=True)
+        utils.wait_for(10, 1,
+                       partial(utils.process_stopped, pid),
+                       utils.monit_available)
 
     def reload(self, jobname):
         cmd = ['monit', 'reload']
@@ -247,7 +259,7 @@ def build_service_block(charm_name, service_defs=SERVICES):
                 partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
                 job_templates(job.get('mapping', {})),
                 set_script_permissions,
-                monit.reload,
+                monit.svc_force_reload,
             ] + job.get('data_ready', []),
             'start': [monit.start, services.open_ports],
             'stop': [monit.stop, services.close_ports]
