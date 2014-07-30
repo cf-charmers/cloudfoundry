@@ -280,10 +280,19 @@ class OrchestratorRelation(RelationContext):
     required_keys = ['artifacts_url', 'cf_version', 'domain']
 
     def get_domain(self):
+        # must be here, because deployer is only installed on cloudfoundry
+        from cloudfoundry.api import APIEnvironment
         domain = hookenv.config()['domain']
         if domain == 'xip.io':
-            public_address = hookenv.unit_get('public-address')
-            domain = "%s.xip.io" % self.to_ip(public_address)
+            creds = JujuAPICredentials()
+            env = APIEnvironment(creds['api_address'], creds['api_password'])
+            env.connect()
+            status = env.status()
+            if 'haproxy' in status['services']:
+                units = status['services']['haproxy']['units']
+                unit0 = sorted(units.items(), key=lambda a: a[0])[0][1]
+                public_address = unit0['public-address']
+                domain = "%s.xip.io" % self.to_ip(public_address)
         return domain
 
     def to_ip(self, address):

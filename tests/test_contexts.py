@@ -234,19 +234,39 @@ class TestOrchestratorRelation(unittest.TestCase):
         mcheck_output.return_value = ' foo.maas\n bar\n'
         self.assertEqual(contexts.OrchestratorRelation().to_ip('foo'), None)
 
-    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')
+    @mock.patch('cloudfoundry.api.APIEnvironment')
+    @mock.patch(CONTEXT + 'JujuAPICredentials')
+    @mock.patch(CONTEXT + 'OrchestratorRelation.get_data', mock.Mock())
     @mock.patch(CONTEXT + 'OrchestratorRelation.to_ip')
-    @mock.patch('charmhelpers.core.hookenv.unit_get')
     @mock.patch('charmhelpers.core.hookenv.config')
-    def test_get_domain(self, mconfig, munit_get, mto_ip, mget_data):
+    def test_get_domain(self, mconfig, mto_ip, api_creds, api_env):
         mconfig.return_value = {'domain': 'foo'}
         self.assertEqual(contexts.OrchestratorRelation().get_domain(), 'foo')
+
         mconfig.return_value = {'domain': 'xip.io'}
-        munit_get.return_value = 'my-domain.org'
+        api_creds.return_value = {'api_address': 'addr', 'api_password': 'pw'}
+        api_env.return_value.status.return_value = {'services': {}}
+        self.assertEqual(contexts.OrchestratorRelation().get_domain(),
+                         'xip.io')
+        api_creds.assert_called_once_with()
+        api_env.assert_called_with('addr', 'pw')
+        api_env.return_value.connect.assert_called_once_with()
+
+        api_env.return_value.status.return_value = {
+            'services': {
+                'cloudfoundry': {},
+                'haproxy': {
+                    'units': {
+                        'haproxy/1': {'public-address': 'unit-1-addr'},
+                        'haproxy/0': {'public-address': 'unit-0-addr'},
+                    },
+                },
+            },
+        }
         mto_ip.return_value = '0.0.0.0'
         self.assertEqual(contexts.OrchestratorRelation().get_domain(),
                          '0.0.0.0.xip.io')
-        mto_ip.assert_called_once_with('my-domain.org')
+        mto_ip.assert_called_once_with('unit-0-addr')
 
 
 class TestJujuAPICredentials(unittest.TestCase):
