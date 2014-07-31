@@ -180,7 +180,7 @@ def setup_modprobe(module):
     subprocess.check_call(['modprobe', module])
     with open('/etc/modules', 'r+') as modules:
         if module not in modules.read():
-            modules.write(module)
+            modules.write(module + '\n')
 
 
 def linux_image_extra_package():
