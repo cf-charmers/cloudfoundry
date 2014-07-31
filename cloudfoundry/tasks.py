@@ -39,16 +39,7 @@ def install(service_def):
             if not isinstance(task, list):
                 task = [task]
             for t in task:
-                print t.func, t.args
                 t()
-
-
-def apt_install(package_list):
-    return [partial(fetch.apt_install, p) for p in package_list]
-
-def modprobe(mods):
-    return [partial(utils.modprobe, mod) for mod in mods]
-
 
 
 def enable_monit_http_interface():

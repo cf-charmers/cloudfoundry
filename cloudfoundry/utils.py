@@ -6,6 +6,10 @@ import subprocess
 import time
 import requests
 
+from functools import partial
+
+from charmhelpers import fetch
+
 
 def current_env():
     return subprocess.check_output(['juju', 'switch']).strip()
@@ -171,9 +175,35 @@ def monit_available(url='http://localhost:2812'):
         return False
 
 
-def modprobe(module):
+def setup_modprobe(module):
     ''' Load a kernel module and configure for auto-load on reboot '''
     subprocess.check_call(['modprobe', module])
     with open('/etc/modules', 'r+') as modules:
         if module not in modules.read():
             modules.write(module)
+
+
+def linux_image_extra_package():
+    """
+    Get the explicitly tagged LIE package for the current kernel release.
+
+    Occasionally, there is a short window of drift between the
+    linux-image-extra-virtual package and the kernel in the cloud image.
+    So, instead of relying on the -virtual package, determine the version
+    based on the actual kernel release we're running on.
+    """
+    kernel_release = subprocess.check_output(['/bin/uname', '-r']).strip()
+    return 'linux-image-extra-{}'.format(kernel_release)
+
+
+def install_linux_image_extra():
+    pkg = linux_image_extra_package()
+    fetch.apt_install(pkg)
+
+
+def apt_install(package_list):
+    return [partial(fetch.apt_install, p) for p in package_list]
+
+
+def modprobe(mods):
+    return [partial(setup_modprobe, mod) for mod in mods]

@@ -1,5 +1,6 @@
 from cloudfoundry import contexts
 from cloudfoundry import tasks
+from cloudfoundry import utils
 
 
 leader_elected_cc_migration = lambda x: None
@@ -21,8 +22,8 @@ SERVICES = {
                 # process the final context before feeding it to erb render
                 # using this rel_key to property path mapping
             },
-            'install': [tasks.apt_install(['linux-image-extras']),
-                        tasks.modprobe(['quota_v1', 'quota_v2'])],
+            'install': [utils.apt_install(['linux-image-extras']),
+                        utils.modprobe(['quota_v1', 'quota_v2'])],
             "provided_data": [contexts.CloudControllerRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,

@@ -53,11 +53,12 @@ class TestTasks(unittest.TestCase):
     @mock.patch('charmhelpers.core.hookenv.log')
     @mock.patch('cloudfoundry.utils.modprobe')
     @mock.patch('charmhelpers.fetch.filter_installed_packages')
-    @mock.patch('charmhelpers.fetch.apt_install')
+    @mock.patch('cloudfoundry.utils.apt_install')
     def test_install(self, apt_install,
                      filter_installed_packages,
                      modprobe, log):
         filter_installed_packages.side_effect = lambda a: a
+        import pdb; pdb.set_trace()
         tasks.install(SERVICES['cloud_controller_v1'])
         apt_install.assert_called_once_with(packages=[
             'linux-image-extras'])

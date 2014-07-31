@@ -1,5 +1,6 @@
 import contexts
 import mapper
+import utils
 
 __all__ = ['SERVICES']
 
@@ -75,6 +76,10 @@ SERVICES = {
         'jobs': [{
             'job_name': 'dea_next',
             'mapping': {},
+            'install': [
+                utils.install_linux_image_extra,
+                utils.modprobe(['quota_v1', 'quota_v2'])
+            ],
             'required_data': [
                 contexts.NatsRelation,
                 contexts.LTCRelation,
