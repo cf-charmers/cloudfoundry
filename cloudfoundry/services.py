@@ -11,14 +11,14 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'cloud_controller_clock',
-            'mapping': {'db': mapper.ccdb},
+            'mapping': {'cc-db': mapper.ccdb},
             'provided_data': [],
             'required_data': [contexts.NatsRelation,
                               contexts.LTCRelation,
                               contexts.LoggregatorRelation,
-                              contexts.MysqlRelation,
                               contexts.CloudControllerRelation,
                               contexts.UAARelation,
+                              contexts.CloudControllerDBRelation,
                               # diego is coming
                               ]
             }],
@@ -32,7 +32,7 @@ SERVICES = {
             'job_name': 'cloud_controller_ng',
             'mapping': {'db': mapper.ccdb},
             'provided_data': [contexts.CloudControllerRelation,
-                              contexts.CloudControllerReadyRelation],
+                              contexts.CloudControllerDBRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.MysqlRelation,
                               contexts.LTCRelation,
@@ -44,7 +44,7 @@ SERVICES = {
                               # get processed by a name mapper
                               ],
             'data_ready': [
-                contexts.CloudControllerReadyRelation.send_ready,
+                contexts.CloudControllerDBRelation.send_data,
             ],
         }]
     },
@@ -54,14 +54,13 @@ SERVICES = {
         'description': '',
         'jobs': [
             {'job_name': 'cloud_controller_worker',
-             'mapping': {'db': mapper.ccdb},
+             'mapping': {'cc-db': mapper.ccdb},
              'provided_data': [],
              'required_data': [contexts.NatsRelation,
-                               contexts.MysqlRelation,
                                contexts.LTCRelation,
                                contexts.UAARelation,
                                contexts.CloudControllerRelation,
-                               contexts.CloudControllerReadyRelation,
+                               contexts.CloudControllerDBRelation,
                                # diego is coming
                                # contexts.BundleConfig,
                                ],
