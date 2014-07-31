@@ -246,15 +246,17 @@ class CloudControllerRelation(RelationContext):
         }
 
 
-class CloudControllerReadyRelation(RelationContext):
-    name = 'cc-ready'
-    interface = 'controller-ready'
-    required_keys = ['ready']
+class CloudControllerDBRelation(RelationContext):
+    name = 'cc-db'
+    interface = 'controller-db'
+    required_keys = MysqlRelation.required_keys
 
     @classmethod
-    def send_ready(cls, job_name):
+    def send_data(cls, job_name):
+        # using send_data instead of provide_data to delay it until data_ready
+        data = MysqlRelation()['db'][0]
         for rid in hookenv.relation_ids(cls.name):
-            hookenv.relation_set(rid, {'ready': True})
+            hookenv.relation_set(rid, data)
 
 
 class RouterRelation(RelationContext):

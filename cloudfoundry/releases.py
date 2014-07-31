@@ -29,8 +29,6 @@ COMMON_SERVICES = [
 # unmanaged (charm store) charms.
 COMMON_RELATIONS = [
     ('mysql:db', 'cc:db'),
-    ('mysql:db', 'cc-clock:db'),
-    ('mysql:db', 'cc-worker:db'),
     ('mysql:db', 'uaa:db'),
     ('etcd:client', 'hm:etcd'),
     ('etcd:client', 'loggregator:etcd'),

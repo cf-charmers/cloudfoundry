@@ -287,4 +287,4 @@ class TestTasks(unittest.TestCase):
         self.assertIsInstance(services[0]['data_ready'][2],
                               tasks.JobTemplates)
         self.assertEqual(services[0]['data_ready'][-1],
-                         contexts.CloudControllerReadyRelation.send_ready)
+                         contexts.CloudControllerDBRelation.send_data)

@@ -61,7 +61,7 @@ def ccdb(data):
 
     #@@ This may need to be adjusted to scale / HA the databases.
     """
-    db = data['db'][0]
+    db = data.get('db', data.get('cc-db'))[0]
 
     job_db = dict(tag='cc',
                   name=db['database'])
