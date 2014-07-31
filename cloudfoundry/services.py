@@ -172,7 +172,8 @@ SERVICES = {
             'provided_data': [contexts.LoggregatorRelation],
             'required_data': [contexts.NatsRelation,
                               contexts.EtcdRelation,
-                              contexts.LTCRelation]
+                              contexts.LTCRelation,
+                              contexts.LoggregatorRelation.remote_view]
             }]
         },
 
