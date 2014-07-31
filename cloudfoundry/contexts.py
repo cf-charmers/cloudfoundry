@@ -161,6 +161,8 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
             'traffic_controller.zone': 'z1',  # XXX: Really unsure what this should be set to
+            'logger_endpoint.use_ssl': False,  # TODO: support SSL option
+            'logger_endpoint.port': 80,  # default is 443
         }
 
 
@@ -223,11 +225,12 @@ class CloudControllerRelation(RelationContext):
 
     def erb_mapping(self):
         creds = self.get_credentials()
-        data = self[self.name]
+        data = self[self.name][0]
         return {
-            'cc.srv_api_uri': data[0]['hostname'],  # TODO: Probably needs to be an actual URL
-            'cc.bulk_api_user': data[0]['user'],
-            'cc.bulk_api_password': data[0]['password'],
+            # TODO: Can the API URI support SSL?  Maybe use the public endpoint?
+            'cc.srv_api_uri': 'http://{}:{}'.format(data['hostname'], data['port']),
+            'cc.bulk_api_user': data['user'],
+            'cc.bulk_api_password': data['password'],
             'cc.staging_upload_user': 'ignored',  # FIXME: We need a staging cache set up
             'cc.staging_upload_password': 'ignored',
             'cc.db_encryption_key': creds['db_encryption_key'],
