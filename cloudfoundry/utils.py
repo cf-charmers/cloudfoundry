@@ -169,3 +169,11 @@ def monit_available(url='http://localhost:2812'):
         return r.ok
     except requests.exceptions.ConnectionError:
         return False
+
+
+def modprobe(module):
+    ''' Load a kernel module and configure for auto-load on reboot '''
+    subprocess.check_call(['modprobe', module])
+    with open('/etc/modules', 'r+') as modules:
+        if module not in modules.read():
+            modules.write(module)

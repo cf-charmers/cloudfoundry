@@ -1,7 +1,6 @@
 import os
 import subprocess
 import tarfile
-#import hashlib
 import yaml
 import stat
 import textwrap
@@ -31,6 +30,25 @@ def install_base_dependencies():
     host.adduser('vcap')
     enable_monit_http_interface()
     subprocess.check_call(['gem', 'install', '--no-ri', '--no-rdoc', gem_file])
+
+
+def install(service_def):
+    for job in service_def['jobs']:
+        tasks = job.get('install', [])
+        for task in tasks:
+            if not isinstance(task, list):
+                task = [task]
+            for t in task:
+                print t.func, t.args
+                t()
+
+
+def apt_install(package_list):
+    return [partial(fetch.apt_install, p) for p in package_list]
+
+def modprobe(mods):
+    return [partial(utils.modprobe, mod) for mod in mods]
+
 
 
 def enable_monit_http_interface():

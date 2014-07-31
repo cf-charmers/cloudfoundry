@@ -6,6 +6,8 @@ from cloudfoundry import contexts
 from cloudfoundry.path import path
 from cloudfoundry import tasks
 
+from release1 import SERVICES
+
 
 class TestTasks(unittest.TestCase):
     def setUp(self):
@@ -46,6 +48,22 @@ class TestTasks(unittest.TestCase):
                        '--no-ri', '--no-rdoc',
                        'charm_dir/files/' +
                        'bosh-template-1.2611.0.pre.gem'])])
+
+
+    @mock.patch('charmhelpers.core.hookenv.log')
+    @mock.patch('cloudfoundry.utils.modprobe')
+    @mock.patch('charmhelpers.fetch.filter_installed_packages')
+    @mock.patch('charmhelpers.fetch.apt_install')
+    def test_install(self, apt_install,
+                     filter_installed_packages,
+                     modprobe, log):
+        filter_installed_packages.side_effect = lambda a: a
+        tasks.install(SERVICES['cloud_controller_v1'])
+        apt_install.assert_called_once_with(packages=[
+            'linux-image-extras'])
+        modprobe.assert_has_calls([mock.call('modprobe', 'quota_v1'),
+                                   mock.call('modprobe', 'quota_v2')])
+
 
     def test_monit_http_enable_idem(self):
         with mock.patch('cloudfoundry.tasks.path', spec=path) as confd:

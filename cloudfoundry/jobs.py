@@ -15,8 +15,10 @@ def job_manager(service_name):
         manage_services(service_name)
 
 
-def manage_install(service_name):
+def manage_install(service_name, service_data=SERVICES):
     tasks.install_base_dependencies()
+    service_def = service_data[service_name]
+    tasks.install(service_def)
 
 
 def manage_services(service_name, service_data=SERVICES):

@@ -26,10 +26,14 @@ class TestJobManager(unittest.TestCase):
             mock.call('service3'),
         ])
 
+
+    @mock.patch('charmhelpers.core.hookenv.relation_ids')
+    @mock.patch.object(jobs.tasks, 'install')
     @mock.patch.object(jobs.tasks, 'install_base_dependencies')
-    def test_manage_install(self, install_base):
-        jobs.manage_install('service')
+    def test_manage_install(self, install_base, install, relation_ids):
+        jobs.manage_install('cloud_controller_v1', SERVICES)
         install_base.assert_called_once_with()
+        install.assert_called_once(SERVICES['cloud_controller_v1'])
 
     @mock.patch('charmhelpers.core.hookenv.log', mock.Mock())
     @mock.patch('charmhelpers.core.hookenv.relation_ids')
