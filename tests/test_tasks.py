@@ -266,5 +266,5 @@ class TestTasks(unittest.TestCase):
     @mock.patch('charmhelpers.core.host.chdir')
     def test_patch_dea(self, chdir, call, mopen):
         mopen.return_value.read.return_value = ''
-        tasks.patch_dea()
+        tasks.patch_dea('service')
         call.assert_called_once_with(['patch', '-s'], stdin=mock.ANY)
