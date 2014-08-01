@@ -2,11 +2,8 @@ import unittest
 import mock
 
 from charmhelpers.core import services
-from cloudfoundry import contexts
 from cloudfoundry.path import path
 from cloudfoundry import tasks
-
-from release1 import SERVICES
 
 
 class TestTasks(unittest.TestCase):
@@ -264,27 +261,10 @@ class TestTasks(unittest.TestCase):
             mock.call('/var/vcap/jobs/version/job_name/monit/job_name.cfg', '/etc/monit/conf.d/job_name'),
         ])
 
-    @mock.patch('cloudfoundry.contexts.CloudControllerRelation.get_credentials')
-    @mock.patch('charmhelpers.core.hookenv.log')
-    @mock.patch('charmhelpers.core.hookenv.unit_get')
-    @mock.patch('charmhelpers.core.hookenv.config')
-    @mock.patch('charmhelpers.core.hookenv.relation_ids')
-    def test_build_service_block(self, relation_ids, mconfig, unit_get, log, get_creds):
-        relation_ids.return_value = []
-        unit_get.return_value = 'unit/0'
-        services = tasks.build_service_block('router-v1')
-        self.assertIsInstance(services[0]['provided_data'][0],
-                              contexts.RouterRelation)
-        self.assertIsInstance(services[0]['required_data'][0],
-                              contexts.OrchestratorRelation)
-        self.assertIsInstance(services[0]['required_data'][1],
-                              contexts.NatsRelation)
-        # Show that we converted to rubytemplatecallbacks
-        self.assertIsInstance(services[0]['data_ready'][2],
-                              tasks.JobTemplates)
-        services = tasks.build_service_block('cloud-controller-v1')
-        # Show that we include both default and additional handlers
-        self.assertIsInstance(services[0]['data_ready'][2],
-                              tasks.JobTemplates)
-        self.assertEqual(services[0]['data_ready'][-1],
-                         contexts.CloudControllerDBRelation.send_data)
+    @mock.patch('cloudfoundry.tasks.open', create=True)
+    @mock.patch('subprocess.check_call')
+    @mock.patch('charmhelpers.core.host.chdir')
+    def test_patch_dea(self, chdir, call, mopen):
+        mopen.return_value.read.return_value = ''
+        tasks.patch_dea()
+        call.assert_called_once_with(['patch', '-s'], stdin=mock.ANY)

@@ -1,5 +1,6 @@
 import contexts
 import mapper
+import tasks
 import utils
 
 __all__ = ['SERVICES']
@@ -77,6 +78,11 @@ SERVICES = {
                 contexts.NatsRelation,
                 contexts.LTCRelation,
             ],
+            'data_ready': [
+                # Apply our workaround till we
+                # have a real fix
+                tasks.patch_dea
+            ]
         }]
 
     },

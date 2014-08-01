@@ -5,6 +5,7 @@ import yaml
 import stat
 import textwrap
 import logging
+from StringIO import StringIO
 from functools import partial
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
@@ -12,19 +13,17 @@ from charmhelpers.core import services
 from charmhelpers import fetch
 from cloudfoundry import contexts
 from cloudfoundry import templating
-from cloudfoundry.services import SERVICES
 from cloudfoundry import utils
 from .path import path
 
 logger = logging.getLogger(__name__)
 
 TEMPLATES_BASE_DIR = path('/var/vcap/jobs')
-PACKAGES_BASE_DIR = path('/var/vcap/packages')
-RELEASES_DIR = path('/var/vcap/releases')
 
 
 def install_base_dependencies():
-    fetch.apt_install(packages=fetch.filter_installed_packages(['ruby', 'monit', 'runit', 'zip', 'unzip']))
+    fetch.apt_install(packages=fetch.filter_installed_packages([
+        'ruby', 'monit', 'runit', 'zip', 'unzip']))
     gem_file = os.path.join(hookenv.charm_dir(),
                             'files/bosh-template-1.2611.0.pre.gem')
     host.adduser('vcap')
@@ -152,6 +151,29 @@ def release_version(contexts=contexts):
     return unit['cf_version']
 
 
+def patch_dea():
+    DEA_PATCH = """
+--- container.rb   2014-08-01 15:49:04.472289999 +0000
++++ container.rb 2014-07-31 23:31:30.776289999 +0000
+@@ -118,7 +118,7 @@
+       new_container_with_bind_mounts(params[:bind_mounts])
+       limit_cpu(params[:limit_cpu])
+       limit_disk(byte: params[:byte], inode: params[:inode])
+-      limit_memory(params[:limit_memory])
++      #limit_memory(params[:limit_memory])
+       setup_network if params[:setup_network]
+     end
+   end
+    """
+    patch = StringIO(DEA_PATCH)
+    with host.chdir('/var/vcap/releases/173/packages/dea_next/lib/container'):
+        current = open('container.rb').read()
+        if "#limit_memory(params)" in current:
+            # Already applied
+            return
+        subprocess.check_call(['patch', '-s'], stdin=patch)
+
+
 class JobTemplates(services.ManagerCallback):
     template_base_dir = TEMPLATES_BASE_DIR
 
@@ -252,26 +274,3 @@ class Monit(object):
 
 monit = Monit()
 
-
-def build_service_block(charm_name, service_defs=SERVICES):
-    service_def = service_defs[charm_name]
-    result = []
-    for job in service_def.get('jobs', []):
-        job_def = {
-            'service': job['job_name'],
-            'ports': job.get('ports', []),
-            'required_data': [contexts.OrchestratorRelation()] +
-                             [r() for r in job.get('required_data', [])],
-            'provided_data': [p() for p in job.get('provided_data', [])],
-            'data_ready': [
-                fetch_job_artifacts,
-                partial(install_job_packages, PACKAGES_BASE_DIR, RELEASES_DIR),
-                job_templates(job.get('mapping', {})),
-                set_script_permissions,
-                monit.svc_force_reload,
-            ] + job.get('data_ready', []),
-            'start': [monit.start, services.open_ports],
-            'stop': [monit.stop, services.close_ports]
-        }
-        result.append(job_def)
-    return result
