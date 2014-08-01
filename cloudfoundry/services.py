@@ -77,6 +77,7 @@ SERVICES = {
             'mapping': {},
             'install': [
                 utils.install_linux_image_extra,
+                utils.apt_install(['quota']),
                 utils.modprobe(['quota_v1', 'quota_v2'])
             ],
             'required_data': [
