@@ -3,9 +3,9 @@ import subprocess
 import tarfile
 import yaml
 import stat
+import tempfile
 import textwrap
 import logging
-from StringIO import StringIO
 from functools import partial
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
@@ -151,7 +151,7 @@ def release_version(contexts=contexts):
     return unit['cf_version']
 
 
-def patch_dea():
+def patch_dea(job_name):
     DEA_PATCH = """
 --- container.rb   2014-08-01 15:49:04.472289999 +0000
 +++ container.rb 2014-07-31 23:31:30.776289999 +0000
@@ -165,13 +165,18 @@ def patch_dea():
      end
    end
     """
-    patch = StringIO(DEA_PATCH)
     with host.chdir('/var/vcap/releases/173/packages/dea_next/lib/container'):
         current = open('container.rb').read()
         if "#limit_memory(params)" in current:
             # Already applied
             return
+        fd, fn = tempfile.mkstemp()
+        os.close(fd)
+        with open(fn, 'w') as fp:
+            print >>fp, DEA_PATCH
+        patch = open(fn)
         subprocess.check_call(['patch', '-s'], stdin=patch)
+        os.unlink(fn)
 
 
 class JobTemplates(services.ManagerCallback):
