@@ -18,8 +18,21 @@ manage them at runtime.
 Deployment
 ----------
 
-    juju deploy cloudfoundry
-    juju set cloudfoundry admin_secret=`cat ${JUJU_HOME:-~/.juju}/environments/$(juju switch).jenv|grep admin-secret|awk '{print $2;}'`
+If you haven't:
+
+juju bootstrap
+
+Then the following script will create a default settings file:
+
+export ADMIN_PASS=`cat ${JUJU_HOME:-~/.juju}/environments/$(juju switch).jenv|grep admin-secret|awk '{print $2;}'`
+cat << EOF > cf.yaml 
+cloudfoundry:
+    admin_secret: $ADMIN_PASS
+EOF
+
+And this line will deploy a working cloudfoundry of the latest supported version:
+
+    juju deploy --config cf.yaml local:trusty/cloudfoundry
 
 This will boot up the bundle orchestrator which will watch and manage a CF
 deployment using juju.
