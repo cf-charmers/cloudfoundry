@@ -1,6 +1,6 @@
-==================
-CF Charm Generator
-==================
+====================
+CloudFoundry Bundle
+====================
 
 .. image:: https://badge.fury.io/py/charmgen.png
     :target: http://badge.fury.io/py/charmgen
@@ -15,31 +15,28 @@ CF Charm Generator
 A Juju charm to generate CF charms from metadata and
 manage them at runtime.
 
-* Free software: BSD license
-* Documentation: http://charmgen.readthedocs.org.
-
-
 Deployment
 ----------
 
     juju deploy cloudfoundry
     juju set cloudfoundry admin_secret=`cat ${JUJU_HOME:-~/.juju}/environments/$(juju switch).jenv|grep admin-secret|awk '{print $2;}'`
 
-This will boot up the bundle orchestrator which will watch and manage a CF deployment using juju.
+This will boot up the bundle orchestrator which will watch and manage a CF
+deployment using juju.
 
-The following is needed _today_ but will not be in the future. Once the deployment is running
-you will see juju deploy all of the needed services. When this is going you will be able to 
+Once the deployment is running you will see juju deploy all of the needed
+services. When this is going you will be able to 
 
-    juju expose haproxy
     ENDPOINT=`juju status haproxy/0 |grep public-address|cut -f 2 -d : `
     IP=`dig +short $ENDPOINT`
     # get the _IP_ of the public address
     cf api http://api.${IP}.xip.io 
     cf login -u admin -p admin
-    # login with default credentials: admin/admin
     cf create-space my-space
     cf target -o my-org -s my-space
-    
+
+You can now push apps.
+
 
 
 Development
@@ -70,8 +67,6 @@ registered with NATS, which can be very helpful for debugging:
 
     cd /var/vcap/packages/cloud_controller_ng/cloud_controller_ng/vendor/bundle/ruby/1.9.1
     /var/vcap/packages/ruby/bin/bundle exec bin/nats-sub -s `grep -o 'nats://.*' /var/vcap/jobs/cloud_controller_ng/config/cloud_controller_ng.yml` ">"
-
-
 
 
 * TODO
