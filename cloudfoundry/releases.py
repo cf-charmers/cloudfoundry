@@ -42,7 +42,7 @@ RELEASES = [
         "releases": (173, 173),
         "topology": {
             "services": COMMON_SERVICES,
-            "expose": ['router_v1'],
+            "expose": ['haproxy'],
             "relations": COMMON_RELATIONS,
         },
         "upgrades": COMMON_UPGRADES

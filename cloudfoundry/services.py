@@ -19,7 +19,6 @@ SERVICES = {
                               contexts.CloudControllerRelation,
                               contexts.UAARelation,
                               contexts.CloudControllerDBRelation,
-                              # diego is coming
                               ]
             }],
 
@@ -38,10 +37,6 @@ SERVICES = {
                               contexts.LTCRelation,
                               contexts.UAARelation,
                               contexts.CloudControllerRelation.remote_view,
-                              # diego is coming
-                              # contexts.BundleConfig,
-                              # All job context keys
-                              # get processed by a name mapper
                               ],
             'data_ready': [
                 contexts.CloudControllerDBRelation.send_data,
@@ -61,8 +56,6 @@ SERVICES = {
                                contexts.UAARelation,
                                contexts.CloudControllerRelation,
                                contexts.CloudControllerDBRelation,
-                               # diego is coming
-                               # contexts.BundleConfig,
                                ],
 
              }
