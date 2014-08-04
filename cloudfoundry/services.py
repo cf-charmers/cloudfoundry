@@ -142,8 +142,7 @@ SERVICES = {
         'summary': 'CF Oauth2 for identity management service',
         'jobs': [
             {'job_name': 'uaa',
-             'ports': [8080],
-             'mapping':{'db': mapper.uaadb},
+             'mapping': {'db': mapper.uaadb},
              'provided_data': [contexts.UAARelation],
              'required_data': [contexts.MysqlRelation,
                                contexts.NatsRelation,
@@ -158,11 +157,11 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'login',
-            'ports': [8080],
             'mapping': {},
             'provided_data': [],
             'required_data': [contexts.NatsRelation,
-                              contexts.UAARelation]
+                              contexts.UAARelation,
+                              contexts.LoginRelation.remote_view]
             }]
         },
 
@@ -187,6 +186,7 @@ SERVICES = {
         'description': '',
         'jobs': [{
             'job_name': 'loggregator_trafficcontroller',
+            'ports': [contexts.LTCRelation.outgoing_port],
             'mapping': {},
             'provided_data': [contexts.LTCRelation],
             'required_data': [contexts.LoggregatorRelation,

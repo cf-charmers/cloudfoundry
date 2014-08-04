@@ -116,7 +116,7 @@ class TestLTCRelation(unittest.TestCase):
         mget_shared_secret.return_value = 'secret'
         self.assertEqual(contexts.LTCRelation().provide_data(), {
             'host': 'address',
-            'port': contexts.LTCRelation.port,
+            'port': contexts.LTCRelation.incoming_port,
             'outgoing_port': contexts.LTCRelation.outgoing_port,
             'shared_secret': 'secret',
         })

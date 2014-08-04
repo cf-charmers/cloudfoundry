@@ -90,7 +90,8 @@ class ClockRelation(RelationContext):
 class UAARelation(RelationContext):
     name = 'uaa'
     interface = 'http'
-    required_keys = ['login_client_secret', 'admin_client_secret', 'cc_client_secret', 'cc_token_secret']
+    required_keys = ['login_client_secret', 'admin_client_secret', 'cc_client_secret', 'cc_token_secret', 'port']
+    port = 8081
 
     def get_shared_secrets(self):
         secret_context = StoredContext(
@@ -104,7 +105,9 @@ class UAARelation(RelationContext):
         return secret_context
 
     def provide_data(self):
-        return self.get_shared_secrets()
+        return dict({
+            'port': self.port,
+        }, **self.get_shared_secrets())
 
     def erb_mapping(self):
         data = self[self.name][0]
@@ -113,6 +116,7 @@ class UAARelation(RelationContext):
             'uaa.admin.client_secret': data['admin_client_secret'],
             'uaa.cc.client_secret': data['cc_client_secret'],
             'uaa.cc.token_secret': data['cc_token_secret'],
+            'uaa.port': data['port'],
             'uaa.require_https': False,  # FIXME: Add SSL as an option; requires cert
             'uaa.no_ssl': True,
             'uaa.scim.users': [
@@ -125,6 +129,18 @@ class LoginRelation(RelationContext):
     name = 'login'
     interface = 'http'
     required_keys = []
+    port = 8080
+
+    def provide_data(self):
+        return {
+            'port': self.port,
+        }
+
+    def erb_mapping(self):
+        data = self[self.name][0]
+        return {
+            'login.port': data['port'],
+        }
 
 
 class DEARelation(RelationContext):
@@ -137,8 +153,8 @@ class LTCRelation(RelationContext):
     name = 'ltc'
     interface = 'loggregator_trafficcontroller'
     required_keys = ['shared_secret', 'host', 'port', 'outgoing_port']
-    outgoing_port = 8083
-    port = 8882
+    incoming_port = 3456
+    outgoing_port = 8082
 
     def get_shared_secret(self):
         secret_context = StoredContext(
@@ -149,7 +165,7 @@ class LTCRelation(RelationContext):
     def provide_data(self):
         return {
             'host': hookenv.unit_get('private-address').encode('utf-8'),
-            'port': self.port,
+            'port': self.incoming_port,
             'outgoing_port': self.outgoing_port,
             'shared_secret': self.get_shared_secret(),
         }
@@ -160,7 +176,10 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.host': data[0]['host'],
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
-            'traffic_controller.zone': 'z1',  # XXX: Really unsure what this should be set to
+            'traffic_controller.zone': 'z1',
+            'traffic_controller.host': data[0]['host'],
+            'traffic_controller.incoming_port': data[0]['port'],
+            'traffic_controller.outgoing_port': data[0]['outgoing_port'],
             'logger_endpoint.use_ssl': False,  # TODO: support SSL option
             'logger_endpoint.port': 80,  # default is 443
         }
@@ -171,8 +190,7 @@ class LoggregatorRelation(RelationContext):
     interface = 'loggregator'
     required_keys = ['address', 'incoming_port', 'outgoing_port']
     incoming_port = 3457
-    outgoing_port = 8082
-    varz_port = 8883
+    outgoing_port = 8083
 
     def provide_data(self):
         return {
@@ -264,6 +282,7 @@ class RouterRelation(RelationContext):
     interface = 'http'
     required_keys = ['address']
     port = 80
+    varz_port = 8084  # not currently used
 
     def provide_data(self):
         return {
