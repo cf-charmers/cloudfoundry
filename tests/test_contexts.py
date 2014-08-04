@@ -173,10 +173,13 @@ class TestStoredContext(unittest.TestCase):
         contexts.StoredContext(file_name, {'key': 'value'})
         self.assertTrue(os.path.isfile(file_name))
 
-    def test_restoring(self):
+    @mock.patch('charmhelpers.core.hookenv.charm_dir')
+    def test_restoring(self, charm_dir):
         _, file_name = tempfile.mkstemp()
         os.unlink(file_name)
-        contexts.StoredContext(file_name, {'key': 'initial_value'})
+        charm_dir.return_value = os.path.dirname(file_name)
+        base_name = os.path.basename(file_name)
+        contexts.StoredContext(base_name, {'key': 'initial_value'})
         self.assertTrue(os.path.isfile(file_name))
         context = contexts.StoredContext(file_name, {'key': 'random_value'})
         self.assertIn('key', context)

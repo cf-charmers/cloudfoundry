@@ -25,7 +25,10 @@ class StoredContext(dict):
             self.update(config_data)
 
     def store_context(self, file_name, config_data):
+        if not os.path.isabs(file_name):
+            file_name = os.path.join(hookenv.charm_dir(), file_name)
         with open(file_name, 'w') as file_stream:
+            os.fchmod(file_stream.fileno(), 0600)
             yaml.dump(config_data, file_stream)
 
     def read_context(self, file_name):
@@ -43,11 +46,10 @@ class NatsRelation(RelationContext):
     port = 4222
 
     def get_credentials(self):
-        return StoredContext(
-            'nats_credentials.yml', {
-                'user': host.pwgen(7),
-                'password': host.pwgen(7),
-            })
+        return StoredContext('nats_credentials.yml', {
+            'user': host.pwgen(7),
+            'password': host.pwgen(7),
+        })
 
     def provide_data(self):
         return dict(
@@ -94,14 +96,12 @@ class UAARelation(RelationContext):
     port = 8081
 
     def get_shared_secrets(self):
-        secret_context = StoredContext(
-            os.path.join(hookenv.charm_dir(), '.uaa-secrets.yml'),
-            {
-                'login_client_secret': host.pwgen(20),
-                'admin_client_secret': host.pwgen(20),
-                'cc_client_secret': host.pwgen(20),
-                'cc_token_secret': host.pwgen(20),
-            })
+        secret_context = StoredContext('uaa-secrets.yml', {
+            'login_client_secret': host.pwgen(20),
+            'admin_client_secret': host.pwgen(20),
+            'cc_client_secret': host.pwgen(20),
+            'cc_token_secret': host.pwgen(20),
+        })
         return secret_context
 
     def provide_data(self):
@@ -157,9 +157,9 @@ class LTCRelation(RelationContext):
     outgoing_port = 8082
 
     def get_shared_secret(self):
-        secret_context = StoredContext(
-            os.path.join(hookenv.charm_dir(), '.ltc-secret.yml'),
-            {'shared_secret': host.pwgen(20)})
+        secret_context = StoredContext('ltc-secrets.yml', {
+            'shared_secret': host.pwgen(20),
+        })
         return secret_context['shared_secret']
 
     def provide_data(self):
