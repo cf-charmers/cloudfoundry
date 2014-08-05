@@ -261,6 +261,12 @@ class CloudControllerRelation(RelationContext):
                     'trial_db_allowed': True,
                 },
             },
+            'cc.install_buildpacks': [
+                {'name': 'java_buildpack', 'package': 'buildpack_java'},
+                {'name': 'ruby_buildpack', 'package': 'buildpack_ruby'},
+                {'name': 'nodejs_buildpack', 'package': 'buildpack_nodejs'},
+                {'name': 'go_buildpack', 'package': 'buildpack_go'},
+            ],
         }
 
 
