@@ -46,7 +46,7 @@ RELEASES = [
             "expose": ['haproxy'],
             "constraints": {
                 "__default__": "arch=amd64",
-                "cc": "arch=amd64 root-disk=12G",
+                "cc": "arch=amd64 root-disk=12G mem=12G",
                 "cc-worker": "arch=amd64 root-disk=10G",
                 "cc-clock": "arch=amd64 root-disk=10G",
                 "dea": "arch=amd64 mem=2G",
