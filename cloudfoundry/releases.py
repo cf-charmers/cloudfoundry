@@ -42,8 +42,15 @@ RELEASES = [
         "releases": (173, 173),
         "topology": {
             "services": COMMON_SERVICES,
-            "expose": ['haproxy'],
             "relations": COMMON_RELATIONS,
+            "expose": ['haproxy'],
+            "constraints": {
+                "__default__": "arch=amd64",
+                "cc": "arch=amd64 root-disk=12G",
+                "cc-worker": "arch=amd64 root-disk=10G",
+                "cc-clock": "arch=amd64 root-disk=10G",
+                "dea": "arch=amd64 mem=2G",
+            },
         },
         "upgrades": COMMON_UPGRADES
     }

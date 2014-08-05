@@ -159,10 +159,12 @@ class TestGenerator(unittest.TestCase):
         # A local generated charm
         self.assertEqual(cf['services']['cc'],
                          {'charm': 'cloud_controller_v1',
-                          'branch': 'local:trusty/cloud_controller_v1'})
+                          'branch': 'local:trusty/cloud_controller_v1',
+                          'constraints': 'root-disk=10G'})
         # A store charm
         self.assertEqual(cf['services']['mysql'],
-                         {'charm': 'cs:trusty/mysql'})
+                         {'charm': 'cs:trusty/mysql',
+                          'constraints': 'arch=amd64'})
 
         # Relations
         rels = set(map(tuple, tuple(cf['relations'])))

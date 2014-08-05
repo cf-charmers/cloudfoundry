@@ -1,5 +1,4 @@
 from cloudfoundry import contexts
-from cloudfoundry import tasks
 from cloudfoundry import utils
 
 
@@ -62,7 +61,11 @@ RELEASES = [
             "expose": ['router_v1'],
             "relations": COMMON_RELATIONS + [
                 (('cc', 'clock'), ('cc_clock_v1', 'clock'))
-            ]
+            ],
+            "constraints": {
+                "__default__": "arch=amd64",
+                "cc": "root-disk=10G",
+            },
         },
         "upgrades": COMMON_UPGRADES + [deploy_cc_clock]
     },

@@ -193,11 +193,15 @@ class CharmGenerator(object):
 
         rel_data = {}
         exposed = set(self.release['topology'].get('expose', []))
+        constraints = self.release['topology'].get('constraints', {})
         for service_id in self.release['topology']['services']:
             charm_id, _, service_name = self._parse_charm_ref(service_id)
             services[service_name] = self._build_charm_ref(charm_id)
             if service_name in exposed:
                 services[service_name]['expose'] = True
+            constraint = constraints.get(service_name, constraints.get("__default__"))
+            if constraint:
+                services[service_name]['constraints'] = constraint
 
         for rel in self._get_relations():
             lhs = self._normalize_relation(rel[0])
