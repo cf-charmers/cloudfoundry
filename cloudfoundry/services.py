@@ -77,6 +77,7 @@ SERVICES = {
             'required_data': [
                 contexts.NatsRelation,
                 contexts.LTCRelation,
+                contexts.DEARelation.remote_view,
             ],
             'data_ready': [
                 # Apply our workaround till we
