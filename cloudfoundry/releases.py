@@ -49,7 +49,7 @@ RELEASES = [
                 "cc": "arch=amd64 root-disk=12G mem=12G",
                 "cc-worker": "arch=amd64 root-disk=10G",
                 "cc-clock": "arch=amd64 root-disk=10G",
-                "dea": "arch=amd64 mem=2G",
+                "dea": "arch=amd64 mem=5G",
             },
         },
         "upgrades": COMMON_UPGRADES
