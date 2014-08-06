@@ -148,6 +148,11 @@ class DEARelation(RelationContext):
     interface = 'dea'
     required_keys = []
 
+    def erb_mapping(self):
+        return {
+            'dea_next.directory_server_protocol': 'http',
+        }
+
 
 class LTCRelation(RelationContext):
     name = 'ltc'
