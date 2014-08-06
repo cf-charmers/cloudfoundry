@@ -12,7 +12,6 @@ COMMON_SERVICES = [
     ('uaa-v1', 'uaa'),
     ('dea-v1', 'dea'),
     ('login-v1', 'login'),
-    ('dea-logging-agent-v1', 'dea-logging'),
     ('nats-stream-forwarder-v1', 'nats-sf'),
     ('loggregator-v1', 'loggregator'),
     ('loggregator-trafficcontroller-v1', 'loggregator-trafficcontrol'),

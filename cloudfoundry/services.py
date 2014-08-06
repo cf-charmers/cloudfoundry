@@ -66,37 +66,34 @@ SERVICES = {
     'dea-v1': {
         'summary': 'DEA runs CF apps in containers',
         'description': '',
-        'jobs': [{
-            'job_name': 'dea_next',
-            'mapping': {},
-            'install': [
-                utils.install_linux_image_extra,
-                utils.apt_install(['quota']),
-                utils.modprobe(['quota_v1', 'quota_v2'])
-            ],
-            'required_data': [
-                contexts.NatsRelation,
-                contexts.LTCRelation,
-                contexts.DEARelation.remote_view,
-            ],
-            'data_ready': [
-                # Apply our workaround till we
-                # have a real fix
-                tasks.patch_dea
-            ]
-        }]
+        'jobs': [
+            {
+                'job_name': 'dea_next',
+                'mapping': {},
+                'install': [
+                    utils.install_linux_image_extra,
+                    utils.apt_install(['quota']),
+                    utils.modprobe(['quota_v1', 'quota_v2'])
+                ],
+                'required_data': [
+                    contexts.NatsRelation,
+                    contexts.LTCRelation,
+                    contexts.DEARelation.remote_view,
+                ],
+                'data_ready': [
+                    # Apply our workaround till we
+                    # have a real fix
+                    tasks.patch_dea
+                ]
+            },
+            {
+                'job_name': 'dea_logging_agent',
+                'mapping': {},
+                'required_data': [contexts.NatsRelation,
+                                  contexts.LTCRelation]
+            },
+        ]
 
-    },
-
-    'dea-logging-agent-v1': {
-        'summary': 'Logging Agent for DEA',
-        'description': '',
-        'jobs': [{
-            'job_name': 'dea_logging_agent',
-            'mapping': {},
-            'required_data': [contexts.NatsRelation,
-                              contexts.LTCRelation]
-        }]
     },
 
     'nats-v1': {
