@@ -266,13 +266,40 @@ class CloudControllerRelation(RelationContext):
                     'trial_db_allowed': True,
                 },
             },
-            'cc.install_buildpacks': [  # FIXME: This should be dynamic, based on the package index
-                {'name': 'java_buildpack', 'package': 'buildpack_java'},
+            'cc.install_buildpacks': [  # FIXME: This should be dynamic or versioned
+                {'name': 'java_buildpack', 'package': 'buildpack_java_offline'},
                 {'name': 'ruby_buildpack', 'package': 'buildpack_ruby'},
                 {'name': 'nodejs_buildpack', 'package': 'buildpack_nodejs'},
                 {'name': 'go_buildpack', 'package': 'buildpack_go'},
                 {'name': 'python_buildpack', 'package': 'buildpack_python'},
+                {'name': 'php_buildpack', 'package': 'buildpack_php'},
             ],
+            'cc.security_group_definitions': [
+                {'name': 'public_networks',
+                 'rules': [
+                     {'protocol': 'all',
+                      'destination': '0.0.0.0-9.255.255.255'},
+                     {'protocol': 'all',
+                      'destination': '11.0.0.0-169.253.255.255'},
+                     {'protocol': 'all',
+                      'destination': '169.255.0.0-172.15.255.255'},
+                     {'protocol': 'all',
+                      'destination': '172.32.0.0-192.167.255.255'},
+                     {'protocol': 'all',
+                      'destination': '192.169.0.0-255.255.255.255'},
+                 ]},
+                {'name': 'dns',
+                 'rules': [
+                     {'protocol': 'tcp',
+                      'destination': '0.0.0.0/0',
+                      'ports': '53'},
+                     {'protocol': 'udp',
+                      'destination': '0.0.0.0/0',
+                      'ports': '53'},
+                 ]},
+            ],
+            'cc.default_running_security_groups': ['public_networks', 'dns'],
+            'cc.default_staging_security_groups': ['public_networks', 'dns'],
         }
 
 
