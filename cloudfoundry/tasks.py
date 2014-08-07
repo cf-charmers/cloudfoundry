@@ -165,7 +165,8 @@ def patch_dea(job_name):
      end
    end
     """
-    with host.chdir('/var/vcap/releases/173/packages/dea_next/lib/container'):
+    version = release_version()
+    with host.chdir('/var/vcap/releases/{}/packages/dea_next/lib/container'.format(version)):
         current = open('container.rb').read()
         if "#limit_memory(params)" in current:
             # Already applied
@@ -278,4 +279,3 @@ class Monit(object):
 
 
 monit = Monit()
-
