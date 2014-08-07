@@ -176,7 +176,7 @@ def patch_dea(job_name):
         with open(fn, 'w') as fp:
             print >>fp, DEA_PATCH
         patch = open(fn)
-        subprocess.check_call(['patch', '-s'], stdin=patch)
+        subprocess.check_call(['patch', '-s', '-F4'], stdin=patch)
         os.unlink(fn)
 
 
