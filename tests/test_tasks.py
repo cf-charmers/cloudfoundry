@@ -267,4 +267,4 @@ class TestTasks(unittest.TestCase):
     def test_patch_dea(self, chdir, call, mopen):
         mopen.return_value.read.return_value = ''
         tasks.patch_dea('service')
-        call.assert_called_once_with(['patch', '-s'], stdin=mock.ANY)
+        call.assert_called_once_with(['patch', '-s', '-F4'], stdin=mock.ANY)

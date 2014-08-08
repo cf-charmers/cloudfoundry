@@ -215,7 +215,7 @@ class TestOrchestratorRelation(unittest.TestCase):
         result = contexts.OrchestratorRelation().provide_data()
         self.assertEqual(result, {
             'artifacts_url': 'http://upi:8019',
-            'cf_version': 173,
+            'cf_version': 175,
             'domain': 'domain',
         })
 
