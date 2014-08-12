@@ -31,6 +31,7 @@ COMMON_RELATIONS = [
     ('mysql:db', 'uaa:db'),
     ('etcd:client', 'hm:etcd'),
     ('etcd:client', 'loggregator:etcd'),
+    ('etcd:client', 'loggregator-trafficcontrol:etcd'),
 ]
 
 COMMON_UPGRADES = []
