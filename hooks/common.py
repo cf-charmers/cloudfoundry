@@ -104,6 +104,7 @@ def deploy(s):
                         continue  # existing relations are ok, just skip
                     else:
                         hookenv.log('Error adding orchestrator relation: {}'.format(str(e)), hookenv.ERROR)
+        env.expose('haproxy')
     finally:
         env.close()
 
