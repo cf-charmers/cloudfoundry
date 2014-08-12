@@ -168,7 +168,7 @@ def patch_dea(job_name):
     version = release_version()
     with host.chdir('/var/vcap/releases/{}/packages/dea_next/lib/container'.format(version)):
         current = open('container.rb').read()
-        if "#limit_memory(params)" in current:
+        if "#limit_memory(params" in current:
             # Already applied
             return
         fd, fn = tempfile.mkstemp()
