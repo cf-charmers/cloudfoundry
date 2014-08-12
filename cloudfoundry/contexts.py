@@ -229,7 +229,7 @@ class EtcdRelation(RelationContext):
 class CloudControllerRelation(RelationContext):
     name = 'cc'
     interface = 'controller'
-    required_keys = ['hostname', 'port', 'user', 'password']
+    required_keys = ['hostname', 'port', 'user', 'password', 'db_encryption_key']
 
     def get_credentials(self):
         return StoredContext('api_credentials.yml', {
@@ -243,12 +243,12 @@ class CloudControllerRelation(RelationContext):
         return {
             'user': creds['user'],
             'password': creds['password'],
+            'db_encryption_key': creds['db_encryption_key'],
             'hostname': hookenv.unit_get('private-address').encode('utf-8'),
             'port': 9022,
         }
 
     def erb_mapping(self):
-        creds = self.get_credentials()
         data = self[self.name][0]
         return {
             # TODO: Can the API URI support SSL?  Maybe use the public endpoint?
@@ -257,7 +257,7 @@ class CloudControllerRelation(RelationContext):
             'cc.bulk_api_password': data['password'],
             'cc.staging_upload_user': 'ignored',  # FIXME: We need a staging cache set up
             'cc.staging_upload_password': 'ignored',
-            'cc.db_encryption_key': creds['db_encryption_key'],
+            'cc.db_encryption_key': data['db_encryption_key'],
             'cc.quota_definitions': {
                 'default': {
                     'memory_limit': 10240,

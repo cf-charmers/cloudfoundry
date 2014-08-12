@@ -155,10 +155,12 @@ class TestCloudControllerRelation(unittest.TestCase):
         mget_credentials.return_value = {
             'user': 'user',
             'password': 'password',
+            'db_encryption_key': 'key',
         }
         self.assertEqual(contexts.CloudControllerRelation().provide_data(), {
             'user': 'user',
             'password': 'password',
+            'db_encryption_key': 'key',
             'hostname': 'address',
             'port': 9022,
         })
