@@ -27,7 +27,7 @@ class CharmGenerator(object):
         self.service_registry = service_registry
 
     def select_release(self, version):
-        if isinstance(version, str):
+        if isinstance(version, basestring):
             try:
                 version = int(version)
             except ValueError:
@@ -48,7 +48,8 @@ class CharmGenerator(object):
         raise KeyError(version)
 
     def _is_relation(self, context):
-        return inspect.isclass(context) and issubclass(context, contexts.RelationContext)
+        return inspect.isclass(context)\
+          and issubclass(context, contexts.RelationContext)
 
     def build_metadata(self, service_key):
         # service usage within the topo can include the service name
