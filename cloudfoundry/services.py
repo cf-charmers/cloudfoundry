@@ -190,7 +190,8 @@ SERVICES = {
             'required_data': [contexts.LoggregatorRelation,
                               contexts.LTCRelation.remote_view,
                               contexts.NatsRelation,
-                              contexts.CloudControllerRelation]
+                              contexts.CloudControllerRelation,
+                              contexts.EtcdRelation]
             }]
         },
 
