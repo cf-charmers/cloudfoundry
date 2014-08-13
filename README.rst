@@ -25,25 +25,26 @@ juju bootstrap
 Then the following script will create a default settings file:
 
 export ADMIN_PASS=`cat ${JUJU_HOME:-~/.juju}/environments/$(juju switch).jenv|grep admin-secret|awk '{print $2;}'`
-cat << EOF > cf.yaml 
+cat << EOF > cf.yaml
 cloudfoundry:
     admin_secret: $ADMIN_PASS
 EOF
 
 And this line will deploy a working cloudfoundry of the latest supported version:
 
-    juju deploy --config cf.yaml local:trusty/cloudfoundry
+    juju deploy --config cf.yaml local:trusty/cloudfoundry --constraints='root-disk=12G'
 
 This will boot up the bundle orchestrator which will watch and manage a CF
-deployment using juju.
+deployment using juju.  (Note: the constraint is required to ensure the orchestrator
+has enough disk space for the build artifacts cache.)
 
 Once the deployment is running you will see juju deploy all of the needed
-services. When this is going you will be able to 
+services. When this is going you will be able to
 
     ENDPOINT=`juju status haproxy/0 |grep public-address|cut -f 2 -d : `
     IP=`dig +short $ENDPOINT`
     # get the _IP_ of the public address
-    cf api http://api.${IP}.xip.io 
+    cf api http://api.${IP}.xip.io
     cf login -u admin -p admin
     cf create-space my-space
     cf target -o my-org -s my-space
