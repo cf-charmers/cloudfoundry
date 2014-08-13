@@ -349,6 +349,8 @@ class OrchestratorRelation(RelationContext):
         domain = hookenv.config()['domain']
         if domain == 'xip.io':
             creds = JujuAPICredentials()
+            if not creds:
+                return domain
             env = APIEnvironment(creds['api_address'], creds['api_password'])
             env.connect()
             status = env.status()
