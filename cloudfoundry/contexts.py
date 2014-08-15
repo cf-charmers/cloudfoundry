@@ -92,7 +92,8 @@ class ClockRelation(RelationContext):
 class UAARelation(RelationContext):
     name = 'uaa'
     interface = 'http'
-    required_keys = ['login_client_secret', 'admin_client_secret', 'cc_client_secret', 'cc_token_secret', 'port']
+    required_keys = ['login_client_secret', 'admin_client_secret', 'cc_client_secret', 'cc_token_secret',
+                     'service_broker_client_secret', 'servicesmgmt_client_secret', 'port']
     port = 8081
 
     def get_shared_secrets(self):
@@ -101,6 +102,8 @@ class UAARelation(RelationContext):
             'admin_client_secret': host.pwgen(20),
             'cc_client_secret': host.pwgen(20),
             'cc_token_secret': host.pwgen(20),
+            'service_broker_client_secret': host.pwgen(20),
+            'servicesmgmt_client_secret': host.pwgen(20),
         })
         return secret_context
 
@@ -122,6 +125,23 @@ class UAARelation(RelationContext):
             'uaa.scim.users': [
                 'admin|admin|scim.write,scim.read,openid,cloud_controller.admin',  # FIXME: Don't hard-code
             ],
+            'uaa.clients': {
+                'cc_service_broker_client': {
+                    'secret': data['service_broker_client_secret'],
+                    'scope': 'openid,cloud_controller_service_permissions.read',
+                    'authorities': 'clients.read,clients.write,clients.admin',
+                    'authorized-grant-types': 'client_credentials',
+                },
+                'servicesmgmt': {
+                    'authorities': 'uaa.resource,oauth.service,clients.read,clients.write,clients.secret',
+                    'authorized-grant-types': 'authorization_code,client_credentials,password,implicit',
+                    'autoapprove': True,
+                    'override': True,
+                    'redirect-uri': 'http://servicesmgmt.10.244.0.34.xip.io/auth/cloudfoundry/callback',
+                    'scope': 'openid,cloud_controller.read,cloud_controller.write',
+                    'secret': data['servicesmgmt_client_secret'],
+                },
+            },
         }
 
 
