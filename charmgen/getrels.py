@@ -123,7 +123,6 @@ def run_rev(repo, rev, options):
         return
     repo.head.reference = ref
     repo.head.reset(index=True, working_tree=True)
-    import pdb; pdb.set_trace()
     if options.verbose:
         print(ref.name)
 
