@@ -38,7 +38,7 @@ COMMON_UPGRADES = []
 
 RELEASES = [
     {
-        "releases": (176, 176),
+        "releases": (177, 177),
         "topology": {
             "services": COMMON_SERVICES + [
                 ('loggregator-trafficcontroller-v2', 'loggregator-trafficcontrol'),
