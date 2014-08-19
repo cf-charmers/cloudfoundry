@@ -195,6 +195,28 @@ SERVICES = {
             }]
         },
 
+    'loggregator-trafficcontroller-v2': {
+        'service': 'loggregator-trafficcontroller',
+        'summary': 'loggregator-trafficcontroller',
+        'description': '',
+        'jobs': [
+            {'job_name': 'loggregator_trafficcontroller',
+             'ports': [contexts.LTCRelation.outgoing_port],
+             'mapping': {},
+             'provided_data': [contexts.LTCRelation],
+             'required_data': [contexts.LoggregatorRelation,
+                               contexts.LTCRelation.remote_view,
+                               contexts.NatsRelation,
+                               contexts.CloudControllerRelation,
+                               contexts.EtcdRelation]},
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation.remote_view,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
+            ]
+        },
+
     'hm9000-v1': {
         'service': 'hm9000',
         'summary': 'health monitor',

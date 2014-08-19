@@ -119,6 +119,8 @@ class TestLTCRelation(unittest.TestCase):
             'port': contexts.LTCRelation.incoming_port,
             'outgoing_port': contexts.LTCRelation.outgoing_port,
             'shared_secret': 'secret',
+            'metron_port': contexts.LTCRelation.metron_port,
+            'metron_dropsonde_port': contexts.LTCRelation.metron_dropsonde_port,
         })
 
 
@@ -131,6 +133,7 @@ class TestLoggregatorRelation(unittest.TestCase):
             'address': 'address',
             'incoming_port': contexts.LoggregatorRelation.incoming_port,
             'outgoing_port': contexts.LoggregatorRelation.outgoing_port,
+            'dropsonde_port': contexts.LoggregatorRelation.dropsonde_port,
         })
 
 

@@ -177,9 +177,11 @@ class DEARelation(RelationContext):
 class LTCRelation(RelationContext):
     name = 'ltc'
     interface = 'loggregator_trafficcontroller'
-    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port']
+    required_keys = ['shared_secret', 'host', 'port', 'outgoing_port', 'metron_port', 'metron_dropsonde_port']
     incoming_port = 3456
     outgoing_port = 8082
+    metron_port = 3458
+    metron_dropsonde_port = 3459
 
     def get_shared_secret(self):
         secret_context = StoredContext('ltc-secrets.yml', {
@@ -193,6 +195,8 @@ class LTCRelation(RelationContext):
             'port': self.incoming_port,
             'outgoing_port': self.outgoing_port,
             'shared_secret': self.get_shared_secret(),
+            'metron_port': self.metron_port,
+            'metron_dropsonde_port': self.metron_dropsonde_port,
         }
 
     def erb_mapping(self):
@@ -201,6 +205,12 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.host': data[0]['host'],
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
+            'metron_endpoint.host': data[0]['host'],
+            'metron_endpoint.port': data[0]['metron_port'],
+            'metron_endpoint.shared_secret': data[0]['shared_secret'],
+            'metron.incoming_port': data[0]['metron_port'],
+            'metron.dropsonde_incoming_port': data[0]['metron_dropsonde_port'],
+            'metron_agent.zone': 'z1',
             'traffic_controller.zone': 'z1',
             'traffic_controller.host': data[0]['host'],
             'traffic_controller.incoming_port': data[0]['port'],
@@ -213,15 +223,17 @@ class LTCRelation(RelationContext):
 class LoggregatorRelation(RelationContext):
     name = 'loggregator'
     interface = 'loggregator'
-    required_keys = ['address', 'incoming_port', 'outgoing_port']
+    required_keys = ['address', 'incoming_port', 'outgoing_port', 'dropsonde_port']
     incoming_port = 3457
     outgoing_port = 8083
+    dropsonde_port = 3460
 
     def provide_data(self):
         return {
             'address': hookenv.unit_get('private-address').encode('utf-8'),
             'incoming_port': self.incoming_port,
             'outgoing_port': self.outgoing_port,
+            'dropsonde_port': self.dropsonde_port,
         }
 
     def erb_mapping(self):
@@ -231,6 +243,7 @@ class LoggregatorRelation(RelationContext):
             'loggregator.servers': {'z1': [d['address'] for d in data]},
             'loggregator.incoming_port': data[0]['incoming_port'],
             'loggregator.outgoing_port': data[0]['outgoing_port'],
+            'loggregator.dropsonde_incoming_port': data[0]['dropsonde_port'],
         }
 
 

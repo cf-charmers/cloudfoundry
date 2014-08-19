@@ -14,7 +14,6 @@ COMMON_SERVICES = [
     ('login-v1', 'login'),
     ('nats-stream-forwarder-v1', 'nats-sf'),
     ('loggregator-v1', 'loggregator'),
-    ('loggregator-trafficcontroller-v1', 'loggregator-trafficcontrol'),
     ('hm9000-v1', 'hm'),
     ('haproxy-v1', 'haproxy'),
 
@@ -39,9 +38,11 @@ COMMON_UPGRADES = []
 
 RELEASES = [
     {
-        "releases": (173, 175),
+        "releases": (176, 176),
         "topology": {
-            "services": COMMON_SERVICES,
+            "services": COMMON_SERVICES + [
+                ('loggregator-trafficcontroller-v2', 'loggregator-trafficcontrol'),
+            ],
             "relations": COMMON_RELATIONS,
             "expose": ['haproxy'],
             "constraints": {
@@ -53,5 +54,23 @@ RELEASES = [
             },
         },
         "upgrades": COMMON_UPGRADES
-    }
+    },
+    {
+        "releases": (173, 175),
+        "topology": {
+            "services": COMMON_SERVICES + [
+                ('loggregator-trafficcontroller-v1', 'loggregator-trafficcontrol'),
+            ],
+            "relations": COMMON_RELATIONS,
+            "expose": ['haproxy'],
+            "constraints": {
+                "__default__": "arch=amd64",
+                "cc": "arch=amd64 root-disk=12G mem=12G",
+                "cc-worker": "arch=amd64 root-disk=10G",
+                "cc-clock": "arch=amd64 root-disk=10G",
+                "dea": "arch=amd64 mem=5G",
+            },
+        },
+        "upgrades": COMMON_UPGRADES
+    },
 ]
