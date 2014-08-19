@@ -4,13 +4,8 @@
 # Service Definition to deployed service name
 # mapping
 COMMON_SERVICES = [
-    ('cloud-controller-v1', 'cc'),
-    ('cloud-controller-clock-v1', 'cc-clock'),
-    ('cloud-controller-worker-v1', 'cc-worker'),
-    ('router-v1', 'router'),
     ('nats-v1', 'nats'),
     ('uaa-v1', 'uaa'),
-    ('dea-v1', 'dea'),
     ('login-v1', 'login'),
     ('nats-stream-forwarder-v1', 'nats-sf'),
     ('loggregator-v1', 'loggregator'),
@@ -41,9 +36,20 @@ RELEASES = [
         "releases": (177, 177),
         "topology": {
             "services": COMMON_SERVICES + [
+                ('router-v2', 'router'),
+                ('cloud-controller-v2', 'cc'),
+                ('cloud-controller-clock-v2', 'cc-clock'),
+                ('cloud-controller-worker-v2', 'cc-worker'),
+                ('dea-v2', 'dea'),
                 ('loggregator-trafficcontroller-v2', 'loggregator-trafficcontrol'),
             ],
-            "relations": COMMON_RELATIONS,
+            "relations": COMMON_RELATIONS + [
+                ('etcd:client', 'cc:etcd'),
+                ('etcd:client', 'cc-worker:etcd'),
+                ('etcd:client', 'cc-clock:etcd'),
+                ('etcd:client', 'router:etcd'),
+                ('etcd:client', 'dea:etcd'),
+            ],
             "expose": ['haproxy'],
             "constraints": {
                 "__default__": "arch=amd64",
@@ -59,6 +65,11 @@ RELEASES = [
         "releases": (173, 175),
         "topology": {
             "services": COMMON_SERVICES + [
+                ('router-v1', 'router'),
+                ('cloud-controller-v1', 'cc'),
+                ('cloud-controller-clock-v1', 'cc-clock'),
+                ('cloud-controller-worker-v1', 'cc-worker'),
+                ('dea-v1', 'dea'),
                 ('loggregator-trafficcontroller-v1', 'loggregator-trafficcontrol'),
             ],
             "relations": COMMON_RELATIONS,

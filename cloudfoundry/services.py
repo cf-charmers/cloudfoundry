@@ -25,6 +25,29 @@ SERVICES = {
 
     },
 
+    'cloud-controller-clock-v2': {
+        'summary': "A shared clock",
+        'description': '',
+        'jobs': [
+            {'job_name': 'cloud_controller_clock',
+             'mapping': {'cc-db': mapper.ccdb},
+             'provided_data': [],
+             'required_data': [contexts.NatsRelation,
+                               contexts.LTCRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.CloudControllerRelation,
+                               contexts.UAARelation,
+                               contexts.CloudControllerDBRelation,
+                               ]},
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
+            ],
+
+    },
+
     'cloud-controller-v1': {
         'summary': 'CF Cloud Controller, the brains of the operation',
         'description': '',
@@ -45,6 +68,31 @@ SERVICES = {
         }]
     },
 
+    'cloud-controller-v2': {
+        'summary': 'CF Cloud Controller, the brains of the operation',
+        'description': '',
+        'jobs': [
+            {'job_name': 'cloud_controller_ng',
+             'mapping': {'db': mapper.ccdb},
+             'provided_data': [contexts.CloudControllerRelation,
+                               contexts.CloudControllerDBRelation],
+             'required_data': [contexts.NatsRelation,
+                               contexts.MysqlRelation,
+                               contexts.LTCRelation,
+                               contexts.UAARelation,
+                               contexts.CloudControllerRelation.remote_view,
+                               ],
+             'data_ready': [
+                 contexts.CloudControllerDBRelation.send_data,
+             ]},
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
+        ]
+    },
+
     'cloud-controller-worker-v1': {
         'summary': "Worker for cc",
         'description': '',
@@ -60,6 +108,29 @@ SERVICES = {
                                ],
 
              }
+            ]
+    },
+
+    'cloud-controller-worker-v2': {
+        'summary': "Worker for cc",
+        'description': '',
+        'jobs': [
+            {'job_name': 'cloud_controller_worker',
+             'mapping': {'cc-db': mapper.ccdb},
+             'provided_data': [],
+             'required_data': [contexts.NatsRelation,
+                               contexts.LTCRelation,
+                               contexts.UAARelation,
+                               contexts.CloudControllerRelation,
+                               contexts.CloudControllerDBRelation,
+                               ],
+
+             },
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
             ]
     },
 
@@ -92,6 +163,44 @@ SERVICES = {
                 'required_data': [contexts.NatsRelation,
                                   contexts.LTCRelation]
             },
+        ]
+
+    },
+
+    'dea-v2': {
+        'summary': 'DEA runs CF apps in containers',
+        'description': '',
+        'jobs': [
+            {
+                'job_name': 'dea_next',
+                'mapping': {},
+                'install': [
+                    utils.install_linux_image_extra,
+                    utils.apt_install(['quota']),
+                    utils.modprobe(['quota_v1', 'quota_v2'])
+                ],
+                'required_data': [
+                    contexts.NatsRelation,
+                    contexts.LTCRelation,
+                    contexts.DEARelation.remote_view,
+                ],
+                'data_ready': [
+                    # Apply our workaround till we
+                    # have a real fix
+                    tasks.patch_dea
+                ]
+            },
+            {
+                'job_name': 'dea_logging_agent',
+                'mapping': {},
+                'required_data': [contexts.NatsRelation,
+                                  contexts.LTCRelation]
+            },
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
         ]
 
     },
@@ -132,6 +241,27 @@ SERVICES = {
                               contexts.LoggregatorRelation,
                               contexts.RouterRelation.remote_view],
         }],
+
+    },
+
+    'router-v2': {
+        'service': 'router',
+        'summary': 'CF Router',
+        'jobs': [
+            {'job_name': 'gorouter',
+             'ports': [contexts.RouterRelation.port],
+             'mapping': {},
+             'provided_data': [contexts.RouterRelation],
+             'required_data': [contexts.NatsRelation,
+                               contexts.LTCRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.RouterRelation.remote_view]},
+            {'job_name': 'metron_agent',
+             'required_data': [contexts.LTCRelation,
+                               contexts.NatsRelation,
+                               contexts.LoggregatorRelation,
+                               contexts.EtcdRelation]},
+        ],
 
     },
 
@@ -208,11 +338,6 @@ SERVICES = {
                                contexts.LTCRelation.remote_view,
                                contexts.NatsRelation,
                                contexts.CloudControllerRelation,
-                               contexts.EtcdRelation]},
-            {'job_name': 'metron_agent',
-             'required_data': [contexts.LTCRelation.remote_view,
-                               contexts.NatsRelation,
-                               contexts.LoggregatorRelation,
                                contexts.EtcdRelation]},
             ]
         },

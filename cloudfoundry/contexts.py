@@ -205,7 +205,7 @@ class LTCRelation(RelationContext):
             'loggregator_endpoint.host': data[0]['host'],
             'loggregator_endpoint.port': data[0]['port'],
             'loggregator_endpoint.shared_secret': data[0]['shared_secret'],
-            'metron_endpoint.host': data[0]['host'],
+            'metron_endpoint.host': 'localhost',
             'metron_endpoint.port': data[0]['metron_port'],
             'metron_endpoint.shared_secret': data[0]['shared_secret'],
             'metron.incoming_port': data[0]['metron_port'],
