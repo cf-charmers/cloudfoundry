@@ -211,6 +211,8 @@ class LTCRelation(RelationContext):
             'metron.incoming_port': data[0]['metron_port'],
             'metron.dropsonde_incoming_port': data[0]['metron_dropsonde_port'],
             'metron_agent.zone': 'z1',
+            'metron_agent.incoming_port': data[0]['metron_port'],
+            'metron_agent.dropsonde_incoming_port': data[0]['metron_dropsonde_port'],
             'traffic_controller.zone': 'z1',
             'traffic_controller.host': data[0]['host'],
             'traffic_controller.incoming_port': data[0]['port'],
