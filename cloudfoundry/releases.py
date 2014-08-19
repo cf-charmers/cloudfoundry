@@ -39,7 +39,7 @@ COMMON_UPGRADES = []
 
 RELEASES = [
     {
-        "releases": (173, 176),
+        "releases": (173, 175),
         "topology": {
             "services": COMMON_SERVICES,
             "relations": COMMON_RELATIONS,
