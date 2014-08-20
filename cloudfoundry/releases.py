@@ -33,7 +33,7 @@ COMMON_UPGRADES = []
 
 RELEASES = [
     {
-        "releases": (177, 177),
+        "releases": (177, 178),
         "topology": {
             "services": COMMON_SERVICES + [
                 ('router-v2', 'router'),

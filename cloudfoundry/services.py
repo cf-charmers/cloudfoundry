@@ -194,7 +194,8 @@ SERVICES = {
                 'job_name': 'dea_logging_agent',
                 'mapping': {},
                 'required_data': [contexts.NatsRelation,
-                                  contexts.LTCRelation]
+                                  contexts.LTCRelation,
+                                  contexts.EtcdRelation]
             },
             {'job_name': 'metron_agent',
              'required_data': [contexts.LTCRelation,
