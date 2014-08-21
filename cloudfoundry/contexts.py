@@ -5,8 +5,19 @@ import yaml
 
 from charmhelpers.core import host
 from charmhelpers.core import hookenv
-from charmhelpers.core.services import RelationContext
+from charmhelpers.core.services import RelationContext as RelationContextBase
 from cloudfoundry.releases import RELEASES
+
+
+class RelationContext(RelationContextBase):
+    @classmethod
+    def remote_view(cls):
+        """
+        Return the provided relation data as it would be seen by a remote unit.
+        """
+        inst = cls()
+        inst[inst.name] = [inst.provide_data()]
+        return inst
 
 
 class StoredContext(dict):
