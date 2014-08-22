@@ -277,5 +277,19 @@ class Monit(object):
         cmd = ['monit', 'stop', 'all']
         self.proc(cmd)
 
+    def summary(self):
+        try:
+            output = subprocess.check_output(['monit', 'summary'])
+            lines = output.split('\n')
+            if len(lines) < 2:
+                return None
+            results = {}
+            for line in lines[2:]:
+                proc_type, name, status = lines.split()
+                results[name.strip("'")] = status
+            return results
+        except subprocess.CalledProcessError:
+            return None
+
 
 monit = Monit()

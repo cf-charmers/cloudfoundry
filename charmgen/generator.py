@@ -83,7 +83,7 @@ class CharmGenerator(object):
     def build_hooks(self, service_key):
         meta = self.build_metadata(service_key)
         results = ['start', 'stop', 'config-changed',
-                   'upgrade-charm', 'install']
+                   'upgrade-charm', 'install', 'health']
         for rel in chain(meta.get('provides', {}), meta.get('requires', {})):
             results.append('{}-relation-changed'.format(rel))
             results.append('{}-relation-joined'.format(rel))
