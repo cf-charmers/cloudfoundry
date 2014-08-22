@@ -49,7 +49,7 @@ class CharmGenerator(object):
 
     def _is_relation(self, context):
         return inspect.isclass(context)\
-          and issubclass(context, contexts.RelationContext)
+            and issubclass(context, contexts.RelationContext)
 
     def build_metadata(self, service_key):
         # service usage within the topo can include the service name
@@ -105,6 +105,9 @@ class CharmGenerator(object):
         meta_target = open(os.path.join(target_dir, 'metadata.yaml'), 'w')
         yaml.safe_dump(meta, meta_target, default_flow_style=False)
         meta_target.close()
+
+        shutil.copyfile(pkg_resources.resource_filename(__name__, '../icon.svg'),
+                        os.path.join(target_dir, 'icon.svg'))
 
         hook_dir = os.path.join(target_dir, 'hooks')
         if not os.path.exists(hook_dir):
