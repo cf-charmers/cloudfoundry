@@ -498,3 +498,16 @@ class Hooks(object):
 def charm_dir():
     """Return the root directory of the current charm"""
     return os.environ.get('CHARM_DIR')
+
+
+def juju_status(status=None, message=None, blockers=None, manual=False, qos=None):
+    kwargs = {k: v for k, v in locals().items() if v is not None}  # must be first line
+    status_file = os.path.join(charm_dir(), 'juju_status.json')
+    state = {'status': None, 'message': None, 'blockers': None, 'manual': False, 'qos': None}
+    if os.path.exists(status_file):
+        with open(status_file) as fp:
+            state = json.load(fp)
+    state.update(kwargs)
+    with open(status_file, 'w') as fp:
+        json.dump(state, fp)
+    return state

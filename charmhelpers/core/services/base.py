@@ -116,11 +116,17 @@ class ServiceManager(object):
         Handle the current hook by doing The Right Thing with the registered services.
         """
         hook_name = hookenv.hook_name()
-        if hook_name == 'stop':
-            self.stop_services()
-        else:
-            self.provide_data()
-            self.reconfigure_services()
+        try:
+            if hook_name == 'stop':
+                self.stop_services()
+            else:
+                self.update_status_working()
+                self.provide_data()
+                self.reconfigure_services()
+                self.update_status_done()
+        except Exception as e:
+            hookenv.juju_status('error', msg=str(e))
+            raise e
 
     def provide_data(self):
         hook_name = hookenv.hook_name()
@@ -237,6 +243,27 @@ class ServiceManager(object):
         """
         self._load_ready_file()
         return service_name in self._ready
+
+    def update_status_working(self):
+        if hookenv.juju_status()['status'] == 'blocked':
+            hookenv.juju_status('churning')
+
+    def update_status_done(self):
+        blocked = False
+        manual = False
+        blockers = []
+        for service in self.services.values():
+            for req in service.get('required_data', []):
+                if not bool(req):
+                    blocked = True
+                    if getattr(req, 'manual', False):
+                        manual = True
+                    if hasattr(req, 'name'):
+                        blockers.append(req.name)
+        if blocked:
+            hookenv.juju_status('blocked', manual=manual, blockers=blockers)
+        else:
+            hookenv.juju_status('up')
 
 
 class ManagerCallback(object):

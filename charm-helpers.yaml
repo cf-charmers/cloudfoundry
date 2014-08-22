@@ -1,5 +1,5 @@
 destination: charmhelpers
-branch: lp:charm-helpers
+branch: lp:~johnsca/charm-helpers/status
 include:
   - core
   - fetch
