@@ -11,7 +11,7 @@ def monit_summary(service):
     summary = tasks.monit.summary()
     if summary is None:
         return dict(result, health='fail', message='unable to get summary')
-    if any(v != 'Running' for v in summary.values):
+    if any(v != 'Running' for v in summary.values()):
         return dict(result,
                     health='fail',
                     message='not all services running',

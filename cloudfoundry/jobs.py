@@ -79,4 +79,4 @@ def report_health(charm_name, service_data=SERVICES):
         'health': health,
         'state': hookenv.juju_status(),
         'checks': results,
-    })
+    }, default_flow_style=False)

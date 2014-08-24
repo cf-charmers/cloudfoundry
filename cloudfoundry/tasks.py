@@ -285,8 +285,9 @@ class Monit(object):
                 return None
             results = {}
             for line in lines[2:]:
-                proc_type, name, status = lines.split()
-                results[name.strip("'")] = status
+                if line:
+                    proc_type, name, status = line.split(None, 2)
+                    results[name.strip("'")] = status
             return results
         except subprocess.CalledProcessError:
             return None
