@@ -109,7 +109,51 @@ def deploy(s):
         env.close()
 
 
+def cache_unit_addresses(s):
+    units = {}
+    for rid in sorted(hookenv.relation_ids(OrchestratorRelation.name)):
+        for unit in sorted(hookenv.related_units(rid)):
+            units[unit] = hookenv.relation_get('private-address', unit, rid)
+    cache_file = path(hookenv.charm_dir()) / 'unit_addresses'
+    cache_file.write_text(yaml.safe_dump(units, default_flow_style=False))
+
+
+def report_consolidated_health():
+    cache_file = path(hookenv.charm_dir()) / 'unit_addresses'
+    results = {
+        'service': 'cloudfoundry',
+        'health': 'pass',
+        'state': hookenv.juju_status(),
+        'units': {},
+    }
+    if cache_file.exists():
+        units = yaml.safe_load(cache_file.text())
+        for unit, address in units.iteritems():
+            unit_dash = unit.replace('/', '-')
+            output = subprocess.check_output([
+                'ssh', 'root@{}'.format(address),
+                '-i', path(hookenv.charm_dir()) / 'orchestrator-key',
+                '-o', 'UserKnownHostsFile=/dev/null',
+                '-o', 'StrictHostKeyChecking=no',
+                ' ; '.join([
+                    'export CHARM_DIR=/var/lib/juju/agents/unit-{}/charm'.format(unit_dash),
+                    'cd $CHARM_DIR',
+                    'hooks/health',
+                ]),
+            ])
+            results['units'][unit] = yaml.safe_load(output)
+            health = results['units'][unit]['health']
+            if health == 'fail':
+                results['health'] = 'fail'
+            elif health == 'warn' and results['health'] != 'fail':
+                results['health'] = 'warn'
+    print yaml.safe_dump(results, default_flow_style=False)
+
+
 def manage():
+    if hookenv.hook_name() == 'health':
+        report_consolidated_health()
+        return
     manager = services.ServiceManager([
         {
             'service': 'bundle',
@@ -118,6 +162,7 @@ def manage():
                 ArtifactsCache(),
             ],
             'data_ready': [
+                cache_unit_addresses,
                 precache_job_artifacts,
                 generate,
                 deploy,

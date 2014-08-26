@@ -198,30 +198,38 @@ class TestStoredContext(unittest.TestCase):
 
 
 class TestOrchestratorRelation(unittest.TestCase):
+    @mock.patch('charmhelpers.core.hookenv.charm_dir', lambda: 'charm_dir')
+    @mock.patch('cloudfoundry.contexts.path')
     @mock.patch('charmhelpers.core.services.RelationContext.get_data', mock.Mock())
     @mock.patch('charmhelpers.core.hookenv.unit_private_ip')
     @mock.patch('charmhelpers.core.hookenv.config')
-    def test_provide_data(self, config, upi):
+    def test_provide_data(self, config, upi, path):
         config.return_value = {'cf_version': 170, 'domain': 'domain'}
         upi.return_value = 'upi'
+        path.return_value.__div__.return_value.text.return_value = 'mock_key'
         result = contexts.OrchestratorRelation().provide_data()
         self.assertEqual(result, {
             'artifacts_url': 'http://upi:8019',
             'cf_version': 170,
             'domain': 'domain',
+            'ssh_key': 'mock_key',
         })
 
+    @mock.patch('charmhelpers.core.hookenv.charm_dir', lambda: 'charm_dir')
+    @mock.patch('cloudfoundry.contexts.path')
     @mock.patch('charmhelpers.core.services.RelationContext.get_data', mock.Mock())
     @mock.patch('charmhelpers.core.hookenv.unit_private_ip')
     @mock.patch('charmhelpers.core.hookenv.config')
-    def test_provide_data_latest(self, config, upi):
+    def test_provide_data_latest(self, config, upi, path):
         config.return_value = {'cf_version': 'latest', 'domain': 'domain'}
         upi.return_value = 'upi'
+        path.return_value.__div__.return_value.text.return_value = 'mock_key'
         result = contexts.OrchestratorRelation().provide_data()
         self.assertEqual(result, {
             'artifacts_url': 'http://upi:8019',
-            'cf_version': 176,
+            'cf_version': contexts.RELEASES[0]['releases'][1],
             'domain': 'domain',
+            'ssh_key': 'mock_key',
         })
 
     @mock.patch(CONTEXT + 'OrchestratorRelation.get_data')

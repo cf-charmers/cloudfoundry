@@ -57,6 +57,13 @@ def enable_monit_http_interface():
     monit.svc_force_reload()
 
 
+def install_orchestrator_key(job_name):
+    rel = contexts.OrchestratorRelation()
+    pub_key = rel[rel.name][0]['ssh_key']
+    authorized_keys = path('/root/.ssh/authorized_keys')
+    authorized_keys.write_text('\n{}'.format(pub_key), append=True)
+
+
 def fetch_job_artifacts(job_name):
     orchestrator_data = contexts.OrchestratorRelation()
     job_path = get_job_path(job_name)

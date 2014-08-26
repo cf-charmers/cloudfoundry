@@ -37,6 +37,7 @@ def build_service_block(charm_name, service_defs=SERVICES):
                              [r() for r in job.get('required_data', [])],
             'provided_data': [p() for p in job.get('provided_data', [])],
             'data_ready': [
+                tasks.install_orchestrator_key,
                 tasks.fetch_job_artifacts,
                 partial(tasks.install_job_packages,
                         PACKAGES_BASE_DIR, RELEASES_DIR),

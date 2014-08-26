@@ -7,6 +7,7 @@ from charmhelpers.core import host
 from charmhelpers.core import hookenv
 from charmhelpers.core.services import RelationContext as RelationContextBase
 from cloudfoundry.releases import RELEASES
+from cloudfoundry.path import path
 
 
 class RelationContext(RelationContextBase):
@@ -387,7 +388,7 @@ class RouterRelation(RelationContext):
 class OrchestratorRelation(RelationContext):
     name = "orchestrator"
     interface = "orchestrator"
-    required_keys = ['artifacts_url', 'cf_version', 'domain']
+    required_keys = ['artifacts_url', 'cf_version', 'domain', 'ssh_key']
 
     def get_domain(self):
         # must be here, because deployer is only installed on cloudfoundry
@@ -426,10 +427,12 @@ class OrchestratorRelation(RelationContext):
         version = config['cf_version']
         if version == 'latest':
             version = RELEASES[0]['releases'][1]
+        pub_key = path(hookenv.charm_dir()) / 'orchestrator-key.pub'
         return {
             'artifacts_url': 'http://{}:8019'.format(private_addr),  # FIXME: this should use SSL
             'cf_version': version,
             'domain': self.get_domain(),
+            'ssh_key': pub_key.text(),
         }
 
     def erb_mapping(self):

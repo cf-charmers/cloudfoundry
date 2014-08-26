@@ -70,11 +70,11 @@ class TestJobManager(unittest.TestCase):
         self.assertIsInstance(services[0]['required_data'][1],
                               contexts.NatsRelation)
         # Show that we converted to rubytemplatecallbacks
-        self.assertIsInstance(services[0]['data_ready'][2],
+        self.assertIsInstance(services[0]['data_ready'][3],
                               tasks.JobTemplates)
         services = jobs.build_service_block('cloud-controller-v1')
         # Show that we include both default and additional handlers
-        self.assertIsInstance(services[0]['data_ready'][2],
+        self.assertIsInstance(services[0]['data_ready'][3],
                               tasks.JobTemplates)
         self.assertEqual(services[0]['data_ready'][-1],
                          contexts.CloudControllerDBRelation.send_data)
