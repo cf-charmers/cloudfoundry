@@ -131,7 +131,7 @@ def report_consolidated_health():
         for unit, address in units.iteritems():
             unit_dash = unit.replace('/', '-')
             output = subprocess.check_output([
-                'ssh', 'root@{}'.format(address),
+                'ssh', '-q', 'root@{}'.format(address),
                 '-i', path(hookenv.charm_dir()) / 'orchestrator-key',
                 '-o', 'UserKnownHostsFile=/dev/null',
                 '-o', 'StrictHostKeyChecking=no',
