@@ -125,8 +125,8 @@ class ServiceManager(object):
                 self.reconfigure_services()
                 self.update_status_done()
         except Exception as e:
-            hookenv.juju_status('error', msg=str(e))
-            raise e
+            hookenv.juju_status('error', message=str(e))
+            raise
 
     def provide_data(self):
         hook_name = hookenv.hook_name()
@@ -249,21 +249,18 @@ class ServiceManager(object):
             hookenv.juju_status('churning')
 
     def update_status_done(self):
-        blocked = False
+        status = 'up'
         manual = False
         blockers = []
         for service in self.services.values():
             for req in service.get('required_data', []):
                 if not bool(req):
-                    blocked = True
+                    status = 'blocked'
                     if getattr(req, 'manual', False):
                         manual = True
                     if hasattr(req, 'name'):
                         blockers.append(req.name)
-        if blocked:
-            hookenv.juju_status('blocked', manual=manual, blockers=blockers)
-        else:
-            hookenv.juju_status('up')
+        hookenv.juju_status(status, manual=manual, blockers=blockers)
 
 
 class ManagerCallback(object):
