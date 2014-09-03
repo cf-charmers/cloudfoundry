@@ -41,5 +41,8 @@ output/*/index.html
 
 # Sphinx
 docs/_build
-.bzr
+.ropeproject
 
+# Generated test charms
+cloudfoundry-r*
+output-v*.yaml
