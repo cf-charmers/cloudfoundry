@@ -210,7 +210,8 @@ class CharmGenerator(object):
         for rel in self._get_relations():
             lhs = self._normalize_relation(rel[0])
             rhs = self._normalize_relation(rel[1])
-            rel_data.setdefault(lhs, []).append(rhs)
+            if rhs not in rel_data.get(lhs, []):
+                rel_data.setdefault(lhs, []).append(rhs)
         for k, v in rel_data.items():
             relations.append((k, tuple(v)))
         return result
